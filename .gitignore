@@ -38,6 +38,7 @@ env/
 # Output files
 output/
 *.txt
+/src/pdf_reader/uploads
 
 # Environment variables
 .env

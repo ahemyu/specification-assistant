@@ -1,7 +1,10 @@
 """This script will be used to parse pdfs file/s, extract text in various formats (.txt, .md, .xml) and save the output."""
+import io
 import logging
-import pdfplumber
 from pathlib import Path
+from typing import Union
+
+import pdfplumber
 
 logging.basicConfig(
     level=logging.INFO,
@@ -79,24 +82,84 @@ def process_single_page(page, page_number: int) -> str:
     return "\n".join(output)
 
 
-def process_single_pdf(pdf_path: Path) -> str:
+def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: str = None) -> dict:
+    """
+    Process a single PDF file and return structured data as dictionary.
+
+    Args:
+        pdf_source: Path to PDF file or BytesIO object
+        filename: Optional filename for display (used when pdf_source is BytesIO)
+
+    Returns:
+        Dictionary with total_pages and page data
+    """
+    with pdfplumber.open(pdf_source) as pdf:
+        total_pages = len(pdf.pages)
+        pages_data = []
+
+        for i, page in enumerate(pdf.pages, 1):
+            tables = page.find_tables()
+
+            def is_char_in_any_table(char):
+                for table in tables:
+                    bbox = table.bbox
+                    x0, top, x1, bottom = bbox
+                    if (char['x0'] >= x0 and char['x1'] <= x1 and
+                        char['top'] >= top and char['bottom'] <= bottom):
+                        return True
+                return False
+
+            if tables:
+                filtered_page = page.filter(lambda obj: obj['object_type'] != 'char' or not is_char_in_any_table(obj))
+                text = filtered_page.extract_text()
+            else:
+                text = page.extract_text()
+
+            tables_data = []
+            for table in tables:
+                table_data = table.extract()
+                if table_data:
+                    tables_data.append(table_data)
+
+            pages_data.append({
+                "page_number": i,
+                "text": text if text else "",
+                "tables": tables_data
+            })
+
+        return {
+            "total_pages": total_pages,
+            "pages": pages_data
+        }
+
+
+def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str = None) -> str:
     """
     Process a single PDF file: extract content from all pages.
 
     Args:
-        pdf_path: Path to the PDF file
+        pdf_source: Path to PDF file or BytesIO object
+        filename: Optional filename for display (used when pdf_source is BytesIO)
 
     Returns:
         Formatted string with entire PDF content
     """
     output = []
 
+    # Determine the display name
+    if isinstance(pdf_source, Path):
+        display_name = pdf_source.name
+    elif filename:
+        display_name = filename
+    else:
+        display_name = "document.pdf"
+
     output.append("#" * 80)
-    output.append(f"DOCUMENT: {pdf_path.name}")
+    output.append(f"DOCUMENT: {display_name}")
     output.append("#" * 80)
     output.append("")
 
-    with pdfplumber.open(pdf_path) as pdf:
+    with pdfplumber.open(pdf_source) as pdf:
         total_pages = len(pdf.pages)
         output.append(f"Total Pages: {total_pages}")
         output.append("")

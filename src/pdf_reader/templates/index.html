@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Text Extraction</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>PDF Text Extraction</h1>
+        <p class="subtitle">Upload your PDF files to extract text and tables</p>
+
+        <div class="upload-section">
+            <div class="file-input-wrapper">
+                <input type="file" id="fileInput" multiple accept=".pdf">
+                <label for="fileInput" class="file-input-label">Choose PDF Files</label>
+            </div>
+            <div class="selected-files" id="selectedFiles"></div>
+            <button class="upload-btn" id="uploadBtn" disabled>Upload and Process</button>
+        </div>
+
+        <div class="spinner" id="spinner"></div>
+        <div class="status" id="status"></div>
+        <div class="results" id="results"></div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
