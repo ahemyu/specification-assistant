@@ -36,6 +36,7 @@ const previewContent = document.getElementById('previewContent');
 
 let uploadedFileIds = [];
 let processedFiles = [];
+let extractionResultsData = null;
 
 fileInput.addEventListener('change', function() {
     const files = Array.from(this.files);
@@ -274,6 +275,9 @@ extractBtn.addEventListener('click', async function() {
         extractSpinner.style.display = 'none';
         showExtractStatus(`Successfully extracted ${keyNames.length} key(s)`, 'success');
 
+        // Store extraction results for Excel download
+        extractionResultsData = data;
+
         displayExtractionResults(data, keyNames);
 
     } catch (error) {
@@ -292,6 +296,15 @@ function showExtractStatus(message, type) {
 
 function displayExtractionResults(data, keyNames) {
     let resultsHTML = '<div class="extraction-results-container">';
+
+    // Add download button at the top
+    resultsHTML += `
+        <div class="download-excel-section">
+            <button class="download-excel-btn" onclick="downloadExtractionExcel()">
+                Download as Excel
+            </button>
+        </div>
+    `;
 
     if (keyNames.length === 1) {
         resultsHTML += formatSingleKeyResult(keyNames[0], data);
@@ -384,3 +397,48 @@ document.addEventListener('keydown', function(e) {
         closePreviewModal();
     }
 });
+
+// Download extraction results as Excel
+async function downloadExtractionExcel() {
+    if (!extractionResultsData) {
+        showExtractStatus('No extraction results available to download', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/download-extraction-excel', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                extraction_results: extractionResultsData
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+
+        // Create a blob from the response
+        const blob = await response.blob();
+
+        // Create a temporary download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'extracted_keys.xlsx';
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showExtractStatus('Excel file downloaded successfully', 'success');
+
+    } catch (error) {
+        showExtractStatus(`Error downloading Excel: ${error.message}`, 'error');
+    }
+}

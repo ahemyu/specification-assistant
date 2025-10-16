@@ -4,14 +4,16 @@ import os
 import re
 from pathlib import Path
 from typing import List, Optional
+from io import BytesIO
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from process_pdfs import process_single_pdf, process_single_pdf_to_dict
 from llm_key_extractor import LLMKeyExtractor, KeyExtractionResult
+import pandas as pd
 
 logging.basicConfig(
     level=logging.INFO,
@@ -421,6 +423,75 @@ async def ask_question(request: QuestionRequest) -> dict:
         raise HTTPException(
             status_code=500,
             detail=f"Error answering question: {str(e)}"
+        )
+
+
+class ExcelDownloadRequest(BaseModel):
+    """Request model for downloading extraction results as Excel."""
+
+    extraction_results: dict
+
+
+@app.post("/download-extraction-excel")
+async def download_extraction_excel(request: ExcelDownloadRequest):
+    """
+    Download extraction results as an Excel file with two columns: Key and Value.
+
+    Requires:
+    - extraction_results: Dictionary mapping key names to their extraction results
+
+    Returns:
+    - Excel file (.xlsx) with extracted key-value pairs
+    """
+    try:
+        # Prepare data for Excel
+        data_rows = []
+
+        for key_name, result in request.extraction_results.items():
+            # Handle None results (failed extractions)
+            if result is None:
+                data_rows.append({
+                    "Key": key_name,
+                    "Value": "Extraction failed"
+                })
+                continue
+
+            # Extract value from result
+            # Handle both single key results and multiple key results
+            if isinstance(result, dict):
+                key_value = result.get("key_value", "Not found")
+            else:
+                key_value = getattr(result, "key_value", "Not found")
+
+            data_rows.append({
+                "Key": key_name,
+                "Value": key_value if key_value is not None else "Not found"
+            })
+
+        # Create DataFrame
+        df = pd.DataFrame(data_rows)
+
+        # Create Excel file in memory
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Extracted Keys')
+
+        output.seek(0)
+
+        # Return as streaming response
+        return StreamingResponse(
+            output,
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            headers={
+                "Content-Disposition": "attachment; filename=extracted_keys.xlsx"
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error generating Excel file: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating Excel file: {str(e)}"
         )
 
 
