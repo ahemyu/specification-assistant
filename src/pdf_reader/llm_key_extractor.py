@@ -50,6 +50,11 @@ class LLMKeyExtractor:
             google_api_key=api_key,
             temperature=0  # Use deterministic output for extraction tasks
         )
+        self.qa_llm = ChatGoogleGenerativeAI(
+            model=model_name,
+            google_api_key=api_key,
+            temperature=0.3  # Slightly higher temperature for more natural Q&A responses
+        )
         self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
         logger.info(f"Initialized LLM key extractor with model: {model_name}")
 
@@ -153,3 +158,79 @@ class LLMKeyExtractor:
                 results[key_name] = None
 
         return results
+
+    def answer_question(
+        self,
+        question: str,
+        pdf_data: List[dict]
+    ) -> str:
+        """
+        Answer a general question about the PDF documents.
+
+        Args:
+            question: The user's question about the documents
+            pdf_data: List of dictionaries containing PDF data from process_single_pdf_to_dict()
+                      Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
+
+        Returns:
+            String containing the LLM's answer to the question
+        """
+        logger.info(f"Answering question about {len(pdf_data)} PDF(s)")
+
+        # Build the context from all PDFs
+        context_parts = []
+        for pdf in pdf_data:
+            filename = pdf.get("filename", "unknown.pdf")
+            pages = pdf.get("pages", [])
+
+            context_parts.append(f"\n{'='*80}\nDOCUMENT: {filename}\n{'='*80}\n")
+
+            for page_data in pages:
+                page_num = page_data.get("page_number", 0)
+                text = page_data.get("text", "")
+                tables = page_data.get("tables", [])
+
+                context_parts.append(f"\n--- PAGE {page_num} ---\n")
+
+                if text:
+                    context_parts.append(f"Text content:\n{text}\n")
+
+                if tables:
+                    context_parts.append(f"\nTables on page {page_num}:\n")
+                    for i, table in enumerate(tables, 1):
+                        context_parts.append(f"Table {i}:\n")
+                        for row in table:
+                            context_parts.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
+                        context_parts.append("\n")
+
+        full_context = "".join(context_parts)
+
+        # Build the prompt
+        prompt = f"""
+            You are an expert assistant helping users understand technical documents.
+            Below are the contents of one or more PDF documents. Each document includes page numbers.
+            Your task is to answer the following question based on the provided documents:
+
+            QUESTION: {question}
+
+            IMPORTANT INSTRUCTIONS:
+            1. Provide a clear, comprehensive answer based on the document contents
+            2. If referencing specific information, mention which document and page number it came from
+            3. If the answer cannot be found in the documents, clearly state that
+            4. Be precise and cite page numbers when possible
+            5. If the question is ambiguous, provide the most reasonable interpretation
+
+            DOCUMENT CONTENTS:
+            {full_context}
+
+            Now answer the question in a clear and helpful way:
+            """
+
+        try:
+            response = self.qa_llm.invoke(prompt)
+            answer = response.content if hasattr(response, 'content') else str(response)
+            logger.info("Successfully answered question")
+            return answer
+        except Exception as e:
+            logger.error(f"Error answering question: {str(e)}")
+            raise

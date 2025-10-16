@@ -261,6 +261,227 @@ h1 {
     100% { transform: rotate(360deg); }
 }
 
+/* Q&A Section Styles */
+.qa-section {
+    margin-top: 48px;
+    padding: 32px;
+    background: linear-gradient(135deg, #e6f7ff 0%, #d4edff 100%);
+    border-radius: 12px;
+    border: 3px solid #91d5ff;
+    transition: all 0.3s ease;
+}
+
+.qa-section:hover {
+    border-color: #40a9ff;
+}
+
+.qa-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.qa-header-content {
+    flex: 1;
+}
+
+.qa-header h2 {
+    color: #1a202c;
+    margin-bottom: 4px;
+    font-size: 1.6em;
+    font-weight: 700;
+}
+
+.section-subtitle-inline {
+    color: #718096;
+    margin: 0;
+    font-size: 0.95em;
+    line-height: 1.6;
+}
+
+.qa-toggle-btn {
+    background: white;
+    border: 2px solid #40a9ff;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    color: #40a9ff;
+}
+
+.qa-toggle-btn:hover {
+    background: #40a9ff;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(64, 169, 255, 0.3);
+}
+
+.qa-icon {
+    transition: transform 0.3s ease;
+}
+
+.qa-icon.expanded {
+    transform: rotate(180deg);
+}
+
+.qa-content {
+    margin-top: 24px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.qa-input-area {
+    background: white;
+    padding: 32px;
+    border-radius: 12px;
+    margin-bottom: 24px;
+    border: 2px solid #e2e8f0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.qa-input-group {
+    margin-bottom: 24px;
+}
+
+.qa-input-group:last-of-type {
+    margin-bottom: 28px;
+}
+
+.qa-input-group label {
+    display: block;
+    margin-bottom: 10px;
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.qa-input-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.95em;
+    resize: vertical;
+    transition: all 0.3s ease;
+    line-height: 1.6;
+}
+
+.qa-input-group textarea:focus {
+    outline: none;
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.1);
+}
+
+.qa-input-group textarea::placeholder {
+    color: #a0aec0;
+}
+
+.ask-btn {
+    padding: 14px 48px;
+    background: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: block;
+    margin: 0 auto;
+    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+}
+
+.ask-btn:hover:not(:disabled) {
+    background: #0070e0;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(24, 144, 255, 0.35);
+}
+
+.ask-btn:disabled {
+    background: #cbd5e0;
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+.qa-results {
+    margin-top: 32px;
+}
+
+.qa-answer-item {
+    background: white;
+    border: 2px solid #91d5ff;
+    border-radius: 12px;
+    padding: 28px;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.qa-answer-item:hover {
+    border-color: #40a9ff;
+    box-shadow: 0 8px 24px rgba(24, 144, 255, 0.15);
+    transform: translateY(-2px);
+}
+
+.qa-question {
+    color: #1890ff;
+    font-size: 1.3em;
+    font-weight: 700;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid #e6f7ff;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.qa-question::before {
+    content: "Q:";
+    font-size: 1.2em;
+    color: #0070e0;
+    font-weight: 800;
+    flex-shrink: 0;
+}
+
+.qa-answer {
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 8px;
+    border-left: 4px solid #1890ff;
+    line-height: 1.8;
+    color: #2d3748;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.qa-answer::before {
+    content: "A:";
+    font-weight: 700;
+    color: #0070e0;
+    font-size: 1.1em;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.qa-meta {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    color: #718096;
+    font-size: 0.9em;
+    text-align: right;
+}
+
 .key-extraction-section {
     margin-top: 48px;
     padding: 40px;

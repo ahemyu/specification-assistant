@@ -5,6 +5,19 @@ const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
 const spinner = document.getElementById('spinner');
 
+// Q&A elements
+const qaSection = document.getElementById('qaSection');
+const qaToggleBtn = document.getElementById('qaToggleBtn');
+const qaIcon = document.getElementById('qaIcon');
+const qaContent = document.getElementById('qaContent');
+const questionInput = document.getElementById('questionInput');
+const askBtn = document.getElementById('askBtn');
+const qaSpinner = document.getElementById('qaSpinner');
+const qaStatus = document.getElementById('qaStatus');
+const qaResults = document.getElementById('qaResults');
+
+let qaExpanded = false;
+
 const keyExtractionSection = document.getElementById('keyExtractionSection');
 const keyInput = document.getElementById('keyInput');
 const contextInput = document.getElementById('contextInput');
@@ -77,7 +90,9 @@ uploadBtn.addEventListener('click', async function() {
         processedFiles = data.processed;
 
         if (uploadedFileIds.length > 0) {
+            qaSection.style.display = 'block';
             keyExtractionSection.style.display = 'block';
+            // Don't scroll to Q&A, just make it available
             keyExtractionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
@@ -111,6 +126,95 @@ function displayResults(results) {
             </div>
         </div>
     `).join('');
+}
+
+// Q&A toggle functionality
+qaToggleBtn.addEventListener('click', function(e) {
+    e.stopPropagation();
+    toggleQASection();
+});
+
+// Also allow clicking the header to toggle
+document.querySelector('.qa-header').addEventListener('click', function(e) {
+    if (e.target !== qaToggleBtn && !qaToggleBtn.contains(e.target)) {
+        toggleQASection();
+    }
+});
+
+function toggleQASection() {
+    qaExpanded = !qaExpanded;
+
+    if (qaExpanded) {
+        qaContent.style.display = 'block';
+        qaIcon.classList.add('expanded');
+    } else {
+        qaContent.style.display = 'none';
+        qaIcon.classList.remove('expanded');
+    }
+}
+
+// Q&A functionality
+askBtn.addEventListener('click', async function() {
+    const question = questionInput.value.trim();
+    if (!question || uploadedFileIds.length === 0) {
+        showQAStatus('Please enter a question', 'error');
+        return;
+    }
+
+    askBtn.disabled = true;
+    qaSpinner.style.display = 'block';
+    qaStatus.style.display = 'none';
+    qaResults.innerHTML = '';
+
+    showQAStatus('Processing your question...', 'info');
+
+    try {
+        const response = await fetch('/ask-question', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                file_ids: uploadedFileIds,
+                question: question
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        qaSpinner.style.display = 'none';
+        showQAStatus('Answer generated successfully', 'success');
+
+        displayQAResult(data);
+
+    } catch (error) {
+        qaSpinner.style.display = 'none';
+        showQAStatus(`Error: ${error.message}`, 'error');
+    } finally {
+        askBtn.disabled = false;
+    }
+});
+
+function showQAStatus(message, type) {
+    qaStatus.textContent = message;
+    qaStatus.className = `status ${type}`;
+    qaStatus.style.display = 'block';
+}
+
+function displayQAResult(data) {
+    const docText = data.document_count === 1 ? 'document' : 'documents';
+    qaResults.innerHTML = `
+        <div class="qa-answer-item">
+            <div class="qa-question">${data.question}</div>
+            <div class="qa-answer">${data.answer}</div>
+            <div class="qa-meta">Based on ${data.document_count} ${docText}</div>
+        </div>
+    `;
 }
 
 extractBtn.addEventListener('click', async function() {

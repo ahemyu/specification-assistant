@@ -27,6 +27,39 @@
             <div class="status" id="status" role="status" aria-live="polite"></div>
             <div class="results" id="results"></div>
 
+            <section class="qa-section" id="qaSection" style="display: none;">
+                <div class="qa-header">
+                    <div class="qa-header-content">
+                        <h2>Ask Questions About Your Documents</h2>
+                        <p class="section-subtitle-inline">Get AI-powered answers to any questions about your uploaded PDFs</p>
+                    </div>
+                    <button class="qa-toggle-btn" id="qaToggleBtn" aria-label="Toggle Q&A section">
+                        <svg class="qa-icon" id="qaIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="qa-content" id="qaContent" style="display: none;">
+                    <div class="qa-input-area">
+                        <div class="qa-input-group">
+                            <label for="questionInput">Your Question:</label>
+                            <textarea
+                                id="questionInput"
+                                rows="3"
+                                placeholder="e.g., What are the main technical specifications mentioned? What is the operating temperature range?"
+                                aria-label="Enter your question"></textarea>
+                        </div>
+
+                        <button class="ask-btn" id="askBtn">Ask Question</button>
+                    </div>
+
+                    <div class="spinner" id="qaSpinner" aria-live="polite" aria-label="Processing question"></div>
+                    <div class="status" id="qaStatus" role="status" aria-live="polite"></div>
+                    <div class="qa-results" id="qaResults"></div>
+                </div>
+            </section>
+
             <section class="key-extraction-section" id="keyExtractionSection" style="display: none;">
                 <h2>Extract Keys from Uploaded PDFs</h2>
                 <p class="section-subtitle">Use AI to extract specific information from your processed documents</p>
