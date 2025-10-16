@@ -88,11 +88,19 @@ def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: st
 
     Args:
         pdf_source: Path to PDF file or BytesIO object
-        filename: Optional filename for display (used when pdf_source is BytesIO)
+        filename: Optional filename for display (used when pdf_source is BytesIO or to override Path name)
 
     Returns:
-        Dictionary with total_pages and page data
+        Dictionary with total_pages, filename, and page data
     """
+    # Determine the display name
+    if filename:
+        display_name = filename
+    elif isinstance(pdf_source, Path):
+        display_name = pdf_source.name
+    else:
+        display_name = "document.pdf"
+
     with pdfplumber.open(pdf_source) as pdf:
         total_pages = len(pdf.pages)
         pages_data = []
@@ -128,6 +136,7 @@ def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: st
             })
 
         return {
+            "filename": display_name,
             "total_pages": total_pages,
             "pages": pages_data
         }

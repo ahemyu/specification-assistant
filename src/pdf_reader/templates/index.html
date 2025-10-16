@@ -23,6 +23,29 @@
         <div class="spinner" id="spinner"></div>
         <div class="status" id="status"></div>
         <div class="results" id="results"></div>
+
+        <div class="key-extraction-section" id="keyExtractionSection" style="display: none;">
+            <h2>Extract Keys from Uploaded PDFs</h2>
+            <p class="section-subtitle">Use AI to extract specific information from your processed documents</p>
+
+            <div class="key-input-area">
+                <div class="key-input-group">
+                    <label for="keyInput">Keys to Extract (one per line):</label>
+                    <textarea id="keyInput" rows="5" placeholder="e.g.,&#10;voltage rating&#10;manufacturer&#10;installation date&#10;frequency"></textarea>
+                </div>
+
+                <div class="key-input-group">
+                    <label for="contextInput">Additional Context (optional):</label>
+                    <textarea id="contextInput" rows="3" placeholder="e.g., This is an electrical specification document"></textarea>
+                </div>
+
+                <button class="extract-btn" id="extractBtn">Extract Keys</button>
+            </div>
+
+            <div class="spinner" id="extractSpinner"></div>
+            <div class="status" id="extractStatus"></div>
+            <div class="extraction-results" id="extractionResults"></div>
+        </div>
     </div>
 
     <script src="/static/js/app.js"></script>
