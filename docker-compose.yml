@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  pdf-processor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: specification-assistant
+    ports:
+      - "8000:8000"
+    environment:
+      # Set your Google API key here or use a .env file
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+    volumes:
+      # Persist uploads and outputs
+      - ./uploads:/app/src/pdf_reader/uploads
+      - ./output:/app/src/pdf_reader/output
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
