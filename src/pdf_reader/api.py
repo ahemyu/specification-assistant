@@ -173,6 +173,36 @@ async def download_file(file_id: str):
     )
 
 
+@app.get("/preview/{file_id}")
+async def preview_file(file_id: str):
+    """
+    Get the text content of an extracted file for preview.
+
+    Returns JSON with the text content and metadata.
+    """
+    file_path = OUTPUT_DIR / f"{file_id}.txt"
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        return {
+            "file_id": file_id,
+            "filename": f"{file_id}.txt",
+            "content": content,
+            "size": len(content)
+        }
+    except Exception as e:
+        logger.error(f"Error reading file {file_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error reading file: {str(e)}"
+        )
+
+
 class KeyExtractionRequest(BaseModel):
     """Request model for key extraction endpoint."""
 
@@ -187,6 +217,13 @@ class MultipleKeysExtractionRequest(BaseModel):
     file_ids: List[str]
     key_names: List[str]
     additional_context: Optional[str] = None
+
+
+class QuestionRequest(BaseModel):
+    """Request model for asking questions about PDFs."""
+
+    file_ids: List[str]
+    question: str
 
 
 @app.post("/extract-key")
@@ -318,6 +355,72 @@ async def extract_multiple_keys(request: MultipleKeysExtractionRequest) -> dict:
         raise HTTPException(
             status_code=500,
             detail=f"Error during key extraction: {str(e)}"
+        )
+
+
+@app.post("/ask-question")
+async def ask_question(request: QuestionRequest) -> dict:
+    """
+    Ask a general question about one or more previously uploaded PDFs using LLM.
+
+    Requires:
+    - file_ids: List of file IDs from previous /upload requests
+    - question: The question to ask about the documents
+
+    Returns:
+    - Dictionary with the question and answer
+    """
+    if not llm_extractor:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM service is not available. GOOGLE_API_KEY may not be configured."
+        )
+
+    # Load the PDF data for each file_id
+    pdf_data_list = []
+    for file_id in request.file_ids:
+        # Try to find the PDF file - could be file_id.pdf or with a counter
+        upload_path = UPLOAD_DIR / f"{file_id}.pdf"
+
+        # If not found, try to find any file starting with file_id
+        if not upload_path.exists():
+            matching_files = list(UPLOAD_DIR.glob(f"{file_id}*.pdf"))
+            if matching_files:
+                upload_path = matching_files[0]
+
+        if not upload_path.exists():
+            raise HTTPException(
+                status_code=404,
+                detail=f"File with ID {file_id} not found"
+            )
+
+        try:
+            # Use the actual filename stored on disk
+            pdf_dict = process_single_pdf_to_dict(upload_path, filename=upload_path.name)
+            pdf_data_list.append(pdf_dict)
+        except Exception as e:
+            logger.error(f"Error processing PDF {file_id}: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error processing PDF {file_id}: {str(e)}"
+            )
+
+    # Get answer from LLM
+    try:
+        answer = llm_extractor.answer_question(
+            question=request.question,
+            pdf_data=pdf_data_list
+        )
+        return {
+            "question": request.question,
+            "answer": answer,
+            "document_count": len(pdf_data_list)
+        }
+    except Exception as e:
+        logger.error(f"Error answering question: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error answering question: {str(e)}"
         )
 
 
