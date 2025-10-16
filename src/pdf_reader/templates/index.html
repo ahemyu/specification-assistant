@@ -3,48 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Text Extraction</title>
+    <title>PDF Text Extraction - Extract and Analyze</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>PDF Text Extraction</h1>
-        <p class="subtitle">Upload your PDF files to extract text and tables</p>
+        <header>
+            <h1>PDF Text Extraction</h1>
+            <p class="subtitle">Upload your PDF files to extract text and tables with AI-powered analysis</p>
+        </header>
 
-        <div class="upload-section">
-            <div class="file-input-wrapper">
-                <input type="file" id="fileInput" multiple accept=".pdf">
-                <label for="fileInput" class="file-input-label">Choose PDF Files</label>
-            </div>
-            <div class="selected-files" id="selectedFiles"></div>
-            <button class="upload-btn" id="uploadBtn" disabled>Upload and Process</button>
-        </div>
+        <main>
+            <section class="upload-section">
+                <div class="file-input-wrapper">
+                    <input type="file" id="fileInput" multiple accept=".pdf" aria-label="Choose PDF files">
+                    <label for="fileInput" class="file-input-label">Choose PDF Files</label>
+                </div>
+                <div class="selected-files" id="selectedFiles"></div>
+                <button class="upload-btn" id="uploadBtn" disabled>Upload and Process</button>
+            </section>
 
-        <div class="spinner" id="spinner"></div>
-        <div class="status" id="status"></div>
-        <div class="results" id="results"></div>
+            <div class="spinner" id="spinner" aria-live="polite" aria-label="Processing"></div>
+            <div class="status" id="status" role="status" aria-live="polite"></div>
+            <div class="results" id="results"></div>
 
-        <div class="key-extraction-section" id="keyExtractionSection" style="display: none;">
-            <h2>Extract Keys from Uploaded PDFs</h2>
-            <p class="section-subtitle">Use AI to extract specific information from your processed documents</p>
+            <section class="key-extraction-section" id="keyExtractionSection" style="display: none;">
+                <h2>Extract Keys from Uploaded PDFs</h2>
+                <p class="section-subtitle">Use AI to extract specific information from your processed documents</p>
 
-            <div class="key-input-area">
-                <div class="key-input-group">
-                    <label for="keyInput">Keys to Extract (one per line):</label>
-                    <textarea id="keyInput" rows="5" placeholder="e.g.,&#10;voltage rating&#10;manufacturer&#10;installation date&#10;frequency"></textarea>
+                <div class="key-input-area">
+                    <div class="key-input-group">
+                        <label for="keyInput">Keys to Extract (one per line):</label>
+                        <textarea
+                            id="keyInput"
+                            rows="5"
+                            placeholder="e.g.,&#10;voltage rating&#10;manufacturer&#10;installation date&#10;frequency"
+                            aria-label="Enter keys to extract"></textarea>
+                    </div>
+
+                    <div class="key-input-group">
+                        <label for="contextInput">Additional Context (optional):</label>
+                        <textarea
+                            id="contextInput"
+                            rows="3"
+                            placeholder="e.g., This is an electrical specification document"
+                            aria-label="Enter additional context"></textarea>
+                    </div>
+
+                    <button class="extract-btn" id="extractBtn">Extract Keys</button>
                 </div>
 
-                <div class="key-input-group">
-                    <label for="contextInput">Additional Context (optional):</label>
-                    <textarea id="contextInput" rows="3" placeholder="e.g., This is an electrical specification document"></textarea>
-                </div>
+                <div class="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting"></div>
+                <div class="status" id="extractStatus" role="status" aria-live="polite"></div>
+                <div class="extraction-results" id="extractionResults"></div>
+            </section>
+        </main>
+    </div>
 
-                <button class="extract-btn" id="extractBtn">Extract Keys</button>
+    <!-- Text Preview Modal -->
+    <div id="previewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Text Preview</h2>
+                <button class="modal-close" id="closeModal" aria-label="Close preview">&times;</button>
             </div>
-
-            <div class="spinner" id="extractSpinner"></div>
-            <div class="status" id="extractStatus"></div>
-            <div class="extraction-results" id="extractionResults"></div>
+            <div class="modal-body">
+                <div class="preview-info">
+                    <span id="previewFilename" class="preview-filename"></span>
+                    <span id="previewSize" class="preview-size"></span>
+                </div>
+                <div class="preview-content" id="previewContent">
+                    <div class="preview-loading">Loading...</div>
+                </div>
+            </div>
         </div>
     </div>
 

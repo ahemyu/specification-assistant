@@ -13,7 +13,16 @@ const extractSpinner = document.getElementById('extractSpinner');
 const extractStatus = document.getElementById('extractStatus');
 const extractionResults = document.getElementById('extractionResults');
 
+// Modal elements
+const previewModal = document.getElementById('previewModal');
+const closeModal = document.getElementById('closeModal');
+const modalTitle = document.getElementById('modalTitle');
+const previewFilename = document.getElementById('previewFilename');
+const previewSize = document.getElementById('previewSize');
+const previewContent = document.getElementById('previewContent');
+
 let uploadedFileIds = [];
+let processedFiles = [];
 
 fileInput.addEventListener('change', function() {
     const files = Array.from(this.files);
@@ -65,6 +74,7 @@ uploadBtn.addEventListener('click', async function() {
         displayResults(data.processed);
 
         uploadedFileIds = data.processed.map(p => p.file_id);
+        processedFiles = data.processed;
 
         if (uploadedFileIds.length > 0) {
             keyExtractionSection.style.display = 'block';
@@ -95,7 +105,10 @@ function displayResults(results) {
             <h3>${result.filename}</h3>
             <p><strong>Pages:</strong> ${result.total_pages}</p>
             <p><strong>File ID:</strong> ${result.file_id}</p>
-            <a href="/download/${result.file_id}" class="download-btn" download>Download Text File</a>
+            <div class="result-actions">
+                <button class="preview-btn" onclick="openPreview('${result.file_id}', '${result.filename}')">Preview Text</button>
+                <a href="/download/${result.file_id}" class="download-btn" download>Download Text File</a>
+            </div>
         </div>
     `).join('');
 }
@@ -218,3 +231,52 @@ function formatSingleKeyResult(keyName, result) {
         </div>
     `;
 }
+
+// Modal functions
+async function openPreview(fileId, originalFilename) {
+    previewModal.classList.add('show');
+    modalTitle.textContent = `Preview: ${originalFilename}`;
+    previewFilename.textContent = originalFilename;
+    previewContent.innerHTML = '<div class="preview-loading">Loading text content...</div>';
+    previewSize.textContent = '';
+
+    try {
+        const response = await fetch(`/preview/${fileId}`);
+
+        if (!response.ok) {
+            throw new Error(`Failed to load preview: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Format file size
+        const sizeKB = (data.size / 1024).toFixed(2);
+        previewSize.textContent = `${sizeKB} KB`;
+
+        // Display content
+        previewContent.textContent = data.content;
+
+    } catch (error) {
+        previewContent.innerHTML = `<div class="preview-error">Error loading preview: ${error.message}</div>`;
+    }
+}
+
+function closePreviewModal() {
+    previewModal.classList.remove('show');
+}
+
+// Modal event listeners
+closeModal.addEventListener('click', closePreviewModal);
+
+previewModal.addEventListener('click', function(e) {
+    if (e.target === previewModal) {
+        closePreviewModal();
+    }
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && previewModal.classList.contains('show')) {
+        closePreviewModal();
+    }
+});

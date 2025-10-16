@@ -173,6 +173,36 @@ async def download_file(file_id: str):
     )
 
 
+@app.get("/preview/{file_id}")
+async def preview_file(file_id: str):
+    """
+    Get the text content of an extracted file for preview.
+
+    Returns JSON with the text content and metadata.
+    """
+    file_path = OUTPUT_DIR / f"{file_id}.txt"
+
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        return {
+            "file_id": file_id,
+            "filename": f"{file_id}.txt",
+            "content": content,
+            "size": len(content)
+        }
+    except Exception as e:
+        logger.error(f"Error reading file {file_id}: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error reading file: {str(e)}"
+        )
+
+
 class KeyExtractionRequest(BaseModel):
     """Request model for key extraction endpoint."""
 
