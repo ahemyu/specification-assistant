@@ -60,5 +60,8 @@ htmlcov/
 CLAUDE.md
 
 # Library docs to feed into llms
-src/pdf_reader/pdfplumber_docs
-src/pdf_reader/pymupdf_docs
+pdfplumber_docs
+pymupdf_docs
+
+# Deployment
+fly.toml
