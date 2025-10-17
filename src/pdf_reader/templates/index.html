@@ -64,28 +64,73 @@
                 <h2>Extract Keys from Uploaded PDFs</h2>
                 <p class="section-subtitle">Use AI to extract specific information from your processed documents</p>
 
-                <div class="key-input-area">
-                    <div class="key-input-group">
-                        <label for="keyInput">Keys to Extract (one per line):</label>
-                        <textarea
-                            id="keyInput"
-                            rows="5"
-                            placeholder="e.g.,&#10;voltage rating&#10;manufacturer&#10;installation date&#10;frequency"
-                            aria-label="Enter keys to extract"></textarea>
-                    </div>
-
-                    <div class="key-input-group">
-                        <label for="contextInput">Additional Context (optional):</label>
-                        <textarea
-                            id="contextInput"
-                            rows="3"
-                            placeholder="e.g., This is an electrical specification document"
-                            aria-label="Enter additional context"></textarea>
-                    </div>
-
-                    <button class="extract-btn" id="extractBtn">Extract Keys</button>
+                <!-- Tab Navigation -->
+                <div class="extraction-tabs">
+                    <button class="tab-btn active" id="excelTab" data-tab="excel">Excel Template</button>
+                    <button class="tab-btn" id="manualTab" data-tab="manual">Manual Input</button>
                 </div>
 
+                <!-- Excel Template Tab Content -->
+                <div class="tab-content active" id="excelTabContent">
+                    <div class="excel-upload-area">
+                        <div class="file-input-group">
+                            <label for="excelFileInput" class="excel-upload-label">
+                                <span class="upload-icon">📄</span>
+                                <span class="upload-text">Choose Excel Template</span>
+                            </label>
+                            <input
+                                type="file"
+                                id="excelFileInput"
+                                accept=".xlsx,.xls"
+                                style="display: none;"
+                                aria-label="Upload Excel template">
+                            <div id="excelFileName" class="excel-filename"></div>
+                        </div>
+
+                        <div class="key-input-group">
+                            <label for="excelContextInput">Additional Context (optional):</label>
+                            <textarea
+                                id="excelContextInput"
+                                rows="3"
+                                placeholder="e.g., This is an electrical specification document"
+                                aria-label="Enter additional context for Excel extraction"></textarea>
+                        </div>
+
+                        <div id="keysPreview" class="keys-preview" style="display: none;">
+                            <h4>Keys to Extract:</h4>
+                            <div id="keysPreviewList"></div>
+                        </div>
+
+                        <button class="extract-btn" id="extractExcelBtn" disabled>Extract Keys from Template</button>
+                    </div>
+                </div>
+
+                <!-- Manual Input Tab Content -->
+                <div class="tab-content" id="manualTabContent">
+                    <div class="key-input-area">
+                        <div class="key-input-group">
+                            <label for="keyInput">Keys to Extract (one per line):</label>
+                            <textarea
+                                id="keyInput"
+                                rows="5"
+                                placeholder="e.g.,&#10;voltage rating&#10;manufacturer&#10;installation date&#10;frequency"
+                                aria-label="Enter keys to extract"></textarea>
+                        </div>
+
+                        <div class="key-input-group">
+                            <label for="contextInput">Additional Context (optional):</label>
+                            <textarea
+                                id="contextInput"
+                                rows="3"
+                                placeholder="e.g., This is an electrical specification document"
+                                aria-label="Enter additional context"></textarea>
+                        </div>
+
+                        <button class="extract-btn" id="extractBtn">Extract Keys</button>
+                    </div>
+                </div>
+
+                <!-- Shared spinner, status, and results -->
                 <div class="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting"></div>
                 <div class="status" id="extractStatus" role="status" aria-live="polite"></div>
                 <div class="extraction-results" id="extractionResults"></div>

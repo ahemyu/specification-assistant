@@ -29,6 +29,22 @@ class ExcelDownloadRequest(BaseModel):
     extraction_results: dict
 
 
+class ExcelTemplateResponse(BaseModel):
+    """Response model for Excel template upload."""
+
+    template_id: str
+    keys: list[str]
+    total_keys: int
+
+
+class ExcelTemplateExtractionRequest(BaseModel):
+    """Request model for extracting keys from an uploaded Excel template."""
+
+    template_id: str
+    file_ids: list[str]
+    additional_context: str | None = None
+
+
 class SourceLocation(BaseModel):
     """Location information for where a key was found."""
 
