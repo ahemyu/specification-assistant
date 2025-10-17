@@ -1,19 +1,23 @@
-"""FastAPI service for PDF text extraction."""
+"""FastAPI service for PDF text extraction, question answering and key extraction."""
 import logging
 import os
-import re
-from pathlib import Path
-from typing import List, Optional
 from io import BytesIO
+from pathlib import Path
 
+import pandas as pd
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
-from process_pdfs import process_single_pdf, process_single_pdf_to_dict
-from llm_key_extractor import LLMKeyExtractor, KeyExtractionResult
-import pandas as pd
+from llm_key_extractor import LLMKeyExtractor
+from models import (
+    ExcelDownloadRequest,
+    KeyExtractionRequest,
+    KeyExtractionResult,
+    MultipleKeysExtractionRequest,
+    QuestionRequest,
+)
+from process_pdfs import dict_to_formatted_text, process_single_pdf_to_dict
 
 logging.basicConfig(
     level=logging.INFO,
@@ -24,16 +28,18 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0")
 
-UPLOAD_DIR = Path("uploads")
 OUTPUT_DIR = Path("output")
-UPLOAD_DIR.mkdir(exist_ok=True)
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
-# Initialize LLM key extractor (requires GOOGLE_API_KEY environment variable)
-llm_extractor: Optional[LLMKeyExtractor] = None
+# In-memory storage for processed PDF data, for now this is file but will need to be moved to a cache
+# Key: file_id, Value: processed pdf_data dict from process_single_pdf_to_dict
+pdf_storage: dict[str, dict] = {}
+
+# Initialize LLM key extractor
+llm_extractor: LLMKeyExtractor | None = None
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 if GOOGLE_API_KEY:
     try:
@@ -45,59 +51,6 @@ else:
     logger.warning("GOOGLE_API_KEY not found. LLM key extraction endpoints will not be available.")
 
 
-def sanitize_filename(filename: str) -> str:
-    """
-    Sanitize a filename to make it safe for filesystem storage.
-
-    Args:
-        filename: Original filename
-
-    Returns:
-        Sanitized filename safe for filesystem use
-    """
-    name = Path(filename).stem
-    ext = Path(filename).suffix
-
-    # Replace unsafe characters with underscores
-    safe_name = re.sub(r'[^\w\s\-.]', '_', name)
-    # Replace multiple spaces/underscores with single underscore
-    safe_name = re.sub(r'[\s_]+', '_', safe_name)
-    # Remove leading/trailing underscores
-    safe_name = safe_name.strip('_')
-
-    return f"{safe_name}{ext}"
-
-
-def get_unique_filepath(directory: Path, filename: str) -> tuple[Path, str]:
-    """
-    Get a unique filepath by appending a counter if the file already exists.
-
-    Args:
-        directory: Directory where file will be saved
-        filename: Desired filename
-
-    Returns:
-        Tuple of (unique_path, unique_filename)
-    """
-    sanitized = sanitize_filename(filename)
-    filepath = directory / sanitized
-
-    if not filepath.exists():
-        return filepath, sanitized
-
-    # File exists, append counter
-    stem = Path(sanitized).stem
-    ext = Path(sanitized).suffix
-    counter = 1
-
-    while filepath.exists():
-        new_filename = f"{stem}_{counter}{ext}"
-        filepath = directory / new_filename
-        counter += 1
-
-    return filepath, filepath.name
-
-
 @app.get("/")
 async def root(request: Request):
     """Serve the main HTML page."""
@@ -105,9 +58,9 @@ async def root(request: Request):
 
 
 @app.post("/upload")
-async def upload_pdfs(files: List[UploadFile] = File(...)):
+async def upload_pdfs(files: list[UploadFile] = File(...)):
     """
-    Upload and process multiple PDF files.
+    Upload and process multiple PDF files in-memory.
 
     Returns JSON with extracted content and file IDs for download.
     """
@@ -120,29 +73,31 @@ async def upload_pdfs(files: List[UploadFile] = File(...)):
             continue
 
         try:
-            # Use sanitized original filename instead of UUID
-            upload_path, stored_filename = get_unique_filepath(UPLOAD_DIR, file.filename)
-
             contents = await file.read()
-            with open(upload_path, "wb") as f:
-                f.write(contents)
 
             logger.info(f"Processing {file.filename}...")
 
-            # Pass original filename to process function
-            pdf_data = process_single_pdf_to_dict(upload_path, filename=file.filename)
+            # Process PDF from memory once
+            pdf_data = process_single_pdf_to_dict(BytesIO(contents), filename=file.filename)
 
-            text_content = process_single_pdf(upload_path, filename=file.filename)
-            # Use same base name for output file
-            output_filename = Path(stored_filename).stem + ".txt"
-            output_path = OUTPUT_DIR / output_filename
+            # Convert structured data to formatted text
+            text_content = dict_to_formatted_text(pdf_data)
+
+            # Save extracted text to output directory (overwrite if exists)
+            safe_filename = file.filename.replace('.pdf', '.txt')
+            output_path = OUTPUT_DIR / safe_filename
+
             with open(output_path, "w", encoding="utf-8") as f:
                 f.write(text_content)
 
+            file_id = output_path.stem
+
+            # Store processed PDF data in memory for later extraction
+            pdf_storage[file_id] = pdf_data
+
             processed.append({
                 "filename": file.filename,
-                "file_id": Path(stored_filename).stem,  # Use stem as file_id for consistency
-                "stored_filename": stored_filename,  # The actual stored filename
+                "file_id": file_id,
                 "total_pages": pdf_data["total_pages"],
                 "data": pdf_data
             })
@@ -205,27 +160,6 @@ async def preview_file(file_id: str):
         )
 
 
-class KeyExtractionRequest(BaseModel):
-    """Request model for key extraction endpoint."""
-
-    file_ids: List[str]
-    key_name: str
-    additional_context: Optional[str] = None
-
-
-class MultipleKeysExtractionRequest(BaseModel):
-    """Request model for extracting multiple keys."""
-
-    file_ids: List[str]
-    key_names: List[str]
-    additional_context: Optional[str] = None
-
-
-class QuestionRequest(BaseModel):
-    """Request model for asking questions about PDFs."""
-
-    file_ids: List[str]
-    question: str
 
 
 @app.post("/extract-key")
@@ -247,34 +181,16 @@ async def extract_key(request: KeyExtractionRequest) -> KeyExtractionResult:
             detail="LLM key extraction service is not available. GOOGLE_API_KEY may not be configured."
         )
 
-    # Load the PDF data for each file_id
+    # Load the processed PDF data for each file_id from memory
     pdf_data_list = []
     for file_id in request.file_ids:
-        # Try to find the PDF file - could be file_id.pdf or with a counter
-        upload_path = UPLOAD_DIR / f"{file_id}.pdf"
-
-        # If not found, try to find any file starting with file_id
-        if not upload_path.exists():
-            matching_files = list(UPLOAD_DIR.glob(f"{file_id}*.pdf"))
-            if matching_files:
-                upload_path = matching_files[0]
-
-        if not upload_path.exists():
+        if file_id not in pdf_storage:
             raise HTTPException(
                 status_code=404,
-                detail=f"File with ID {file_id} not found"
+                detail=f"File with ID {file_id} not found. Please upload the file first."
             )
 
-        try:
-            # Use the actual filename stored on disk
-            pdf_dict = process_single_pdf_to_dict(upload_path, filename=upload_path.name)
-            pdf_data_list.append(pdf_dict)
-        except Exception as e:
-            logger.error(f"Error processing PDF {file_id}: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error processing PDF {file_id}: {str(e)}"
-            )
+        pdf_data_list.append(pdf_storage[file_id])
 
     # Extract the key using LLM
     try:
@@ -311,34 +227,16 @@ async def extract_multiple_keys(request: MultipleKeysExtractionRequest) -> dict:
             detail="LLM key extraction service is not available. GOOGLE_API_KEY may not be configured."
         )
 
-    # Load the PDF data for each file_id
+    # Load the processed PDF data for each file_id from memory
     pdf_data_list = []
     for file_id in request.file_ids:
-        # Try to find the PDF file - could be file_id.pdf or with a counter
-        upload_path = UPLOAD_DIR / f"{file_id}.pdf"
-
-        # If not found, try to find any file starting with file_id
-        if not upload_path.exists():
-            matching_files = list(UPLOAD_DIR.glob(f"{file_id}*.pdf"))
-            if matching_files:
-                upload_path = matching_files[0]
-
-        if not upload_path.exists():
+        if file_id not in pdf_storage:
             raise HTTPException(
                 status_code=404,
-                detail=f"File with ID {file_id} not found"
+                detail=f"File with ID {file_id} not found. Please upload the file first."
             )
 
-        try:
-            # Use the actual filename stored on disk
-            pdf_dict = process_single_pdf_to_dict(upload_path, filename=upload_path.name)
-            pdf_data_list.append(pdf_dict)
-        except Exception as e:
-            logger.error(f"Error processing PDF {file_id}: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error processing PDF {file_id}: {str(e)}"
-            )
+        pdf_data_list.append(pdf_storage[file_id])
 
     # Extract all keys using LLM
     try:
@@ -378,34 +276,16 @@ async def ask_question(request: QuestionRequest) -> dict:
             detail="LLM service is not available. GOOGLE_API_KEY may not be configured."
         )
 
-    # Load the PDF data for each file_id
+    # Load the processed PDF data for each file_id from memory
     pdf_data_list = []
     for file_id in request.file_ids:
-        # Try to find the PDF file - could be file_id.pdf or with a counter
-        upload_path = UPLOAD_DIR / f"{file_id}.pdf"
-
-        # If not found, try to find any file starting with file_id
-        if not upload_path.exists():
-            matching_files = list(UPLOAD_DIR.glob(f"{file_id}*.pdf"))
-            if matching_files:
-                upload_path = matching_files[0]
-
-        if not upload_path.exists():
+        if file_id not in pdf_storage:
             raise HTTPException(
                 status_code=404,
-                detail=f"File with ID {file_id} not found"
+                detail=f"File with ID {file_id} not found. Please upload the file first."
             )
 
-        try:
-            # Use the actual filename stored on disk
-            pdf_dict = process_single_pdf_to_dict(upload_path, filename=upload_path.name)
-            pdf_data_list.append(pdf_dict)
-        except Exception as e:
-            logger.error(f"Error processing PDF {file_id}: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error processing PDF {file_id}: {str(e)}"
-            )
+        pdf_data_list.append(pdf_storage[file_id])
 
     # Get answer from LLM
     try:
@@ -426,10 +306,6 @@ async def ask_question(request: QuestionRequest) -> dict:
         )
 
 
-class ExcelDownloadRequest(BaseModel):
-    """Request model for downloading extraction results as Excel."""
-
-    extraction_results: dict
 
 
 @app.post("/download-extraction-excel")
