@@ -155,7 +155,8 @@ function toggleQASection() {
 }
 
 // Q&A functionality
-askBtn.addEventListener('click', async function() {
+// Function to submit question
+async function submitQuestion() {
     const question = questionInput.value.trim();
     if (!question || uploadedFileIds.length === 0) {
         showQAStatus('Please enter a question', 'error');
@@ -198,6 +199,17 @@ askBtn.addEventListener('click', async function() {
         showQAStatus(`Error: ${error.message}`, 'error');
     } finally {
         askBtn.disabled = false;
+    }
+}
+
+// Submit question on button click
+askBtn.addEventListener('click', submitQuestion);
+
+// Submit question on Enter key (but allow Shift+Enter for new line)
+questionInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitQuestion();
     }
 });
 
