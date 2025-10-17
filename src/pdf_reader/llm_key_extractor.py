@@ -1,9 +1,8 @@
 """LLM-based key extraction service using LangChain and Google Gemini."""
 import logging
-from typing import List, Optional
 
 from langchain_google_genai import ChatGoogleGenerativeAI
-from pydantic import BaseModel, Field
+from models import KeyExtractionResult
 
 logging.basicConfig(
     level=logging.INFO,
@@ -12,26 +11,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-
-class SourceLocation(BaseModel):
-    """Location information for where a key was found."""
-
-    pdf_filename: str = Field(description="Name of the PDF file where the information was found")
-    page_numbers: List[int] = Field(description="List of page numbers where the information was found")
-
-
-class KeyExtractionResult(BaseModel):
-    """Structured output for key extraction from PDF text."""
-
-    key_value: Optional[str] = Field(
-        description="The extracted value for the requested key. If not found, this should be null."
-    )
-    source_locations: List[SourceLocation] = Field(
-        description="List of source locations (PDF files and page numbers) where the key information was found"
-    )
-    description: str = Field(
-        description="A brief description of where and how the key was found in the documents"
-    )
 
 
 class LLMKeyExtractor:
@@ -61,7 +40,7 @@ class LLMKeyExtractor:
     def extract_key(
         self,
         key_name: str,
-        pdf_data: List[dict],
+        pdf_data: list[dict],
         additional_context: str = ""
     ) -> KeyExtractionResult:
         """
@@ -133,8 +112,8 @@ class LLMKeyExtractor:
 
     def extract_multiple_keys(
         self,
-        key_names: List[str],
-        pdf_data: List[dict],
+        key_names: list[str],
+        pdf_data: list[dict],
         additional_context: str = ""
     ) -> dict:
         """
@@ -162,7 +141,7 @@ class LLMKeyExtractor:
     def answer_question(
         self,
         question: str,
-        pdf_data: List[dict]
+        pdf_data: list[dict]
     ) -> str:
         """
         Answer a general question about the PDF documents.

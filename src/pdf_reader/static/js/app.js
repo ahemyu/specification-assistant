@@ -19,9 +19,27 @@ const qaResults = document.getElementById('qaResults');
 let qaExpanded = false;
 
 const keyExtractionSection = document.getElementById('keyExtractionSection');
+
+// Tab elements
+const excelTab = document.getElementById('excelTab');
+const manualTab = document.getElementById('manualTab');
+const excelTabContent = document.getElementById('excelTabContent');
+const manualTabContent = document.getElementById('manualTabContent');
+
+// Excel template elements
+const excelFileInput = document.getElementById('excelFileInput');
+const excelFileName = document.getElementById('excelFileName');
+const excelContextInput = document.getElementById('excelContextInput');
+const extractExcelBtn = document.getElementById('extractExcelBtn');
+const keysPreview = document.getElementById('keysPreview');
+const keysPreviewList = document.getElementById('keysPreviewList');
+
+// Manual input elements
 const keyInput = document.getElementById('keyInput');
 const contextInput = document.getElementById('contextInput');
 const extractBtn = document.getElementById('extractBtn');
+
+// Shared elements
 const extractSpinner = document.getElementById('extractSpinner');
 const extractStatus = document.getElementById('extractStatus');
 const extractionResults = document.getElementById('extractionResults');
@@ -37,6 +55,9 @@ const previewContent = document.getElementById('previewContent');
 let uploadedFileIds = [];
 let processedFiles = [];
 let extractionResultsData = null;
+let currentExtractionMode = 'excel'; // 'excel' or 'manual'
+let uploadedTemplateId = null;
+let uploadedTemplateKeys = [];
 
 fileInput.addEventListener('change', function() {
     const files = Array.from(this.files);
@@ -129,6 +150,145 @@ function displayResults(results) {
     `).join('');
 }
 
+// Tab switching functionality
+excelTab.addEventListener('click', function() {
+    switchTab('excel');
+});
+
+manualTab.addEventListener('click', function() {
+    switchTab('manual');
+});
+
+function switchTab(mode) {
+    currentExtractionMode = mode;
+
+    if (mode === 'excel') {
+        excelTab.classList.add('active');
+        manualTab.classList.remove('active');
+        excelTabContent.classList.add('active');
+        manualTabContent.classList.remove('active');
+    } else {
+        manualTab.classList.add('active');
+        excelTab.classList.remove('active');
+        manualTabContent.classList.add('active');
+        excelTabContent.classList.remove('active');
+    }
+
+    // Clear results when switching tabs
+    extractionResults.innerHTML = '';
+    extractStatus.style.display = 'none';
+}
+
+// Excel file upload handling
+excelFileInput.addEventListener('change', async function() {
+    const file = this.files[0];
+    if (!file) {
+        extractExcelBtn.disabled = true;
+        excelFileName.textContent = '';
+        keysPreview.style.display = 'none';
+        return;
+    }
+
+    // Clear previous results
+    extractionResults.innerHTML = '';
+    extractStatus.style.display = 'none';
+
+    excelFileName.textContent = `Selected: ${file.name}`;
+
+    // Upload the Excel template
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        showExtractStatus('Uploading Excel template...', 'info');
+
+        const response = await fetch('/upload-excel-template', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        uploadedTemplateId = data.template_id;
+        uploadedTemplateKeys = data.keys;
+
+        // Show keys preview
+        keysPreviewList.innerHTML = `
+            <ul>
+                ${data.keys.map(key => `<li>${key}</li>`).join('')}
+            </ul>
+        `;
+        keysPreview.style.display = 'block';
+
+        extractExcelBtn.disabled = false;
+        showExtractStatus(`Template uploaded successfully with ${data.total_keys} keys`, 'success');
+
+    } catch (error) {
+        showExtractStatus(`Error uploading template: ${error.message}`, 'error');
+        extractExcelBtn.disabled = true;
+    }
+});
+
+// Excel extraction
+extractExcelBtn.addEventListener('click', async function() {
+    if (!uploadedTemplateId || uploadedFileIds.length === 0) {
+        showExtractStatus('Please upload both Excel template and PDF files', 'error');
+        return;
+    }
+
+    const additionalContext = excelContextInput.value.trim();
+
+    extractExcelBtn.disabled = true;
+    extractSpinner.style.display = 'block';
+    extractStatus.style.display = 'none';
+    extractionResults.innerHTML = '';
+
+    showExtractStatus('Extracting keys from template...', 'info');
+
+    try {
+        const response = await fetch('/extract-keys-from-template', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                template_id: uploadedTemplateId,
+                file_ids: uploadedFileIds,
+                additional_context: additionalContext || undefined
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+        }
+
+        // Get extraction results as JSON (same format as manual mode)
+        const data = await response.json();
+
+        extractSpinner.style.display = 'none';
+        showExtractStatus('Extraction complete! Review results below and download when ready.', 'success');
+
+        // Display results with download button
+        // For single key, unwrap the result to match the format expected by displayExtractionResults
+        const dataToDisplay = uploadedTemplateKeys.length === 1
+            ? data[uploadedTemplateKeys[0]]
+            : data;
+        displayExtractionResultsWithDownload(dataToDisplay, uploadedTemplateKeys);
+
+    } catch (error) {
+        extractSpinner.style.display = 'none';
+        showExtractStatus(`Error: ${error.message}`, 'error');
+    } finally {
+        extractExcelBtn.disabled = false;
+    }
+});
+
 // Q&A toggle functionality
 qaToggleBtn.addEventListener('click', function(e) {
     e.stopPropagation();
@@ -155,7 +315,8 @@ function toggleQASection() {
 }
 
 // Q&A functionality
-askBtn.addEventListener('click', async function() {
+// Function to submit question
+async function submitQuestion() {
     const question = questionInput.value.trim();
     if (!question || uploadedFileIds.length === 0) {
         showQAStatus('Please enter a question', 'error');
@@ -198,6 +359,17 @@ askBtn.addEventListener('click', async function() {
         showQAStatus(`Error: ${error.message}`, 'error');
     } finally {
         askBtn.disabled = false;
+    }
+}
+
+// Submit question on button click
+askBtn.addEventListener('click', submitQuestion);
+
+// Submit question on Enter key (but allow Shift+Enter for new line)
+questionInput.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        submitQuestion();
     }
 });
 
@@ -298,14 +470,7 @@ function showExtractStatus(message, type) {
 function displayExtractionResults(data, keyNames) {
     let resultsHTML = '<div class="extraction-results-container">';
 
-    // Add download button at the top
-    resultsHTML += `
-        <div class="download-excel-section">
-            <button class="download-excel-btn" onclick="downloadExtractionExcel()">
-                Download as Excel
-            </button>
-        </div>
-    `;
+    // Show extraction results for manual mode (display-only, no download)
 
     if (keyNames.length === 1) {
         resultsHTML += formatSingleKeyResult(keyNames[0], data);
@@ -319,6 +484,75 @@ function displayExtractionResults(data, keyNames) {
 
     resultsHTML += '</div>';
     extractionResults.innerHTML = resultsHTML;
+}
+
+function displayExtractionResultsWithDownload(data, keyNames) {
+    let resultsHTML = '<div class="extraction-results-container">';
+
+    // Add download button at the top for Excel template mode
+    resultsHTML += `
+        <div class="download-excel-section">
+            <button class="download-excel-btn" onclick="downloadFilledExcel()">
+                Download Filled Excel
+            </button>
+        </div>
+    `;
+
+    // Show extraction results
+    if (keyNames.length === 1) {
+        resultsHTML += formatSingleKeyResult(keyNames[0], data);
+    } else {
+        for (const keyName of keyNames) {
+            if (data[keyName]) {
+                resultsHTML += formatSingleKeyResult(keyName, data[keyName]);
+            }
+        }
+    }
+
+    resultsHTML += '</div>';
+    extractionResults.innerHTML = resultsHTML;
+}
+
+async function downloadFilledExcel() {
+    if (!uploadedTemplateId) {
+        showExtractStatus('No Excel file available to download', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch(`/download-filled-excel/${uploadedTemplateId}`);
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Failed to download Excel file');
+        }
+
+        // Download the filled Excel file
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Extract filename from response headers or use default
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = 'filled_template.xlsx';
+        if (contentDisposition && contentDisposition.includes('filename=')) {
+            const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition);
+            if (matches && matches[1]) {
+                filename = matches[1].replace(/['"]/g, '');
+            }
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        showExtractStatus('Excel file downloaded successfully!', 'success');
+    } catch (error) {
+        showExtractStatus(`Error downloading Excel: ${error.message}`, 'error');
+    }
 }
 
 function formatSingleKeyResult(keyName, result) {

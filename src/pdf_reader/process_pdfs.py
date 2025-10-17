@@ -1,4 +1,6 @@
-"""This script will be used to parse pdfs file/s, extract text in various formats (.txt, .md, .xml) and save the output."""
+"""
+This script will be used to parse pdf files, extract their content as text file suitable for llms to digest.
+"""
 import io
 import logging
 from pathlib import Path
@@ -14,7 +16,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def process_single_page(page, page_number: int) -> str:
+def process_single_page(page, page_number: int) -> dict:
     """
     Process a single PDF page: extract text (excluding tables) and tables separately.
 
@@ -23,15 +25,14 @@ def process_single_page(page, page_number: int) -> str:
         page_number: 1-based page number
 
     Returns:
-        Formatted string with page content
+        Dictionary with structured data and formatted text:
+        {
+            "page_number": int,
+            "text": str,
+            "tables": list,
+            "formatted_text": str
+        }
     """
-    output = []
-
-    output.append("=" * 80)
-    output.append(f"PAGE {page_number}")
-    output.append("=" * 80)
-    output.append("")
-
     tables = page.find_tables()
 
     def is_char_in_any_table(char):
@@ -43,16 +44,30 @@ def process_single_page(page, page_number: int) -> str:
                 return True
         return False
 
-    output.append("-" * 80)
-    output.append("TEXT CONTENT (excluding tables)")
-    output.append("-" * 80)
-    output.append("")
-
+    # Extract text (excluding tables)
     if tables:
         filtered_page = page.filter(lambda obj: obj['object_type'] != 'char' or not is_char_in_any_table(obj))
         text = filtered_page.extract_text()
     else:
         text = page.extract_text()
+
+    # Extract table data
+    tables_data = []
+    for table in tables:
+        table_data = table.extract()
+        if table_data:
+            tables_data.append(table_data)
+
+    # Build formatted text output
+    output = []
+    output.append("=" * 80)
+    output.append(f"PAGE {page_number}")
+    output.append("=" * 80)
+    output.append("")
+    output.append("-" * 80)
+    output.append("TEXT CONTENT (excluding tables)")
+    output.append("-" * 80)
+    output.append("")
 
     if text and text.strip():
         output.append(text)
@@ -65,24 +80,27 @@ def process_single_page(page, page_number: int) -> str:
     output.append("-" * 80)
     output.append("")
 
-    if tables:
-        for i, table in enumerate(tables, 1):
+    if tables_data:
+        for i, table_data in enumerate(tables_data, 1):
             output.append(f"Table {i} on Page {page_number}:")
             output.append("")
-            table_data = table.extract()
-            if table_data:
-                for row in table_data:
-                    output.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
+            for row in table_data:
+                output.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
             output.append("")
     else:
         output.append("[No tables found on this page]")
 
     output.append("")
 
-    return "\n".join(output)
+    return {
+        "page_number": page_number,
+        "text": text if text else "",
+        "tables": tables_data,
+        "formatted_text": "\n".join(output)
+    }
 
 
-def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: str = None) -> dict:
+def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: str | None = None) -> dict:
     """
     Process a single PDF file and return structured data as dictionary.
 
@@ -106,34 +124,9 @@ def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: st
         pages_data = []
 
         for i, page in enumerate(pdf.pages, 1):
-            tables = page.find_tables()
-
-            def is_char_in_any_table(char):
-                for table in tables:
-                    bbox = table.bbox
-                    x0, top, x1, bottom = bbox
-                    if (char['x0'] >= x0 and char['x1'] <= x1 and
-                        char['top'] >= top and char['bottom'] <= bottom):
-                        return True
-                return False
-
-            if tables:
-                filtered_page = page.filter(lambda obj: obj['object_type'] != 'char' or not is_char_in_any_table(obj))
-                text = filtered_page.extract_text()
-            else:
-                text = page.extract_text()
-
-            tables_data = []
-            for table in tables:
-                table_data = table.extract()
-                if table_data:
-                    tables_data.append(table_data)
-
-            pages_data.append({
-                "page_number": i,
-                "text": text if text else "",
-                "tables": tables_data
-            })
+            # Extract once, get both structured and formatted data
+            page_data = process_single_page(page, i)
+            pages_data.append(page_data)
 
         return {
             "filename": display_name,
@@ -142,7 +135,33 @@ def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: st
         }
 
 
-def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str = None) -> str:
+def dict_to_formatted_text(pdf_data: dict) -> str:
+    """
+    Convert structured PDF data (from process_single_pdf_to_dict) to formatted text.
+
+    Args:
+        pdf_data: Dictionary with filename, total_pages, and pages data
+
+    Returns:
+        Formatted string with entire PDF content
+    """
+    output = []
+
+    output.append("#" * 80)
+    output.append(f"DOCUMENT: {pdf_data['filename']}")
+    output.append("#" * 80)
+    output.append("")
+    output.append(f"Total Pages: {pdf_data['total_pages']}")
+    output.append("")
+
+    # Simply concatenate the pre-formatted page texts
+    for page_data in pdf_data['pages']:
+        output.append(page_data['formatted_text'])
+
+    return "\n".join(output)
+
+
+def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str | None = None) -> str:
     """
     Process a single PDF file: extract content from all pages.
 
@@ -153,36 +172,15 @@ def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str = None
     Returns:
         Formatted string with entire PDF content
     """
-    output = []
-
-    # Determine the display name
-    if isinstance(pdf_source, Path):
-        display_name = pdf_source.name
-    elif filename:
-        display_name = filename
-    else:
-        display_name = "document.pdf"
-
-    output.append("#" * 80)
-    output.append(f"DOCUMENT: {display_name}")
-    output.append("#" * 80)
-    output.append("")
-
-    with pdfplumber.open(pdf_source) as pdf:
-        total_pages = len(pdf.pages)
-        output.append(f"Total Pages: {total_pages}")
-        output.append("")
-
-        for i, page in enumerate(pdf.pages, 1):
-            page_content = process_single_page(page, i)
-            output.append(page_content)
-
-    return "\n".join(output)
+    # Use the dict function and convert to text
+    pdf_data = process_single_pdf_to_dict(pdf_source, filename)
+    return dict_to_formatted_text(pdf_data)
 
 
 def process_pdf_directory(input_dir: str, output_dir: str = "output"):
     """
     Process all PDF files in a directory and save extracted content to text files.
+    This can be used if this shall be run as a script locally.
 
     Args:
         input_dir: Path to directory containing PDF files
@@ -224,10 +222,3 @@ def process_pdf_directory(input_dir: str, output_dir: str = "output"):
             logger.error(f"Error processing {pdf_file.name}: {str(e)}")
 
     logger.info("Processing complete!")
-
-
-if __name__ == "__main__":
-    input_directory = "/home/ahemyu/projects/specification-assistant/data/test/Datasheet/Example spec/__Siemens Energy HVDC Lanwin2" #TODO: Change this to dir where pdfs reside
-    output_directory = "/home/ahemyu/projects/specification-assistant/output" # TODO: change this to where the extracted text of the pdfs shall be written to
-
-    process_pdf_directory(input_directory, output_directory)
