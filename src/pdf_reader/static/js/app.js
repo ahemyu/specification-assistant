@@ -276,7 +276,8 @@ extractBtn.addEventListener('click', async function() {
         showExtractStatus(`Successfully extracted ${keyNames.length} key(s)`, 'success');
 
         // Store extraction results for Excel download
-        extractionResultsData = data;
+        // For single key, wrap result in a dictionary with the key name
+        extractionResultsData = keyNames.length === 1 ? {[keyNames[0]]: data} : data;
 
         displayExtractionResults(data, keyNames);
 
