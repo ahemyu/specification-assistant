@@ -4,9 +4,10 @@ FastAPI web service for extracting and analyzing PDF documents with LLM-powered 
 
 ## Features
 
-- Extract text and tables from PDFs (pdfplumber)
+- Extract text and tables from PDFs (pdfplumber) with parallel processing
 - Preview extracted content in browser
 - LLM-powered key extraction (e.g., "voltage rating", "manufacturer name")
+- Upload Excel templates with keys and auto-fill values using LLM
 - Chat with PDFs using natural language questions
 - Export extracted key-value pairs to Excel
 
@@ -39,8 +40,9 @@ Access at: http://localhost:8000
 1. Upload PDFs via web interface
 2. Preview extracted text
 3. Extract specific keys using LLM (e.g., "device model", "max voltage")
-4. Ask questions about uploaded PDFs
-5. Download results as text or Excel
+4. Upload Excel template with keys to auto-fill values from PDFs or type in keys manually
+5. Ask questions about uploaded PDFs
+6. Download results as Excel
 
 ## Tech Stack
 
