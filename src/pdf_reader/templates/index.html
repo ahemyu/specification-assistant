@@ -3,44 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Text Extraction - Extract and Analyze</title>
+    <title>Spec Assistant</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>PDF Text Extraction</h1>
-            <p class="subtitle">Upload your PDF files to extract text and tables with AI-powered analysis</p>
+            <h1>Spec Assistant</h1>
+            <p class="subtitle">Upload your PDF files and use LLMs to extract keys or ask questions</p>
         </header>
 
+        <!-- Main Tab Navigation -->
+        <nav class="main-tabs">
+            <button class="main-tab-btn active" data-tab="upload">Upload PDFs</button>
+            <button class="main-tab-btn disabled" data-tab="extract" data-tooltip="First upload PDFs before continuing">Extract Keys</button>
+            <button class="main-tab-btn disabled" data-tab="qa" data-tooltip="First upload PDFs before continuing">Ask Questions</button>
+        </nav>
+
         <main>
-            <section class="upload-section">
-                <div class="file-input-wrapper">
-                    <input type="file" id="fileInput" multiple accept=".pdf" aria-label="Choose PDF files">
-                    <label for="fileInput" class="file-input-label">Choose PDF Files</label>
-                </div>
-                <div class="selected-files" id="selectedFiles"></div>
-                <button class="upload-btn" id="uploadBtn" disabled>Upload and Process</button>
-            </section>
-
-            <div class="spinner" id="spinner" aria-live="polite" aria-label="Processing"></div>
-            <div class="status" id="status" role="status" aria-live="polite"></div>
-            <div class="results" id="results"></div>
-
-            <section class="qa-section" id="qaSection" style="display: none;">
-                <div class="qa-header">
-                    <div class="qa-header-content">
-                        <h2>Ask Questions About Your Documents</h2>
-                        <p class="section-subtitle-inline">Get AI-powered answers to any questions about your uploaded PDFs</p>
+            <!-- Upload PDFs View -->
+            <div class="tab-view active" id="uploadView">
+                <section class="upload-section">
+                    <div class="file-input-wrapper">
+                        <input type="file" id="fileInput" multiple accept=".pdf" aria-label="Choose PDF files">
+                        <label for="fileInput" class="file-input-label">Choose PDF Files</label>
                     </div>
-                    <button class="qa-toggle-btn" id="qaToggleBtn" aria-label="Toggle Q&A section">
-                        <svg class="qa-icon" id="qaIcon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                </div>
+                    <div class="selected-files" id="selectedFiles"></div>
+                    <button class="upload-btn" id="uploadBtn" disabled>Upload and Process</button>
+                </section>
 
-                <div class="qa-content" id="qaContent" style="display: none;">
+                <div class="spinner" id="spinner" aria-live="polite" aria-label="Processing"></div>
+                <div class="status" id="status" role="status" aria-live="polite"></div>
+                <div class="results" id="results"></div>
+            </div>
+
+            <!-- Ask Questions View -->
+            <div class="tab-view" id="qaView">
+                <section class="qa-section">
+                    <h2>Ask Questions About Your Documents</h2>
+                    <p class="section-subtitle">Get AI-powered answers to any questions about your uploaded PDFs</p>
+
                     <div class="qa-input-area">
                         <div class="qa-input-group">
                             <label for="questionInput">Your Question:</label>
@@ -57,84 +59,87 @@
                     <div class="spinner" id="qaSpinner" aria-live="polite" aria-label="Processing question"></div>
                     <div class="status" id="qaStatus" role="status" aria-live="polite"></div>
                     <div class="qa-results" id="qaResults"></div>
-                </div>
-            </section>
+                </section>
+            </div>
 
-            <section class="key-extraction-section" id="keyExtractionSection" style="display: none;">
-                <h2>Extract Keys from Uploaded PDFs</h2>
-                <p class="section-subtitle">Use AI to extract specific information from your processed documents</p>
+            <!-- Extract Keys View -->
+            <div class="tab-view" id="extractView">
+                <section class="key-extraction-section">
+                    <h2>Extract Keys from Uploaded PDFs</h2>
+                    <p class="section-subtitle">Use AI to extract specificied keys from your PDFs</p>
 
-                <!-- Tab Navigation -->
-                <div class="extraction-tabs">
-                    <button class="tab-btn active" id="excelTab" data-tab="excel">Excel Template</button>
-                    <button class="tab-btn" id="manualTab" data-tab="manual">Manual Input</button>
-                </div>
-
-                <!-- Excel Template Tab Content -->
-                <div class="tab-content active" id="excelTabContent">
-                    <div class="excel-upload-area">
-                        <div class="file-input-group">
-                            <label for="excelFileInput" class="excel-upload-label">
-                                <span class="upload-icon">📄</span>
-                                <span class="upload-text">Choose Excel Template</span>
-                            </label>
-                            <input
-                                type="file"
-                                id="excelFileInput"
-                                accept=".xlsx,.xls"
-                                style="display: none;"
-                                aria-label="Upload Excel template">
-                            <div id="excelFileName" class="excel-filename"></div>
-                        </div>
-
-                        <div class="key-input-group">
-                            <label for="excelContextInput">Additional Context (optional):</label>
-                            <textarea
-                                id="excelContextInput"
-                                rows="3"
-                                placeholder="e.g., This is an electrical specification document"
-                                aria-label="Enter additional context for Excel extraction"></textarea>
-                        </div>
-
-                        <div id="keysPreview" class="keys-preview" style="display: none;">
-                            <h4>Keys to Extract:</h4>
-                            <div id="keysPreviewList"></div>
-                        </div>
-
-                        <button class="extract-btn" id="extractExcelBtn" disabled>Extract Keys from Template</button>
+                    <!-- Tab Navigation -->
+                    <div class="extraction-tabs">
+                        <button class="tab-btn active" id="excelTab" data-tab="excel">Excel Template</button>
+                        <button class="tab-btn" id="manualTab" data-tab="manual">Manual Input</button>
                     </div>
-                </div>
 
-                <!-- Manual Input Tab Content -->
-                <div class="tab-content" id="manualTabContent">
-                    <div class="key-input-area">
-                        <div class="key-input-group">
-                            <label for="keyInput">Keys to Extract (one per line):</label>
-                            <textarea
-                                id="keyInput"
-                                rows="5"
-                                placeholder="e.g.,&#10;voltage rating&#10;manufacturer&#10;installation date&#10;frequency"
-                                aria-label="Enter keys to extract"></textarea>
+                    <!-- Excel Template Tab Content -->
+                    <div class="tab-content active" id="excelTabContent">
+                        <div class="excel-upload-area">
+                            <div class="file-input-group">
+                                <label for="excelFileInput" class="excel-upload-label">
+                                    <span class="upload-icon">📄</span>
+                                    <span class="upload-text">Choose Excel Template</span>
+                                </label>
+                                <input
+                                    type="file"
+                                    id="excelFileInput"
+                                    accept=".xlsx,.xls"
+                                    style="display: none;"
+                                    aria-label="Upload Excel template">
+                                <div id="excelFileName" class="excel-filename"></div>
+                            </div>
+
+                            <div class="key-input-group">
+                                <label for="excelContextInput">Additional Context (optional):</label>
+                                <textarea
+                                    id="excelContextInput"
+                                    rows="3"
+                                    placeholder="e.g., This is an electrical specification document"
+                                    aria-label="Enter additional context for Excel extraction"></textarea>
+                            </div>
+
+                            <div id="keysPreview" class="keys-preview" style="display: none;">
+                                <h4>Keys to Extract:</h4>
+                                <div id="keysPreviewList"></div>
+                            </div>
+
+                            <button class="extract-btn" id="extractExcelBtn" disabled>Extract Keys from Template</button>
                         </div>
-
-                        <div class="key-input-group">
-                            <label for="contextInput">Additional Context (optional):</label>
-                            <textarea
-                                id="contextInput"
-                                rows="3"
-                                placeholder="e.g., This is an electrical specification document"
-                                aria-label="Enter additional context"></textarea>
-                        </div>
-
-                        <button class="extract-btn" id="extractBtn">Extract Keys</button>
                     </div>
-                </div>
 
-                <!-- Shared spinner, status, and results -->
-                <div class="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting"></div>
-                <div class="status" id="extractStatus" role="status" aria-live="polite"></div>
-                <div class="extraction-results" id="extractionResults"></div>
-            </section>
+                    <!-- Manual Input Tab Content -->
+                    <div class="tab-content" id="manualTabContent">
+                        <div class="key-input-area">
+                            <div class="key-input-group">
+                                <label for="keyInput">Keys to Extract (one per line):</label>
+                                <textarea
+                                    id="keyInput"
+                                    rows="5"
+                                    placeholder="e.g.,&#10;voltage rating&#10;manufacturer&#10;installation date&#10;frequency"
+                                    aria-label="Enter keys to extract"></textarea>
+                            </div>
+
+                            <div class="key-input-group">
+                                <label for="contextInput">Additional Context (optional):</label>
+                                <textarea
+                                    id="contextInput"
+                                    rows="3"
+                                    placeholder="e.g., This is an electrical specification document"
+                                    aria-label="Enter additional context"></textarea>
+                            </div>
+
+                            <button class="extract-btn" id="extractBtn">Extract Keys</button>
+                        </div>
+                    </div>
+
+                    <!-- Shared spinner, status, and results -->
+                    <div class="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting"></div>
+                    <div class="status" id="extractStatus" role="status" aria-live="polite"></div>
+                    <div class="extraction-results" id="extractionResults"></div>
+                </section>
+            </div>
         </main>
     </div>
 

@@ -5,20 +5,18 @@ const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
 const spinner = document.getElementById('spinner');
 
+// Main view elements
+const uploadView = document.getElementById('uploadView');
+const extractView = document.getElementById('extractView');
+const qaView = document.getElementById('qaView');
+const mainTabButtons = document.querySelectorAll('.main-tab-btn');
+
 // Q&A elements
-const qaSection = document.getElementById('qaSection');
-const qaToggleBtn = document.getElementById('qaToggleBtn');
-const qaIcon = document.getElementById('qaIcon');
-const qaContent = document.getElementById('qaContent');
 const questionInput = document.getElementById('questionInput');
 const askBtn = document.getElementById('askBtn');
 const qaSpinner = document.getElementById('qaSpinner');
 const qaStatus = document.getElementById('qaStatus');
 const qaResults = document.getElementById('qaResults');
-
-let qaExpanded = false;
-
-const keyExtractionSection = document.getElementById('keyExtractionSection');
 
 // Tab elements
 const excelTab = document.getElementById('excelTab');
@@ -58,12 +56,67 @@ let extractionResultsData = null;
 let currentExtractionMode = 'excel'; // 'excel' or 'manual'
 let uploadedTemplateId = null;
 let uploadedTemplateKeys = [];
+let allUploadedFiles = []; // Track all files across multiple uploads
+
+// Main tab switching
+mainTabButtons.forEach(button => {
+    button.addEventListener('click', function() {
+        const targetTab = this.getAttribute('data-tab');
+        switchMainTab(targetTab);
+    });
+});
+
+function switchMainTab(tabName) {
+    const targetButton = document.querySelector(`[data-tab="${tabName}"]`);
+
+    // Don't switch if the tab is disabled
+    if (targetButton && targetButton.classList.contains('disabled')) {
+        return;
+    }
+
+    // Remove active class from all tabs and views
+    mainTabButtons.forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-view').forEach(view => view.classList.remove('active'));
+
+    // Add active class to selected tab and view
+    if (targetButton) {
+        targetButton.classList.add('active');
+    }
+
+    // Show corresponding view
+    if (tabName === 'upload') {
+        uploadView.classList.add('active');
+    } else if (tabName === 'extract') {
+        extractView.classList.add('active');
+    } else if (tabName === 'qa') {
+        qaView.classList.add('active');
+    }
+}
+
+function enableMainTabs() {
+    // Enable Extract Keys and Ask Questions tabs
+    const extractTab = document.querySelector('[data-tab="extract"]');
+    const qaTab = document.querySelector('[data-tab="qa"]');
+
+    if (extractTab) {
+        extractTab.classList.remove('disabled');
+        extractTab.removeAttribute('data-tooltip');
+    }
+    if (qaTab) {
+        qaTab.classList.remove('disabled');
+        qaTab.removeAttribute('data-tooltip');
+    }
+}
 
 fileInput.addEventListener('change', function() {
     const files = Array.from(this.files);
     if (files.length > 0) {
         uploadBtn.disabled = false;
+        const fileCountText = allUploadedFiles.length > 0
+            ? `<p style="margin-bottom: 12px; color: #59BDB9; font-weight: 600;">Adding ${files.length} new file(s) to ${allUploadedFiles.length} existing file(s)</p>`
+            : '';
         selectedFilesDiv.innerHTML = `
+            ${fileCountText}
             <ul>
                 ${files.map(f => `<li>${f.name} (${(f.size / 1024 / 1024).toFixed(2)} MB)</li>`).join('')}
             </ul>
@@ -104,23 +157,27 @@ uploadBtn.addEventListener('click', async function() {
         const data = await response.json();
 
         spinner.style.display = 'none';
-        showStatus(`Successfully processed ${data.processed.length} PDF(s)`, 'success');
 
-        displayResults(data.processed);
+        // Add new files to the cumulative list
+        uploadedFileIds.push(...data.processed.map(p => p.file_id));
+        processedFiles.push(...data.processed);
+        allUploadedFiles.push(...data.processed);
 
-        uploadedFileIds = data.processed.map(p => p.file_id);
-        processedFiles = data.processed;
+        showStatus(`Successfully processed ${data.processed.length} PDF(s). Total PDFs: ${uploadedFileIds.length}`, 'success');
 
+        displayResults(allUploadedFiles);
+
+        // Enable Extract Keys and Ask Questions tabs after first successful upload
         if (uploadedFileIds.length > 0) {
-            qaSection.style.display = 'block';
-            keyExtractionSection.style.display = 'block';
-            // Don't scroll to Q&A, just make it available
-            keyExtractionSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            enableMainTabs();
         }
 
         if (data.failed.length > 0) {
             showStatus(`Failed to process: ${data.failed.join(', ')}`, 'error');
         }
+
+        // Reset file input to allow uploading more files
+        fileInput.value = '';
 
     } catch (error) {
         spinner.style.display = 'none';
@@ -288,31 +345,6 @@ extractExcelBtn.addEventListener('click', async function() {
         extractExcelBtn.disabled = false;
     }
 });
-
-// Q&A toggle functionality
-qaToggleBtn.addEventListener('click', function(e) {
-    e.stopPropagation();
-    toggleQASection();
-});
-
-// Also allow clicking the header to toggle
-document.querySelector('.qa-header').addEventListener('click', function(e) {
-    if (e.target !== qaToggleBtn && !qaToggleBtn.contains(e.target)) {
-        toggleQASection();
-    }
-});
-
-function toggleQASection() {
-    qaExpanded = !qaExpanded;
-
-    if (qaExpanded) {
-        qaContent.style.display = 'block';
-        qaIcon.classList.add('expanded');
-    } else {
-        qaContent.style.display = 'none';
-        qaIcon.classList.remove('expanded');
-    }
-}
 
 // Q&A functionality
 // Function to submit question

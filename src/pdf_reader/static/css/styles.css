@@ -6,7 +6,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 50%, #87BD25 100%);
     min-height: 100vh;
     padding: 32px 20px;
     display: flex;
@@ -18,7 +18,7 @@ body {
     max-width: 900px;
     width: 100%;
     background: white;
-    border-radius: 12px;
+    border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     padding: 48px;
 }
@@ -34,15 +34,124 @@ h1 {
 
 .subtitle {
     color: #718096;
-    margin-bottom: 40px;
+    margin-bottom: 24px;
     font-size: 1.1em;
     text-align: center;
     line-height: 1.6;
 }
 
+/* Main Tab Navigation */
+.main-tabs {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 32px;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 0;
+}
+
+.main-tab-btn {
+    padding: 14px 28px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: #718096;
+    font-size: 1.05em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    bottom: -2px;
+}
+
+.main-tab-btn:hover {
+    color: #59BDB9;
+    background: rgba(89, 189, 185, 0.05);
+}
+
+.main-tab-btn.active {
+    color: #1C2C8C;
+    border-bottom-color: #1C2C8C;
+    background: rgba(28, 44, 140, 0.03);
+}
+
+.main-tab-btn.disabled {
+    color: #cbd5e0;
+    cursor: not-allowed;
+    opacity: 0.5;
+    position: relative;
+}
+
+.main-tab-btn.disabled:hover {
+    color: #cbd5e0;
+    background: transparent;
+}
+
+.main-tab-btn.disabled:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    padding: 8px 12px;
+    background: #1a202c;
+    color: white;
+    font-size: 0.85em;
+    font-weight: 500;
+    white-space: nowrap;
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+.main-tab-btn.disabled:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 2px;
+    border: 6px solid transparent;
+    border-top-color: #1a202c;
+    z-index: 1000;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Tab Views */
+.tab-view {
+    display: none;
+    animation: fadeIn 0.3s ease;
+}
+
+.tab-view.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
 .upload-section {
     border: 3px dashed #cbd5e0;
-    border-radius: 12px;
+    border-radius: 20px;
     padding: 40px;
     text-align: center;
     background: #f7fafc;
@@ -51,7 +160,7 @@ h1 {
 }
 
 .upload-section:hover {
-    border-color: #667eea;
+    border-color: #1C2C8C;
     background: #edf2f7;
     transform: translateY(-2px);
 }
@@ -71,40 +180,40 @@ h1 {
 .file-input-label {
     display: inline-block;
     padding: 14px 32px;
-    background: #667eea;
+    background: #1C2C8C;
     color: white;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 600;
     font-size: 1em;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.25);
 }
 
 .file-input-label:hover {
-    background: #5568d3;
+    background: #152066;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.35);
 }
 
 .upload-btn {
     padding: 14px 48px;
-    background: #10b981;
+    background: #87BD25;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
     transition: all 0.3s ease;
     margin-top: 16px;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.25);
 }
 
 .upload-btn:hover:not(:disabled) {
-    background: #059669;
+    background: #6a971d;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 6px 16px rgba(135, 189, 37, 0.35);
 }
 
 .upload-btn:disabled {
@@ -123,7 +232,7 @@ h1 {
     list-style: none;
     padding: 16px;
     background: white;
-    border-radius: 8px;
+    border-radius: 20px;
     border: 1px solid #e2e8f0;
     max-height: 200px;
     overflow-y: auto;
@@ -145,7 +254,7 @@ h1 {
 
 .selected-files li:before {
     content: "\2022";
-    color: #667eea;
+    color: #1C2C8C;
     font-weight: bold;
     font-size: 1.2em;
 }
@@ -153,7 +262,7 @@ h1 {
 .status {
     margin: 24px 0;
     padding: 16px 20px;
-    border-radius: 8px;
+    border-radius: 20px;
     display: none;
     font-weight: 500;
     text-align: center;
@@ -196,15 +305,15 @@ h1 {
 .result-item {
     background: #ffffff;
     border: 2px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 20px;
     padding: 24px;
     margin-bottom: 16px;
     transition: all 0.3s ease;
 }
 
 .result-item:hover {
-    border-color: #667eea;
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+    border-color: #1C2C8C;
+    box-shadow: 0 4px 16px rgba(28, 44, 140, 0.15);
     transform: translateY(-2px);
 }
 
@@ -229,25 +338,25 @@ h1 {
 .download-btn {
     display: inline-block;
     padding: 12px 28px;
-    background: #667eea;
+    background: #1C2C8C;
     color: white;
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: 20px;
     margin-top: 16px;
     transition: all 0.3s ease;
     font-weight: 600;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.25);
 }
 
 .download-btn:hover {
-    background: #5568d3;
+    background: #152066;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.35);
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.35);
 }
 
 .spinner {
     border: 4px solid #e2e8f0;
-    border-top: 4px solid #667eea;
+    border-top: 4px solid #1C2C8C;
     border-radius: 50%;
     width: 48px;
     height: 48px;
@@ -263,87 +372,24 @@ h1 {
 
 /* Q&A Section Styles */
 .qa-section {
-    margin-top: 48px;
-    padding: 32px;
-    background: linear-gradient(135deg, #e6f7ff 0%, #d4edff 100%);
-    border-radius: 12px;
-    border: 3px solid #91d5ff;
-    transition: all 0.3s ease;
+    padding: 0;
 }
 
-.qa-section:hover {
-    border-color: #40a9ff;
-}
-
-.qa-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 20px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.qa-header-content {
-    flex: 1;
-}
-
-.qa-header h2 {
+.qa-section h2 {
     color: #1a202c;
-    margin-bottom: 4px;
-    font-size: 1.6em;
+    margin-bottom: 8px;
+    font-size: 1.9em;
     font-weight: 700;
-}
-
-.section-subtitle-inline {
-    color: #718096;
-    margin: 0;
-    font-size: 0.95em;
-    line-height: 1.6;
-}
-
-.qa-toggle-btn {
-    background: white;
-    border: 2px solid #40a9ff;
-    border-radius: 50%;
-    width: 48px;
-    height: 48px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    flex-shrink: 0;
-    color: #40a9ff;
-}
-
-.qa-toggle-btn:hover {
-    background: #40a9ff;
-    color: white;
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(64, 169, 255, 0.3);
-}
-
-.qa-icon {
-    transition: transform 0.3s ease;
-}
-
-.qa-icon.expanded {
-    transform: rotate(180deg);
-}
-
-.qa-content {
-    margin-top: 24px;
-    overflow: hidden;
-    transition: all 0.3s ease;
+    text-align: center;
 }
 
 .qa-input-area {
-    background: white;
+    background: linear-gradient(135deg, #e6f9f8 0%, #d4f3f1 100%);
     padding: 32px;
-    border-radius: 12px;
+    border-radius: 20px;
+    margin-top: 32px;
     margin-bottom: 24px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid #59BDB9;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -367,7 +413,7 @@ h1 {
     width: 100%;
     padding: 14px 16px;
     border: 2px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     font-size: 0.95em;
     resize: vertical;
@@ -377,8 +423,8 @@ h1 {
 
 .qa-input-group textarea:focus {
     outline: none;
-    border-color: #40a9ff;
-    box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.1);
+    border-color: #59BDB9;
+    box-shadow: 0 0 0 3px rgba(89, 189, 185, 0.1);
 }
 
 .qa-input-group textarea::placeholder {
@@ -387,23 +433,23 @@ h1 {
 
 .ask-btn {
     padding: 14px 48px;
-    background: #1890ff;
+    background: #59BDB9;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
     transition: all 0.3s ease;
     display: block;
     margin: 0 auto;
-    box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
+    box-shadow: 0 4px 12px rgba(89, 189, 185, 0.25);
 }
 
 .ask-btn:hover:not(:disabled) {
-    background: #0070e0;
+    background: #3d9894;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(24, 144, 255, 0.35);
+    box-shadow: 0 6px 16px rgba(89, 189, 185, 0.35);
 }
 
 .ask-btn:disabled {
@@ -419,8 +465,8 @@ h1 {
 
 .qa-answer-item {
     background: white;
-    border: 2px solid #91d5ff;
-    border-radius: 12px;
+    border: 2px solid #59BDB9;
+    border-radius: 20px;
     padding: 28px;
     margin-bottom: 24px;
     transition: all 0.3s ease;
@@ -428,18 +474,18 @@ h1 {
 }
 
 .qa-answer-item:hover {
-    border-color: #40a9ff;
-    box-shadow: 0 8px 24px rgba(24, 144, 255, 0.15);
+    border-color: #3d9894;
+    box-shadow: 0 8px 24px rgba(89, 189, 185, 0.15);
     transform: translateY(-2px);
 }
 
 .qa-question {
-    color: #1890ff;
+    color: #59BDB9;
     font-size: 1.3em;
     font-weight: 700;
     margin-bottom: 20px;
     padding-bottom: 16px;
-    border-bottom: 3px solid #e6f7ff;
+    border-bottom: 3px solid #e6f9f8;
     display: flex;
     align-items: flex-start;
     gap: 12px;
@@ -448,7 +494,7 @@ h1 {
 .qa-question::before {
     content: "Q:";
     font-size: 1.2em;
-    color: #0070e0;
+    color: #3d9894;
     font-weight: 800;
     flex-shrink: 0;
 }
@@ -456,8 +502,8 @@ h1 {
 .qa-answer {
     padding: 20px;
     background: #f7fafc;
-    border-radius: 8px;
-    border-left: 4px solid #1890ff;
+    border-radius: 20px;
+    border-left: 4px solid #59BDB9;
     line-height: 1.8;
     color: #2d3748;
     white-space: pre-wrap;
@@ -467,7 +513,7 @@ h1 {
 .qa-answer::before {
     content: "A:";
     font-weight: 700;
-    color: #0070e0;
+    color: #3d9894;
     font-size: 1.1em;
     display: block;
     margin-bottom: 12px;
@@ -483,16 +529,7 @@ h1 {
 }
 
 .key-extraction-section {
-    margin-top: 48px;
-    padding: 40px;
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-    border-radius: 12px;
-    border: 3px solid #cbd5e0;
-    transition: all 0.3s ease;
-}
-
-.key-extraction-section:hover {
-    border-color: #667eea;
+    padding: 0;
 }
 
 .key-extraction-section h2 {
@@ -535,12 +572,12 @@ h1 {
 }
 
 .tab-btn:hover {
-    color: #667eea;
+    color: #1C2C8C;
 }
 
 .tab-btn.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
+    color: #1C2C8C;
+    border-bottom-color: #1C2C8C;
 }
 
 /* Tab Content */
@@ -556,7 +593,7 @@ h1 {
 .excel-upload-area {
     background: white;
     padding: 32px;
-    border-radius: 12px;
+    border-radius: 20px;
     margin-bottom: 24px;
     border: 2px solid #e2e8f0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -571,18 +608,18 @@ h1 {
     align-items: center;
     gap: 12px;
     padding: 16px 32px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%);
     color: white;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
 }
 
 .excel-upload-label:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
 .upload-icon {
@@ -604,7 +641,7 @@ h1 {
 .keys-preview {
     background: #f7fafc;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 20px;
     margin-bottom: 24px;
     border: 2px solid #e2e8f0;
 }
@@ -628,7 +665,7 @@ h1 {
 .keys-preview li {
     background: white;
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: 20px;
     color: #4a5568;
     font-size: 0.9em;
     border: 1px solid #e2e8f0;
@@ -636,12 +673,12 @@ h1 {
 
 /* Extraction Success Message */
 .extraction-success {
-    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    background: linear-gradient(135deg, #87BD25 0%, #6a971d 100%);
     color: white;
     padding: 32px;
-    border-radius: 12px;
+    border-radius: 20px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.3);
 }
 
 .extraction-success h3 {
@@ -658,7 +695,7 @@ h1 {
 .key-input-area {
     background: white;
     padding: 32px;
-    border-radius: 12px;
+    border-radius: 20px;
     margin-bottom: 24px;
     border: 2px solid #e2e8f0;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
@@ -684,7 +721,7 @@ h1 {
     width: 100%;
     padding: 14px 16px;
     border: 2px solid #e2e8f0;
-    border-radius: 8px;
+    border-radius: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     font-size: 0.95em;
     resize: vertical;
@@ -694,8 +731,8 @@ h1 {
 
 .key-input-group textarea:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: #1C2C8C;
+    box-shadow: 0 0 0 3px rgba(28, 44, 140, 0.1);
 }
 
 .key-input-group textarea::placeholder {
@@ -704,23 +741,23 @@ h1 {
 
 .extract-btn {
     padding: 14px 48px;
-    background: #764ba2;
+    background: #5F9EA0;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
     transition: all 0.3s ease;
     display: block;
     margin: 0 auto;
-    box-shadow: 0 4px 12px rgba(118, 75, 162, 0.25);
+    box-shadow: 0 4px 12px rgba(89, 189, 185, 0.25);
 }
 
 .extract-btn:hover:not(:disabled) {
-    background: #5a3a7a;
+    background: #3d9894;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(118, 75, 162, 0.35);
+    box-shadow: 0 6px 16px rgba(89, 189, 185, 0.35);
 }
 
 .extract-btn:disabled {
@@ -737,7 +774,7 @@ h1 {
 .extraction-result-item {
     background: white;
     border: 2px solid #e2e8f0;
-    border-radius: 12px;
+    border-radius: 20px;
     padding: 28px;
     margin-bottom: 24px;
     transition: all 0.3s ease;
@@ -745,13 +782,13 @@ h1 {
 }
 
 .extraction-result-item:hover {
-    border-color: #667eea;
-    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.15);
+    border-color: #1C2C8C;
+    box-shadow: 0 8px 24px rgba(28, 44, 140, 0.15);
     transform: translateY(-2px);
 }
 
 .key-name {
-    color: #667eea;
+    color: #1C2C8C;
     font-size: 1.4em;
     font-weight: 700;
     margin-bottom: 20px;
@@ -763,7 +800,7 @@ h1 {
     margin-bottom: 20px;
     padding: 16px;
     background: #f7fafc;
-    border-radius: 8px;
+    border-radius: 20px;
     border: 1px solid #e2e8f0;
 }
 
@@ -775,7 +812,7 @@ h1 {
 }
 
 .key-value .found {
-    color: #059669;
+    color: #87BD25;
     font-weight: 600;
     font-size: 1.1em;
 }
@@ -791,7 +828,7 @@ h1 {
     color: #4a5568;
     padding: 16px;
     background: #f7fafc;
-    border-radius: 8px;
+    border-radius: 20px;
 }
 
 .key-description strong {
@@ -802,8 +839,8 @@ h1 {
 }
 
 .source-locations {
-    background: #ebf8ff;
-    border-left: 4px solid #667eea;
+    background: #e6f9f8;
+    border-left: 4px solid #1C2C8C;
     padding: 18px 20px;
     border-radius: 8px;
 }
@@ -823,12 +860,12 @@ h1 {
 
 .source-locations li {
     padding: 10px 12px;
-    color: #2c5282;
+    color: #1C2C8C;
     font-weight: 500;
     background: white;
     margin-bottom: 8px;
     border-radius: 6px;
-    border: 1px solid #bee3f8;
+    border: 1px solid #59BDB9;
 }
 
 .source-locations li:last-child {
@@ -858,23 +895,23 @@ h1 {
 .preview-btn {
     display: inline-block;
     padding: 10px 24px;
-    background: #10b981;
+    background: #87BD25;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     margin-top: 16px;
     margin-right: 12px;
     transition: all 0.3s ease;
     font-weight: 600;
     font-size: 0.95em;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.25);
 }
 
 .preview-btn:hover {
-    background: #059669;
+    background: #6a971d;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 6px 16px rgba(135, 189, 37, 0.35);
 }
 
 /* Modal styles */
@@ -1069,33 +1106,33 @@ h1 {
 .download-excel-section {
     margin: 0 0 32px 0;
     padding: 24px;
-    background: linear-gradient(135deg, #f0fff4 0%, #d1fae5 100%);
-    border-radius: 12px;
-    border: 3px solid #9ae6b4;
+    background: linear-gradient(135deg, #f5fce8 0%, #e8f5d5 100%);
+    border-radius: 20px;
+    border: 3px solid #87BD25;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.15);
 }
 
 .download-excel-btn {
     padding: 14px 48px;
-    background: #10b981;
+    background: #87BD25;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 1.05em;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.25);
 }
 
 .download-excel-btn:hover {
-    background: #059669;
+    background: #6a971d;
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.35);
+    box-shadow: 0 6px 16px rgba(135, 189, 37, 0.35);
 }
 
 .download-excel-btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 2px 8px rgba(135, 189, 37, 0.25);
 }
