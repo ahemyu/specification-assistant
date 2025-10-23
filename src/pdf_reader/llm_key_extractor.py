@@ -193,6 +193,7 @@ class LLMKeyExtractor:
             QUESTION: {question}
 
             IMPORTANT INSTRUCTIONS:
+            0. ALWAYS answer in THE SAME LANGUAGE the question was asked in.
             1. Provide a clear, comprehensive answer based on the document contents
             2. If referencing specific information, mention which document and page number it came from
             3. If the answer cannot be found in the documents, clearly state that
