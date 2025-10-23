@@ -382,7 +382,7 @@ async function submitQuestion() {
         const data = await response.json();
 
         qaSpinner.style.display = 'none';
-        showQAStatus('Answer generated successfully', 'success');
+        qaStatus.style.display = 'none';
 
         displayQAResult(data);
 
