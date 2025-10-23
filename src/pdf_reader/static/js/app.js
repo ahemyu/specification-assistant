@@ -459,7 +459,7 @@ extractExcelBtn.addEventListener('click', async function() {
 });
 
 // Q&A functionality
-// Function to submit question
+// Function to submit question with streaming
 async function submitQuestion() {
     const question = questionInput.value.trim();
     if (!question || uploadedFileIds.length === 0) {
@@ -478,13 +478,55 @@ async function submitQuestion() {
     askBtn.disabled = true;
     questionInput.disabled = true;
 
-    // Show typing indicator
+    // Show typing indicator until first chunk arrives
     showTypingIndicator();
+
+    let fullAnswer = '';
+    let systemMessage = null;
+    let messageDiv = null;
+    let contentDiv = null;
+    let isFirstChunk = true;
+
+    // Throttling variables for smooth rendering
+    let pendingRenderFrame = null;
+    let lastRenderTime = 0;
+    const RENDER_THROTTLE_MS = 32; // ~30fps for smooth rendering
+
+    // Function to render markdown with throttling using requestAnimationFrame
+    const scheduleRender = () => {
+        if (pendingRenderFrame) return; // Already scheduled
+
+        const now = Date.now();
+        const timeSinceLastRender = now - lastRenderTime;
+
+        if (timeSinceLastRender >= RENDER_THROTTLE_MS) {
+            // Render on next frame
+            pendingRenderFrame = requestAnimationFrame(() => {
+                contentDiv.innerHTML = marked.parse(fullAnswer);
+                scrollToBottom();
+                lastRenderTime = Date.now();
+                pendingRenderFrame = null;
+            });
+        } else {
+            // Schedule for later to maintain throttle rate
+            const delay = RENDER_THROTTLE_MS - timeSinceLastRender;
+            setTimeout(() => {
+                if (!pendingRenderFrame) {
+                    pendingRenderFrame = requestAnimationFrame(() => {
+                        contentDiv.innerHTML = marked.parse(fullAnswer);
+                        scrollToBottom();
+                        lastRenderTime = Date.now();
+                        pendingRenderFrame = null;
+                    });
+                }
+            }, delay);
+        }
+    };
 
     try {
         const selectedModel = modelSelect ? modelSelect.value : 'gemini-2.5-flash';
 
-        const response = await fetch('/ask-question', {
+        const response = await fetch('/ask-question-stream', { //Here we can change it back to full response generatioon
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -502,25 +544,94 @@ async function submitQuestion() {
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-        // Hide typing indicator
-        hideTypingIndicator();
+        while (true) {
+            const { done, value } = await reader.read();
 
-        // If this is the first message, store the system message
-        if (data.system_message) {
-            // Insert system message at the beginning of conversation history
-            conversationHistory.unshift({ role: 'system', content: data.system_message });
-            saveChatHistory();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+
+            // Keep the last incomplete line in the buffer
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = JSON.parse(line.substring(6));
+
+                    if (data.type === 'system_message') {
+                        // Store system message
+                        systemMessage = data.content;
+                    } else if (data.type === 'chunk') {
+                        // On first chunk, create message container and hide typing indicator
+                        if (isFirstChunk) {
+                            hideTypingIndicator();
+                            removeChatWelcome();
+                            messageDiv = document.createElement('div');
+                            messageDiv.className = 'chat-message assistant';
+                            messageDiv.innerHTML = `
+                                <div class="chat-message-role">Assistant</div>
+                                <div class="chat-message-content"></div>
+                            `;
+                            chatMessages.appendChild(messageDiv);
+                            contentDiv = messageDiv.querySelector('.chat-message-content');
+                            scrollToBottom();
+                            isFirstChunk = false;
+                        }
+
+                        // Append chunk to full answer
+                        fullAnswer += data.content;
+
+                        // Schedule throttled render
+                        scheduleRender();
+                    } else if (data.type === 'done') {
+                        // Final render to ensure markdown is complete (force immediate render)
+                        if (pendingRenderFrame) {
+                            // Cancel pending render frame and do final render now
+                            cancelAnimationFrame(pendingRenderFrame);
+                            pendingRenderFrame = null;
+                        }
+                        if (contentDiv) {
+                            contentDiv.innerHTML = marked.parse(fullAnswer);
+                            scrollToBottom();
+                        }
+                    } else if (data.type === 'error') {
+                        throw new Error(data.content);
+                    }
+                }
+            }
         }
 
-        // Add assistant message to chat
-        appendMessage('assistant', data.answer);
+        // If this is the first message, store the system message
+        if (systemMessage) {
+            conversationHistory.unshift({ role: 'system', content: systemMessage });
+        }
+
+        // Add assistant message to conversation history
+        conversationHistory.push({ role: 'assistant', content: fullAnswer });
+        saveChatHistory();
 
     } catch (error) {
         hideTypingIndicator();
-        appendMessage('assistant', `Error: ${error.message}`);
+        if (isFirstChunk) {
+            // Error before any content - show as new message
+            removeChatWelcome();
+            messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message assistant';
+            messageDiv.innerHTML = `
+                <div class="chat-message-role">Assistant</div>
+                <div class="chat-message-content"></div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            contentDiv = messageDiv.querySelector('.chat-message-content');
+        }
+        contentDiv.innerHTML = `<span style="color: #EF4444;">Error: ${escapeHtml(error.message)}</span>`;
     } finally {
+        hideTypingIndicator();
         askBtn.disabled = false;
         questionInput.disabled = false;
         questionInput.focus();
