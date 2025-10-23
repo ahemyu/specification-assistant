@@ -17,6 +17,7 @@ const askBtn = document.getElementById('askBtn');
 const chatMessages = document.getElementById('chatMessages');
 const typingIndicator = document.getElementById('typingIndicator');
 const clearChatBtn = document.getElementById('clearChatBtn');
+const modelSelect = document.getElementById('modelSelect');
 
 // Tab elements
 const excelTab = document.getElementById('excelTab');
@@ -481,6 +482,8 @@ async function submitQuestion() {
     showTypingIndicator();
 
     try {
+        const selectedModel = modelSelect ? modelSelect.value : 'gemini-2.5-flash';
+
         const response = await fetch('/ask-question', {
             method: 'POST',
             headers: {
@@ -489,7 +492,8 @@ async function submitQuestion() {
             body: JSON.stringify({
                 file_ids: uploadedFileIds,
                 question: question,
-                conversation_history: conversationHistory.slice(0, -1) // Exclude the just-added user message
+                conversation_history: conversationHistory.slice(0, -1), // Exclude the just-added user message
+                model_name: selectedModel
             })
         });
 

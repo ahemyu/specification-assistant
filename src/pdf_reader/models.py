@@ -30,6 +30,7 @@ class QuestionRequest(BaseModel):
     file_ids: list[str]
     question: str
     conversation_history: list[ChatMessage] | None = None
+    model_name: str | None = "gemini-2.5-flash"
 
 class ExcelDownloadRequest(BaseModel):
     """Request model for downloading extraction results as Excel."""

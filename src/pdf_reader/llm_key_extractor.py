@@ -23,17 +23,23 @@ class LLMKeyExtractor:
 
         Args:
             api_key: Google API key for Gemini
-            model_name: Name of the Gemini model to use (default: gemini-2.0-flash-exp)
+            model_name: Name of the Gemini model to use for key extraction (default: gemini-2.5-flash)
         """
         self.llm = ChatGoogleGenerativeAI(
             model=model_name,
             google_api_key=api_key,
             temperature=0  # Use deterministic output for extraction tasks
         )
-        self.qa_llm = ChatGoogleGenerativeAI(
-            model=model_name,
+        # Initialize Q&A LLM instances for both supported models
+        self.qa_llm_flash = ChatGoogleGenerativeAI(
+            model="gemini-2.5-flash",
             google_api_key=api_key,
-            temperature=0.3  # Slightly higher temperature for more natural Q&A responses
+            temperature=0.3
+        )
+        self.qa_llm_pro = ChatGoogleGenerativeAI(
+            model="gemini-2.5-pro",
+            google_api_key=api_key,
+            temperature=0.3
         )
         self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
         logger.info(f"Initialized LLM key extractor with model: {model_name}")
@@ -143,7 +149,8 @@ class LLMKeyExtractor:
         self,
         question: str,
         pdf_data: list[dict],
-        conversation_history: list[dict[str, str]] | None = None
+        conversation_history: list[dict[str, str]] | None = None,
+        model_name: str | None = None
     ) -> tuple[str, str | None]:
         """
         Answer a general question about the PDF documents.
@@ -153,6 +160,7 @@ class LLMKeyExtractor:
             pdf_data: List of dictionaries containing PDF data from process_single_pdf_to_dict()
                       Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
             conversation_history: Optional list of previous messages in format [{"role": "system"|"user"|"assistant", "content": str}]
+            model_name: Optional model name ("gemini-2.5-flash" or "gemini-2.5-pro", defaults to flash)
 
         Returns:
             Tuple of (answer, system_message_content)
@@ -160,6 +168,10 @@ class LLMKeyExtractor:
             - system_message_content: The system message content (only on first message, None for subsequent)
         """
         logger.info(f"Answering question about {len(pdf_data)} PDF(s)")
+
+        # Select the appropriate Q&A LLM based on model_name
+        qa_llm = self.qa_llm_pro if model_name == "gemini-2.5-pro" else self.qa_llm_flash
+        logger.info(f"Using model: {model_name or 'gemini-2.5-flash'}")
 
         # Check if we have a system message in conversation history
         has_system_message = (
@@ -238,7 +250,7 @@ class LLMKeyExtractor:
         messages.append(HumanMessage(content=question))
 
         try:
-            response = self.qa_llm.invoke(messages)
+            response = qa_llm.invoke(messages)
             answer = response.content if hasattr(response, 'content') else str(response)
             logger.info("Successfully answered question")
             return answer, system_message_to_return

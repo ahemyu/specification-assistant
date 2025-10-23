@@ -369,7 +369,8 @@ async def ask_question(request: QuestionRequest) -> dict:
         answer, system_message = llm_extractor.answer_question(
             question=request.question,
             pdf_data=pdf_data_list,
-            conversation_history=conversation_history
+            conversation_history=conversation_history,
+            model_name=request.model_name
         )
         response = {
             "question": request.question,
