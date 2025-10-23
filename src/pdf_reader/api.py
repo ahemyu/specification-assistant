@@ -358,15 +358,27 @@ async def ask_question(request: QuestionRequest) -> dict:
 
     # Get answer from LLM
     try:
-        answer = llm_extractor.answer_question(
+        # Convert conversation history to dict format for LLM
+        conversation_history = None
+        if request.conversation_history:
+            conversation_history = [
+                {"role": msg.role, "content": msg.content}
+                for msg in request.conversation_history
+            ]
+
+        answer, system_message = llm_extractor.answer_question(
             question=request.question,
-            pdf_data=pdf_data_list
+            pdf_data=pdf_data_list,
+            conversation_history=conversation_history
         )
-        return {
+        response = {
             "question": request.question,
             "answer": answer,
             "document_count": len(pdf_data_list)
         }
+        if system_message:
+            response["system_message"] = system_message
+        return response
     except Exception as e:
         logger.error(f"Error answering question: {str(e)}")
         raise HTTPException(

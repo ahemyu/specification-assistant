@@ -11,12 +11,12 @@ const extractView = document.getElementById('extractView');
 const qaView = document.getElementById('qaView');
 const mainTabButtons = document.querySelectorAll('.main-tab-btn');
 
-// Q&A elements
+// Chat elements
 const questionInput = document.getElementById('questionInput');
 const askBtn = document.getElementById('askBtn');
-const qaSpinner = document.getElementById('qaSpinner');
-const qaStatus = document.getElementById('qaStatus');
-const qaResults = document.getElementById('qaResults');
+const chatMessages = document.getElementById('chatMessages');
+const typingIndicator = document.getElementById('typingIndicator');
+const clearChatBtn = document.getElementById('clearChatBtn');
 
 // Tab elements
 const excelTab = document.getElementById('excelTab');
@@ -57,6 +57,117 @@ let currentExtractionMode = 'excel'; // 'excel' or 'manual'
 let uploadedTemplateId = null;
 let uploadedTemplateKeys = [];
 let allUploadedFiles = []; // Track all files across multiple uploads
+
+// Chat history management
+let conversationHistory = [];
+const CHAT_STORAGE_KEY = 'specification_assistant_chat_history';
+
+// Load chat history from localStorage on page load
+function loadChatHistory() {
+    try {
+        const stored = localStorage.getItem(CHAT_STORAGE_KEY);
+        if (stored) {
+            conversationHistory = JSON.parse(stored);
+            conversationHistory.forEach(msg => {
+                appendMessage(msg.role, msg.content, false);
+            });
+            if (conversationHistory.length > 0) {
+                removeChatWelcome();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+        conversationHistory = [];
+    }
+}
+
+// Save chat history to localStorage
+function saveChatHistory() {
+    try {
+        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(conversationHistory));
+    } catch (error) {
+        console.error('Error saving chat history:', error);
+    }
+}
+
+// Clear chat history
+function clearChatHistory() {
+    conversationHistory = [];
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    chatMessages.innerHTML = '<div class="chat-welcome"><p>Welcome! Ask me anything about your uploaded documents.</p></div>';
+}
+
+// Remove welcome message
+function removeChatWelcome() {
+    const welcome = chatMessages.querySelector('.chat-welcome');
+    if (welcome) {
+        welcome.remove();
+    }
+}
+
+// Append a message to the chat
+function appendMessage(role, content, saveToHistory = true) {
+    // Don't render system messages in the UI
+    if (role === 'system') {
+        if (saveToHistory) {
+            conversationHistory.push({ role, content });
+            saveChatHistory();
+        }
+        return;
+    }
+
+    removeChatWelcome();
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}`;
+
+    const roleLabel = role === 'user' ? 'You' : 'Assistant';
+
+    // Parse markdown for assistant messages
+    const messageContent = role === 'assistant' ? marked.parse(content) : escapeHtml(content);
+
+    messageDiv.innerHTML = `
+        <div class="chat-message-role">${roleLabel}</div>
+        <div class="chat-message-content">${messageContent}</div>
+    `;
+
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+
+    if (saveToHistory) {
+        conversationHistory.push({ role, content });
+        saveChatHistory();
+    }
+}
+
+// Escape HTML for user messages to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Scroll to bottom of chat
+function scrollToBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Show typing indicator
+function showTypingIndicator() {
+    typingIndicator.classList.add('active');
+    scrollToBottom();
+}
+
+// Hide typing indicator
+function hideTypingIndicator() {
+    typingIndicator.classList.remove('active');
+}
+
+// Auto-resize textarea
+function autoResizeTextarea() {
+    questionInput.style.height = 'auto';
+    questionInput.style.height = Math.min(questionInput.scrollHeight, 120) + 'px';
+}
 
 // Main tab switching
 mainTabButtons.forEach(button => {
@@ -351,16 +462,23 @@ extractExcelBtn.addEventListener('click', async function() {
 async function submitQuestion() {
     const question = questionInput.value.trim();
     if (!question || uploadedFileIds.length === 0) {
-        showQAStatus('Please enter a question', 'error');
+        alert('Please enter a question and ensure PDFs are uploaded.');
         return;
     }
 
-    askBtn.disabled = true;
-    qaSpinner.style.display = 'block';
-    qaStatus.style.display = 'none';
-    qaResults.innerHTML = '';
+    // Add user message to chat
+    appendMessage('user', question);
 
-    showQAStatus('Processing your question...', 'info');
+    // Clear input and reset height
+    questionInput.value = '';
+    questionInput.style.height = 'auto';
+
+    // Disable input while processing
+    askBtn.disabled = true;
+    questionInput.disabled = true;
+
+    // Show typing indicator
+    showTypingIndicator();
 
     try {
         const response = await fetch('/ask-question', {
@@ -370,7 +488,8 @@ async function submitQuestion() {
             },
             body: JSON.stringify({
                 file_ids: uploadedFileIds,
-                question: question
+                question: question,
+                conversation_history: conversationHistory.slice(0, -1) // Exclude the just-added user message
             })
         });
 
@@ -381,16 +500,26 @@ async function submitQuestion() {
 
         const data = await response.json();
 
-        qaSpinner.style.display = 'none';
-        qaStatus.style.display = 'none';
+        // Hide typing indicator
+        hideTypingIndicator();
 
-        displayQAResult(data);
+        // If this is the first message, store the system message
+        if (data.system_message) {
+            // Insert system message at the beginning of conversation history
+            conversationHistory.unshift({ role: 'system', content: data.system_message });
+            saveChatHistory();
+        }
+
+        // Add assistant message to chat
+        appendMessage('assistant', data.answer);
 
     } catch (error) {
-        qaSpinner.style.display = 'none';
-        showQAStatus(`Error: ${error.message}`, 'error');
+        hideTypingIndicator();
+        appendMessage('assistant', `Error: ${error.message}`);
     } finally {
         askBtn.disabled = false;
+        questionInput.disabled = false;
+        questionInput.focus();
     }
 }
 
@@ -405,22 +534,18 @@ questionInput.addEventListener('keydown', function(e) {
     }
 });
 
-function showQAStatus(message, type) {
-    qaStatus.textContent = message;
-    qaStatus.className = `status ${type}`;
-    qaStatus.style.display = 'block';
-}
+// Auto-resize textarea as user types
+questionInput.addEventListener('input', autoResizeTextarea);
 
-function displayQAResult(data) {
-    const docText = data.document_count === 1 ? 'document' : 'documents';
-    qaResults.innerHTML = `
-        <div class="qa-answer-item">
-            <div class="qa-question">${data.question}</div>
-            <div class="qa-answer">${data.answer}</div>
-            <div class="qa-meta">Based on ${data.document_count} ${docText}</div>
-        </div>
-    `;
-}
+// Clear chat button
+clearChatBtn.addEventListener('click', function() {
+    if (confirm('Are you sure you want to clear the conversation history?')) {
+        clearChatHistory();
+    }
+});
+
+// Load chat history when page loads
+window.addEventListener('DOMContentLoaded', loadChatHistory);
 
 extractBtn.addEventListener('click', async function() {
     const keysText = keyInput.value.trim();

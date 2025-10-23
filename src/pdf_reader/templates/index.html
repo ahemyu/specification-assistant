@@ -39,27 +39,47 @@
 
             <!-- Ask Questions View -->
             <div class="tab-view" id="qaView">
-                <section class="qa-section">
-                    <h2>Ask Questions About Your Documents</h2>
-                    <p class="section-subtitle">Get AI-powered answers to any questions about your uploaded PDFs</p>
+                <h2 class="view-title">Ask Questions About Your Documents</h2>
+                <p class="view-subtitle">Chat with AI about your uploaded PDFs</p>
 
-                    <div class="qa-input-area">
-                        <div class="qa-input-group">
-                            <label for="questionInput">Your Question:</label>
-                            <textarea
-                                id="questionInput"
-                                rows="3"
-                                placeholder="e.g., What are the main technical specifications mentioned? What is the operating temperature range?"
-                                aria-label="Enter your question"></textarea>
+                <div class="chat-container">
+                    <section class="chat-section">
+                        <div class="chat-header">
+                            <span class="chat-status">Active Conversation</span>
+                            <button class="clear-chat-btn" id="clearChatBtn" title="Start a new conversation">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                                </svg>
+                                Clear Chat
+                            </button>
                         </div>
 
-                        <button class="ask-btn" id="askBtn">Ask Question</button>
-                    </div>
+                        <div class="chat-messages-container" id="chatMessages">
+                            <div class="chat-welcome">
+                                <p>Welcome! Ask me anything about your uploaded documents.</p>
+                            </div>
+                        </div>
 
-                    <div class="spinner" id="qaSpinner" aria-live="polite" aria-label="Processing question"></div>
-                    <div class="status" id="qaStatus" role="status" aria-live="polite"></div>
-                    <div class="qa-results" id="qaResults"></div>
-                </section>
+                        <div class="typing-indicator" id="typingIndicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+
+                        <div class="chat-input-area">
+                            <textarea
+                                id="questionInput"
+                                rows="1"
+                                placeholder="Type your question here..."
+                                aria-label="Enter your question"></textarea>
+                            <button class="send-btn" id="askBtn" title="Send message">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </section>
+                </div>
             </div>
 
             <!-- Extract Keys View -->
@@ -162,6 +182,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked@16.4.1/lib/marked.umd.min.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
 </html>

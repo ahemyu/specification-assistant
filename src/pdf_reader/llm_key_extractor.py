@@ -1,6 +1,7 @@
 """LLM-based key extraction service using LangChain and Google Gemini."""
 import logging
 
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 from models import KeyExtractionResult
 
@@ -87,20 +88,20 @@ class LLMKeyExtractor:
 
         # Build the prompt
         prompt = f"""
-        You are an expert at extracting specific information from technical documents.
-        Your task is to find and extract the value for the key: "{key_name}"
-        {f"Additional context: {additional_context}" if additional_context else ""}
-        Below are the contents of one or more PDF documents. Each document includes page numbers to help you track where information is found.
-        IMPORTANT INSTRUCTIONS:
-        1. Extract the exact value/s for the requested key
-        2. Record ALL PDF filenames and page numbers where you found relevant information (they COULD be spread to different pdfs/pages)
-        3. Provide a clear description of where and how you found the information
-        4. If the key is not found in any document, set key_value to null and explain in the description
-        5. Be precise about page numbers - always reference the specific pages where information was found
-        
-        DOCUMENT CONTENTS:
-        {full_context}
-        Now extract the key "{key_name}" and provide the structured output."""
+                You are an expert at extracting specific information from technical documents.
+                Your task is to find and extract the value for the key: "{key_name}"
+                {f"Additional context: {additional_context}" if additional_context else ""}
+                Below are the contents of one or more PDF documents. Each document includes page numbers to help you track where information is found.
+                IMPORTANT INSTRUCTIONS:
+                1. Extract the exact value/s for the requested key
+                2. Record ALL PDF filenames and page numbers where you found relevant information (they COULD be spread to different pdfs/pages)
+                3. Provide a clear description of where and how you found the information
+                4. If the key is not found in any document, set key_value to null and explain in the description
+                5. Be precise about page numbers - always reference the specific pages where information was found
+
+                DOCUMENT CONTENTS:
+                {full_context}
+                Now extract the key "{key_name}" and provide the structured output."""
 
         try:
             result = self.structured_llm.invoke(prompt)
@@ -141,8 +142,9 @@ class LLMKeyExtractor:
     def answer_question(
         self,
         question: str,
-        pdf_data: list[dict]
-    ) -> str:
+        pdf_data: list[dict],
+        conversation_history: list[dict[str, str]] | None = None
+    ) -> tuple[str, str | None]:
         """
         Answer a general question about the PDF documents.
 
@@ -150,67 +152,96 @@ class LLMKeyExtractor:
             question: The user's question about the documents
             pdf_data: List of dictionaries containing PDF data from process_single_pdf_to_dict()
                       Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
+            conversation_history: Optional list of previous messages in format [{"role": "system"|"user"|"assistant", "content": str}]
 
         Returns:
-            String containing the LLM's answer to the question
+            Tuple of (answer, system_message_content)
+            - answer: The LLM's answer to the question
+            - system_message_content: The system message content (only on first message, None for subsequent)
         """
         logger.info(f"Answering question about {len(pdf_data)} PDF(s)")
 
-        # Build the context from all PDFs
-        context_parts = []
-        for pdf in pdf_data:
-            filename = pdf.get("filename", "unknown.pdf")
-            pages = pdf.get("pages", [])
+        # Check if we have a system message in conversation history
+        has_system_message = (
+            conversation_history
+            and len(conversation_history) > 0
+            and conversation_history[0].get("role") == "system"
+        )
 
-            context_parts.append(f"\n{'='*80}\nDOCUMENT: {filename}\n{'='*80}\n")
+        system_message_to_return = None
 
-            for page_data in pages:
-                page_num = page_data.get("page_number", 0)
-                text = page_data.get("text", "")
-                tables = page_data.get("tables", [])
+        # Build message list
+        messages = []
 
-                context_parts.append(f"\n--- PAGE {page_num} ---\n")
+        if has_system_message:
+            # Use existing system message from history
+            logger.info("Using existing system message from conversation history")
+            messages.append(SystemMessage(content=conversation_history[0]["content"]))
 
-                if text:
-                    context_parts.append(f"Text content:\n{text}\n")
+            # Add rest of conversation history (skip first system message)
+            for msg in conversation_history[1:]:
+                if msg["role"] == "user":
+                    messages.append(HumanMessage(content=msg["content"]))
+                elif msg["role"] == "assistant":
+                    messages.append(AIMessage(content=msg["content"]))
+        else:
+            # First message in conversation - create system message with document context
+            logger.info("Creating new system message with document context")
 
-                if tables:
-                    context_parts.append(f"\nTables on page {page_num}:\n")
-                    for i, table in enumerate(tables, 1):
-                        context_parts.append(f"Table {i}:\n")
-                        for row in table:
-                            context_parts.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
-                        context_parts.append("\n")
+            # Build the context from all PDFs
+            context_parts = []
+            for pdf in pdf_data:
+                filename = pdf.get("filename", "unknown.pdf")
+                pages = pdf.get("pages", [])
 
-        full_context = "".join(context_parts)
+                context_parts.append(f"\n{'='*80}\nDOCUMENT: {filename}\n{'='*80}\n")
 
-        # Build the prompt
-        prompt = f"""
-            You are an expert assistant helping users understand technical documents.
-            Below are the contents of one or more PDF documents. Each document includes page numbers.
-            Your task is to answer the following question based on the provided documents:
+                for page_data in pages:
+                    page_num = page_data.get("page_number", 0)
+                    text = page_data.get("text", "")
+                    tables = page_data.get("tables", [])
 
-            QUESTION: {question}
+                    context_parts.append(f"\n--- PAGE {page_num} ---\n")
 
-            IMPORTANT INSTRUCTIONS:
-            0. ALWAYS answer in THE SAME LANGUAGE the question was asked in.
-            1. Provide a clear, comprehensive answer based on the document contents
-            2. If referencing specific information, mention which document and page number it came from
-            3. If the answer cannot be found in the documents, clearly state that
-            4. Be precise and cite page numbers when possible
-            5. If the question is ambiguous, provide the most reasonable interpretation
+                    if text:
+                        context_parts.append(f"Text content:\n{text}\n")
 
-            DOCUMENT CONTENTS:
-            {full_context}
+                    if tables:
+                        context_parts.append(f"\nTables on page {page_num}:\n")
+                        for i, table in enumerate(tables, 1):
+                            context_parts.append(f"Table {i}:\n")
+                            for row in table:
+                                context_parts.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
+                            context_parts.append("\n")
 
-            Now answer the question in a clear and helpful way:
-            """
+            full_context = "".join(context_parts)
+
+            system_content = f"""You are an expert assistant helping users understand technical documents.
+                            Below are the contents of one or more PDF documents. Each document includes page numbers.
+
+                            IMPORTANT INSTRUCTIONS:
+                            1. ALWAYS answer in THE SAME LANGUAGE the question was asked in.
+                            2. Provide a clear, comprehensive answer based on the document contents
+                            3. If referencing specific information, mention which document and page number it came from
+                            4. If the answer cannot be found in the documents, clearly state that
+                            5. Be precise and cite page numbers when possible
+                            6. If the question is ambiguous, provide the most reasonable interpretation
+                            7. Take into account the previous conversation context when answering
+
+                            DOCUMENT CONTENTS:
+                            {full_context}"""
+
+            messages.append(SystemMessage(content=system_content))
+            system_message_to_return = system_content
+
+        # Add current question
+        messages.append(HumanMessage(content=question))
 
         try:
-            response = self.qa_llm.invoke(prompt)
+            response = self.qa_llm.invoke(messages)
             answer = response.content if hasattr(response, 'content') else str(response)
             logger.info("Successfully answered question")
-            return answer
+            return answer, system_message_to_return
         except Exception as e:
             logger.error(f"Error answering question: {str(e)}")
             raise
