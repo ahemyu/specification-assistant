@@ -1,9 +1,15 @@
 """LLM-based key extraction service using LangChain and Google Gemini."""
 import logging
+import sys
+from pathlib import Path
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
-from models import KeyExtractionResult
+
+# Add parent directory to path to allow imports from pdf_reader root
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from schemas.domain import KeyExtractionResult
 
 logging.basicConfig(
     level=logging.INFO,
@@ -124,95 +130,6 @@ class LLMKeyExtractor:
 
         return results
 
-    def answer_question(
-        self,
-        question: str,
-        pdf_data: list[dict],
-        conversation_history: list[dict[str, str]] | None = None,
-        model_name: str | None = None
-    ) -> tuple[str, str | None]:
-        """
-        Answer a general question about the PDF documents.
-
-        Args:
-            question: The user's question about the documents
-            pdf_data: List of dictionaries containing PDF data from process_single_pdf_to_dict()
-                      Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
-            conversation_history: Optional list of previous messages in format
-                                  [{"role": "system"|"user"|"assistant", "content": str}]
-            model_name: Optional model name ("gemini-2.5-flash" or "gemini-2.5-pro",
-                        defaults to flash)
-
-        Returns:
-            Tuple of (answer, system_message_content)
-            - answer: The LLM's answer to the question
-            - system_message_content: The system message content (only on first message, None for subsequent)
-        """
-        logger.info(f"Answering question about {len(pdf_data)} PDF(s)")
-
-        # Select the appropriate Q&A LLM based on model_name
-        qa_llm = self.qa_llm_pro if model_name == "gemini-2.5-pro" else self.qa_llm_flash
-        logger.info(f"Using model: {model_name or 'gemini-2.5-flash'}")
-
-        # Check if we have a system message in conversation history
-        has_system_message = (
-            conversation_history
-            and len(conversation_history) > 0
-            and conversation_history[0].get("role") == "system"
-        )
-
-        system_message_to_return = None
-
-        # Build message list
-        messages = []
-
-        if has_system_message:
-            # Use existing system message from history
-            logger.info("Using existing system message from conversation history")
-            messages.append(SystemMessage(content=conversation_history[0]["content"]))
-
-            # Add rest of conversation history (skip first system message)
-            for msg in conversation_history[1:]:
-                if msg["role"] == "user":
-                    messages.append(HumanMessage(content=msg["content"]))
-                elif msg["role"] == "assistant":
-                    messages.append(AIMessage(content=msg["content"]))
-        else:
-            # First message in conversation - create system message with document context
-            logger.info("Creating new system message with document context")
-
-            # Use pre-formatted text that was created during PDF processing
-            full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
-
-            system_content = f"""You are an expert assistant helping users understand technical documents.
-                            Below are the contents of one or more PDF documents. Each document includes page numbers.
-
-                            IMPORTANT INSTRUCTIONS:
-                            1. ALWAYS answer in THE SAME LANGUAGE the question was asked in.
-                            2. Provide a clear, comprehensive answer based on the document contents
-                            3. If referencing specific information, mention which document and page number it came from
-                            4. If the answer cannot be found in the documents, clearly state that
-                            5. Be precise and cite page numbers when possible
-                            6. If the question is ambiguous, provide the most reasonable interpretation
-                            7. Take into account the previous conversation context when answering
-
-                            DOCUMENT CONTENTS:
-                            {full_context}"""
-
-            messages.append(SystemMessage(content=system_content))
-            system_message_to_return = system_content
-
-        # Add current question
-        messages.append(HumanMessage(content=question))
-
-        try:
-            response = qa_llm.invoke(messages)
-            answer = response.content if hasattr(response, 'content') else str(response)
-            logger.info("Successfully answered question")
-            return answer, system_message_to_return
-        except Exception as e:
-            logger.error(f"Error answering question: {str(e)}")
-            raise
 
     async def answer_question_stream(
         self,
