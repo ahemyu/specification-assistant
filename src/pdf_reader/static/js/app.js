@@ -11,12 +11,13 @@ const extractView = document.getElementById('extractView');
 const qaView = document.getElementById('qaView');
 const mainTabButtons = document.querySelectorAll('.main-tab-btn');
 
-// Q&A elements
+// Chat elements
 const questionInput = document.getElementById('questionInput');
 const askBtn = document.getElementById('askBtn');
-const qaSpinner = document.getElementById('qaSpinner');
-const qaStatus = document.getElementById('qaStatus');
-const qaResults = document.getElementById('qaResults');
+const chatMessages = document.getElementById('chatMessages');
+const typingIndicator = document.getElementById('typingIndicator');
+const clearChatBtn = document.getElementById('clearChatBtn');
+const modelSelect = document.getElementById('modelSelect');
 
 // Tab elements
 const excelTab = document.getElementById('excelTab');
@@ -57,6 +58,117 @@ let currentExtractionMode = 'excel'; // 'excel' or 'manual'
 let uploadedTemplateId = null;
 let uploadedTemplateKeys = [];
 let allUploadedFiles = []; // Track all files across multiple uploads
+
+// Chat history management
+let conversationHistory = [];
+const CHAT_STORAGE_KEY = 'specification_assistant_chat_history';
+
+// Load chat history from localStorage on page load
+function loadChatHistory() {
+    try {
+        const stored = localStorage.getItem(CHAT_STORAGE_KEY);
+        if (stored) {
+            conversationHistory = JSON.parse(stored);
+            conversationHistory.forEach(msg => {
+                appendMessage(msg.role, msg.content, false);
+            });
+            if (conversationHistory.length > 0) {
+                removeChatWelcome();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading chat history:', error);
+        conversationHistory = [];
+    }
+}
+
+// Save chat history to localStorage
+function saveChatHistory() {
+    try {
+        localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(conversationHistory));
+    } catch (error) {
+        console.error('Error saving chat history:', error);
+    }
+}
+
+// Clear chat history
+function clearChatHistory() {
+    conversationHistory = [];
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    chatMessages.innerHTML = '<div class="chat-welcome"><p>Welcome! Ask me anything about your uploaded documents.</p></div>';
+}
+
+// Remove welcome message
+function removeChatWelcome() {
+    const welcome = chatMessages.querySelector('.chat-welcome');
+    if (welcome) {
+        welcome.remove();
+    }
+}
+
+// Append a message to the chat
+function appendMessage(role, content, saveToHistory = true) {
+    // Don't render system messages in the UI
+    if (role === 'system') {
+        if (saveToHistory) {
+            conversationHistory.push({ role, content });
+            saveChatHistory();
+        }
+        return;
+    }
+
+    removeChatWelcome();
+
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `chat-message ${role}`;
+
+    const roleLabel = role === 'user' ? 'You' : 'Assistant';
+
+    // Parse markdown for assistant messages
+    const messageContent = role === 'assistant' ? marked.parse(content) : escapeHtml(content);
+
+    messageDiv.innerHTML = `
+        <div class="chat-message-role">${roleLabel}</div>
+        <div class="chat-message-content">${messageContent}</div>
+    `;
+
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+
+    if (saveToHistory) {
+        conversationHistory.push({ role, content });
+        saveChatHistory();
+    }
+}
+
+// Escape HTML for user messages to prevent XSS
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Scroll to bottom of chat
+function scrollToBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Show typing indicator
+function showTypingIndicator() {
+    typingIndicator.classList.add('active');
+    scrollToBottom();
+}
+
+// Hide typing indicator
+function hideTypingIndicator() {
+    typingIndicator.classList.remove('active');
+}
+
+// Auto-resize textarea
+function autoResizeTextarea() {
+    questionInput.style.height = 'auto';
+    questionInput.style.height = Math.min(questionInput.scrollHeight, 120) + 'px';
+}
 
 // Main tab switching
 mainTabButtons.forEach(button => {
@@ -347,30 +459,83 @@ extractExcelBtn.addEventListener('click', async function() {
 });
 
 // Q&A functionality
-// Function to submit question
+// Function to submit question with streaming
 async function submitQuestion() {
     const question = questionInput.value.trim();
     if (!question || uploadedFileIds.length === 0) {
-        showQAStatus('Please enter a question', 'error');
+        alert('Please enter a question and ensure PDFs are uploaded.');
         return;
     }
 
-    askBtn.disabled = true;
-    qaSpinner.style.display = 'block';
-    qaStatus.style.display = 'none';
-    qaResults.innerHTML = '';
+    // Add user message to chat
+    appendMessage('user', question);
 
-    showQAStatus('Processing your question...', 'info');
+    // Clear input and reset height
+    questionInput.value = '';
+    questionInput.style.height = 'auto';
+
+    // Disable input while processing
+    askBtn.disabled = true;
+    questionInput.disabled = true;
+
+    // Show typing indicator until first chunk arrives
+    showTypingIndicator();
+
+    let fullAnswer = '';
+    let systemMessage = null;
+    let messageDiv = null;
+    let contentDiv = null;
+    let isFirstChunk = true;
+
+    // Throttling variables for smooth rendering
+    let pendingRenderFrame = null;
+    let lastRenderTime = 0;
+    const RENDER_THROTTLE_MS = 32; // ~30fps for smooth rendering
+
+    // Function to render markdown with throttling using requestAnimationFrame
+    const scheduleRender = () => {
+        if (pendingRenderFrame) return; // Already scheduled
+
+        const now = Date.now();
+        const timeSinceLastRender = now - lastRenderTime;
+
+        if (timeSinceLastRender >= RENDER_THROTTLE_MS) {
+            // Render on next frame
+            pendingRenderFrame = requestAnimationFrame(() => {
+                contentDiv.innerHTML = marked.parse(fullAnswer);
+                scrollToBottom();
+                lastRenderTime = Date.now();
+                pendingRenderFrame = null;
+            });
+        } else {
+            // Schedule for later to maintain throttle rate
+            const delay = RENDER_THROTTLE_MS - timeSinceLastRender;
+            setTimeout(() => {
+                if (!pendingRenderFrame) {
+                    pendingRenderFrame = requestAnimationFrame(() => {
+                        contentDiv.innerHTML = marked.parse(fullAnswer);
+                        scrollToBottom();
+                        lastRenderTime = Date.now();
+                        pendingRenderFrame = null;
+                    });
+                }
+            }, delay);
+        }
+    };
 
     try {
-        const response = await fetch('/ask-question', {
+        const selectedModel = modelSelect ? modelSelect.value : 'gemini-2.5-flash';
+
+        const response = await fetch('/ask-question-stream', { //Here we can change it back to full response generatioon
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 file_ids: uploadedFileIds,
-                question: question
+                question: question,
+                conversation_history: conversationHistory.slice(0, -1), // Exclude the just-added user message
+                model_name: selectedModel
             })
         });
 
@@ -379,18 +544,97 @@ async function submitQuestion() {
             throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
         }
 
-        const data = await response.json();
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-        qaSpinner.style.display = 'none';
-        qaStatus.style.display = 'none';
+        while (true) {
+            const { done, value } = await reader.read();
 
-        displayQAResult(data);
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+
+            // Keep the last incomplete line in the buffer
+            buffer = lines.pop();
+
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const data = JSON.parse(line.substring(6));
+
+                    if (data.type === 'system_message') {
+                        // Store system message
+                        systemMessage = data.content;
+                    } else if (data.type === 'chunk') {
+                        // On first chunk, create message container and hide typing indicator
+                        if (isFirstChunk) {
+                            hideTypingIndicator();
+                            removeChatWelcome();
+                            messageDiv = document.createElement('div');
+                            messageDiv.className = 'chat-message assistant';
+                            messageDiv.innerHTML = `
+                                <div class="chat-message-role">Assistant</div>
+                                <div class="chat-message-content"></div>
+                            `;
+                            chatMessages.appendChild(messageDiv);
+                            contentDiv = messageDiv.querySelector('.chat-message-content');
+                            scrollToBottom();
+                            isFirstChunk = false;
+                        }
+
+                        // Append chunk to full answer
+                        fullAnswer += data.content;
+
+                        // Schedule throttled render
+                        scheduleRender();
+                    } else if (data.type === 'done') {
+                        // Final render to ensure markdown is complete (force immediate render)
+                        if (pendingRenderFrame) {
+                            // Cancel pending render frame and do final render now
+                            cancelAnimationFrame(pendingRenderFrame);
+                            pendingRenderFrame = null;
+                        }
+                        if (contentDiv) {
+                            contentDiv.innerHTML = marked.parse(fullAnswer);
+                            scrollToBottom();
+                        }
+                    } else if (data.type === 'error') {
+                        throw new Error(data.content);
+                    }
+                }
+            }
+        }
+
+        // If this is the first message, store the system message
+        if (systemMessage) {
+            conversationHistory.unshift({ role: 'system', content: systemMessage });
+        }
+
+        // Add assistant message to conversation history
+        conversationHistory.push({ role: 'assistant', content: fullAnswer });
+        saveChatHistory();
 
     } catch (error) {
-        qaSpinner.style.display = 'none';
-        showQAStatus(`Error: ${error.message}`, 'error');
+        hideTypingIndicator();
+        if (isFirstChunk) {
+            // Error before any content - show as new message
+            removeChatWelcome();
+            messageDiv = document.createElement('div');
+            messageDiv.className = 'chat-message assistant';
+            messageDiv.innerHTML = `
+                <div class="chat-message-role">Assistant</div>
+                <div class="chat-message-content"></div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            contentDiv = messageDiv.querySelector('.chat-message-content');
+        }
+        contentDiv.innerHTML = `<span style="color: #EF4444;">Error: ${escapeHtml(error.message)}</span>`;
     } finally {
+        hideTypingIndicator();
         askBtn.disabled = false;
+        questionInput.disabled = false;
+        questionInput.focus();
     }
 }
 
@@ -405,22 +649,18 @@ questionInput.addEventListener('keydown', function(e) {
     }
 });
 
-function showQAStatus(message, type) {
-    qaStatus.textContent = message;
-    qaStatus.className = `status ${type}`;
-    qaStatus.style.display = 'block';
-}
+// Auto-resize textarea as user types
+questionInput.addEventListener('input', autoResizeTextarea);
 
-function displayQAResult(data) {
-    const docText = data.document_count === 1 ? 'document' : 'documents';
-    qaResults.innerHTML = `
-        <div class="qa-answer-item">
-            <div class="qa-question">${data.question}</div>
-            <div class="qa-answer">${data.answer}</div>
-            <div class="qa-meta">Based on ${data.document_count} ${docText}</div>
-        </div>
-    `;
-}
+// Clear chat button
+clearChatBtn.addEventListener('click', function() {
+    if (confirm('Are you sure you want to clear the conversation history?')) {
+        clearChatHistory();
+    }
+});
+
+// Load chat history when page loads
+window.addEventListener('DOMContentLoaded', loadChatHistory);
 
 extractBtn.addEventListener('click', async function() {
     const keysText = keyInput.value.trim();

@@ -1,5 +1,6 @@
 """FastAPI service for PDF text extraction, question answering and key extraction."""
 import asyncio
+import json
 import logging
 import os
 import uuid
@@ -358,21 +359,120 @@ async def ask_question(request: QuestionRequest) -> dict:
 
     # Get answer from LLM
     try:
-        answer = llm_extractor.answer_question(
+        # Convert conversation history to dict format for LLM
+        conversation_history = None
+        if request.conversation_history:
+            conversation_history = [
+                {"role": msg.role, "content": msg.content}
+                for msg in request.conversation_history
+            ]
+
+        answer, system_message = llm_extractor.answer_question(
             question=request.question,
-            pdf_data=pdf_data_list
+            pdf_data=pdf_data_list,
+            conversation_history=conversation_history,
+            model_name=request.model_name
         )
-        return {
+        response = {
             "question": request.question,
             "answer": answer,
             "document_count": len(pdf_data_list)
         }
+        if system_message:
+            response["system_message"] = system_message
+        return response
     except Exception as e:
         logger.error(f"Error answering question: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error answering question: {str(e)}"
         )
+
+
+@app.post("/ask-question-stream")
+async def ask_question_stream(request: QuestionRequest):
+    """
+    Ask a general question about one or more previously uploaded PDFs using LLM with streaming.
+
+    Requires:
+    - file_ids: List of file IDs from previous /upload requests
+    - question: The question to ask about the documents
+
+    Returns:
+    - Streaming response with Server-Sent Events (SSE) format
+    """
+    if not llm_extractor:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM service is not available. GOOGLE_API_KEY may not be configured."
+        )
+
+    # Load the processed PDF data for each file_id from memory
+    pdf_data_list = []
+    for file_id in request.file_ids:
+        if file_id not in pdf_storage:
+            raise HTTPException(
+                status_code=404,
+                detail=f"File with ID {file_id} not found. Please upload the file first."
+            )
+
+        pdf_data_list.append(pdf_storage[file_id])
+
+    # Convert conversation history to dict format for LLM
+    conversation_history = None
+    if request.conversation_history:
+        conversation_history = [
+            {"role": msg.role, "content": msg.content}
+            for msg in request.conversation_history
+        ]
+
+    async def event_generator():
+        """Generate SSE events for streaming response."""
+        try:
+            async for chunk, system_message in llm_extractor.answer_question_stream(
+                question=request.question,
+                pdf_data=pdf_data_list,
+                conversation_history=conversation_history,
+                model_name=request.model_name
+            ):
+                # Send system message if this is the first message
+                if system_message:
+                    system_event = {
+                        "type": "system_message",
+                        "content": system_message
+                    }
+                    yield f"data: {json.dumps(system_event)}\n\n"
+
+                # Send the chunk
+                chunk_event = {
+                    "type": "chunk",
+                    "content": chunk
+                }
+                yield f"data: {json.dumps(chunk_event)}\n\n"
+
+            # Send completion event
+            done_event = {
+                "type": "done"
+            }
+            yield f"data: {json.dumps(done_event)}\n\n"
+
+        except Exception as e:
+            logger.error(f"Error during streaming: {str(e)}")
+            error_event = {
+                "type": "error",
+                "content": str(e)
+            }
+            yield f"data: {json.dumps(error_event)}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no"
+        }
+    )
 
 
 

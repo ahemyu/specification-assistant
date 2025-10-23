@@ -17,11 +17,20 @@ class MultipleKeysExtractionRequest(BaseModel):
     additional_context: str | None = None
 
 
+class ChatMessage(BaseModel):
+    """Individual message in a conversation."""
+
+    role: str
+    content: str
+
+
 class QuestionRequest(BaseModel):
     """Request model for asking questions about PDFs."""
 
     file_ids: list[str]
     question: str
+    conversation_history: list[ChatMessage] | None = None
+    model_name: str | None = "gemini-2.5-flash"
 
 class ExcelDownloadRequest(BaseModel):
     """Request model for downloading extraction results as Excel."""
