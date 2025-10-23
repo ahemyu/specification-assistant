@@ -1,0 +1,215 @@
+KEYS DIE ALLE PRODUKTE HABEN: 
+Dateiname
+Titel (iiRDS)
+Sprache (iiRDS)
+hat Dokumentart
+hat VDI-2770-Dokumentkategorie
+Aufstellhöhe
+Umgebungstemp. Max
+Umgebungstemp. Min
+Abgeschnittener Blitzstoß
+Spez. Kriechweg
+Biegefestigkeit
+Isolatorauswahl Hersteller
+Blitzstoßspannung BIL
+Max. Betriebsspannung Um
+Min. Kriechweg
+Verschmutzungsklasse
+Prüfwechselspannung X
+Prüfwechselspannung sekundär
+Nennfrequenz fR
+Schaltstoßspannung SIL
+Stehwechselspannung trocken
+Haltespannung bei 1 bar abs.
+bezieht sich auf Typenprüfung nach o.g. Norm
+Externer Beobachter
+Erweiterte Typenprüfung
+SIL gefordert
+Haltespannung bei 1 bar abs.
+Magnetisierungskennlinie U
+Magnetisierungskennlinie I
+Taupunktmessung
+Isolationswiderstandsmessung
+Erweiterte Routinetests & Sonderprüfungen
+BIL gefordert
+Dichtewächtertyp
+Schutzschlauch DW-Kabel
+DW-Hersteller
+Anzahl DW Schaltkontakte
+DW zum Boden geneigt
+bezieht sich auf DW - Schaltkontaktebei fallendem Druck
+DW-Prüfeinrichtung
+DW im KK verdrahtet
+Erdkontakte seperat geerdet
+Druckfüllventil
+Hybrid Densimeter
+Zulässige Leckrate
+Druckangabe am Dichtewächter
+Sensgear-Box gefordert
+Doku im KK
+Primäranschluss
+Wandlerpass
+Erdungsanschluss
+Material Erdungsanschluss
+Beistellteile TG seitig
+Hilfsschalterart
+Barcode auf LS
+Hersteller ID-Nr. auf LS
+Material Leistungsschild
+Sollbruchstellen
+Abdeckung Kundenklemmen
+Kabelverschraubungen
+Sprache Leistungsschild
+Klemmenkastenheizung
+Detail der Sicherungen
+Sicherungen
+Funkenstrecke
+Klemmentype
+Erdungsschiene
+Klemmenkastenart
+Klemmentype DW
+PT100 gefordert
+Wandlerbezeichnung auf LS
+
+
+KEYS NUR IN Spannungswandler: 
+
+Genauigkeitsklasse Wicklung 1
+Genauigkeitsklasse Wicklung 2
+Genauigkeitsklasse Wicklung 3
+Genauigkeitsklasse Wicklung 4
+Genauigkeitsklasse Wicklung 5
+Leistung Wicklung 1
+Leistung Wicklung 2
+Leistung Wicklung 3
+Leistung Wicklung 4
+Leistung Wicklung 5
+Leistung Erdschluss
+Nennspannung primär (V) Wicklung 1
+Nennspannung primär (V) Wicklung 2
+Nennspannung primär (V) Wicklung 3
+Nennspannung primär (V) Wicklung 4
+Nennspannung primär (V) Wicklung 5
+Nennspannung primär (V) Erdschluss
+Nennspannung sekundär (V) Wicklung 1
+Nennspannung sekundär (V) Wicklung 2
+Nennspannung sekundär (V) Wicklung 3
+Nennspannung sekundär (V) Wicklung 4
+Nennspannung sekundär (V) Wicklung 5
+Nennspannung sekundär (V) Erdschluss
+
+
+
+KEYS NUR IN Stromwandler: 
+Genauigkeitsklasse Kern 1
+Genauigkeitsklasse Kern 2
+Genauigkeitsklasse Kern 3
+Genauigkeitsklasse Kern 4
+Genauigkeitsklasse Kern 5
+Genauigkeitsklasse Kern 6
+Genauigkeitsklasse Kern 7
+1. Stromfluß t´ [ms] Kern 1
+1. Stromfluß t´ [ms] Kern 2
+1. Stromfluß t´ [ms] Kern 3
+1. Stromfluß t´ [ms] Kern 4
+1. Stromfluß t´ [ms] Kern 5
+1. Stromfluß t´ [ms] Kern 6
+1. Stromfluß t´ [ms] Kern 7
+2. Stromfluß t´´ [ms] Kern 1
+2. Stromfluß t´´ [ms] Kern 2
+2. Stromfluß t´´ [ms] Kern 3
+2. Stromfluß t´´ [ms] Kern 4
+2. Stromfluß t´´ [ms] Kern 5
+2. Stromfluß t´´ [ms] Kern 6
+2. Stromfluß t´´ [ms] Kern 7
+1. Stromfluß tal´ [ms] Kern 1
+1. Stromfluß tal´ [ms] Kern 2
+1. Stromfluß tal´ [ms] Kern 3
+1. Stromfluß tal´ [ms] Kern 4
+1. Stromfluß tal´ [ms] Kern 5
+1. Stromfluß tal´ [ms] Kern 6
+1. Stromfluß tal´ [ms] Kern 7
+2. Stromfluß tal´´ [ms] Kern 1
+2. Stromfluß tal´´ [ms] Kern 2
+2. Stromfluß tal´´ [ms] Kern 3
+2. Stromfluß tal´´ [ms] Kern 4
+2. Stromfluß tal´´ [ms] Kern 5
+2. Stromfluß tal´´ [ms] Kern 6
+2. Stromfluß tal´´ [ms] Kern 7
+Totzeit ttfr [ms] Kern 1
+Totzeit ttfr [ms] Kern 2
+Totzeit ttfr [ms] Kern 3
+Totzeit ttfr [ms] Kern 4
+Totzeit ttfr [ms] Kern 5
+Totzeit ttfr [ms] Kern 6
+Totzeit ttfr [ms] Kern 7
+Dimensionierungsfaktor Kern 1
+Dimensionierungsfaktor Kern 2
+Dimensionierungsfaktor Kern 3
+Dimensionierungsfaktor Kern 4
+Dimensionierungsfaktor Kern 5
+Dimensionierungsfaktor Kern 6
+Dimensionierungsfaktor Kern 7
+Erweiterter Messbereich (%) Kern 1
+Erweiterter Messbereich (%) Kern 2
+Erweiterter Messbereich (%) Kern 3
+Erweiterter Messbereich (%) Kern 4
+Erweiterter Messbereich (%) Kern 5
+Erweiterter Messbereich (%) Kern 6
+Erweiterter Messbereich (%) Kern 7
+Kniepunkt Ek (V) Kern 1
+Kniepunkt Ek (V) Kern 2
+Kniepunkt Ek (V) Kern 3
+Kniepunkt Ek (V) Kern 4
+Kniepunkt Ek (V) Kern 5
+Kniepunkt Ek (V) Kern 6
+Kniepunkt Ek (V) Kern 7
+Magnetisierungsstrom (mA) Kern 1
+Magnetisierungsstrom (mA) Kern 2
+Magnetisierungsstrom (mA) Kern 3
+Magnetisierungsstrom (mA) Kern 4
+Magnetisierungsstrom (mA) Kern 5
+Magnetisierungsstrom (mA) Kern 6
+Magnetisierungsstrom (mA) Kern 7
+Leistung Kern 1
+Leistung Kern 2
+Leistung Kern 3
+Leistung Kern 4
+Leistung Kern 5
+Leistung Kern 6
+Leistung Kern 7
+Nennstrom primär (A) Kern 1
+Nennstrom primär (A) Kern 2
+Nennstrom primär (A) Kern 3
+Nennstrom primär (A) Kern 4
+Nennstrom primär (A) Kern 5
+Nennstrom primär (A) Kern 6
+Nennstrom primär (A) Kern 7
+Nennstrom sekundär (A) Kern 1
+Nennstrom sekundär (A) Kern 2
+Nennstrom sekundär (A) Kern 3
+Nennstrom sekundär (A) Kern 4
+Nennstrom sekundär (A) Kern 5
+Nennstrom sekundär (A) Kern 6
+Nennstrom sekundär (A) Kern 7
+Sekundärwiderstand (ohm) Kern 1
+Sekundärwiderstand (ohm) Kern 2
+Sekundärwiderstand (ohm) Kern 3
+Sekundärwiderstand (ohm) Kern 4
+Sekundärwiderstand (ohm) Kern 5
+Sekundärwiderstand (ohm) Kern 6
+Sekundärwiderstand (ohm) Kern 7
+Kurzschlußstromfaktor Kern 1
+Kurzschlußstromfaktor Kern 2
+Kurzschlußstromfaktor Kern 3
+Kurzschlußstromfaktor Kern 4
+Kurzschlußstromfaktor Kern 5
+Kurzschlußstromfaktor Kern 6
+Kurzschlußstromfaktor Kern 7
+Bemessungszeitkonstante primär Tp (ms) Kern 1
+Bemessungszeitkonstante primär Tp (ms) Kern 2
+Bemessungszeitkonstante primär Tp (ms) Kern 3
+Bemessungszeitkonstante primär Tp (ms) Kern 4
+Bemessungszeitkonstante primär Tp (ms) Kern 5
+Bemessungszeitkonstante primär Tp (ms) Kern 6
+Bemessungszeitkonstante primär Tp (ms) Kern 7
