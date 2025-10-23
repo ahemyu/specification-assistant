@@ -19,8 +19,6 @@ from models import (
     ExcelTemplateExtractionRequest,
     ExcelTemplateResponse,
     KeyExtractionRequest,
-    KeyExtractionResult,
-    MultipleKeysExtractionRequest,
     QuestionRequest,
 )
 from openpyxl import load_workbook
@@ -231,57 +229,10 @@ async def preview_file(file_id: str):
 
 
 
-#TODO: why do we have two functions for the same fucking thing????????
-@app.post("/extract-key")
-async def extract_key(request: KeyExtractionRequest) -> KeyExtractionResult:
+@app.post("/extract-keys")
+async def extract_keys(request: KeyExtractionRequest) -> dict:
     """
-    Extract a specific key from one or more previously uploaded PDFs using LLM.
-
-    Requires:
-    - file_ids: List of file IDs from previous /upload requests
-    - key_name: The key to extract (e.g., "voltage rating", "manufacturer name")
-    - additional_context (optional): Additional context to help the LLM
-
-    Returns:
-    - KeyExtractionResult with the extracted value and source locations
-    """
-    if not llm_extractor:
-        raise HTTPException(
-            status_code=503,
-            detail="LLM key extraction service is not available. GOOGLE_API_KEY may not be configured."
-        )
-
-    # Load the processed PDF data for each file_id from memory
-    pdf_data_list = []
-    for file_id in request.file_ids:
-        if file_id not in pdf_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"File with ID {file_id} not found. Please upload the file first."
-            )
-
-        pdf_data_list.append(pdf_storage[file_id])
-
-    # Extract the key using LLM
-    try:
-        result = llm_extractor.extract_key(
-            key_name=request.key_name,
-            pdf_data=pdf_data_list,
-            additional_context=request.additional_context or ""
-        )
-        return result
-    except Exception as e:
-        logger.error(f"Error during LLM key extraction: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error during key extraction: {str(e)}"
-        )
-
-
-@app.post("/extract-multiple-keys")
-async def extract_multiple_keys(request: MultipleKeysExtractionRequest) -> dict:
-    """
-    Extract multiple keys from one or more previously uploaded PDFs using LLM.
+    Extract keys from one or more previously uploaded PDFs using LLM.
 
     Requires:
     - file_ids: List of file IDs from previous /upload requests
@@ -310,7 +261,7 @@ async def extract_multiple_keys(request: MultipleKeysExtractionRequest) -> dict:
 
     # Extract all keys using LLM
     try:
-        results = llm_extractor.extract_multiple_keys(
+        results = llm_extractor.extract_keys(
             key_names=request.key_names,
             pdf_data=pdf_data_list,
             additional_context=request.additional_context or ""
@@ -569,7 +520,7 @@ async def extract_keys_from_template(request: ExcelTemplateExtractionRequest) ->
     - additional_context (optional): Additional context for extraction
 
     Returns:
-    - Dictionary of extraction results (same format as /extract-multiple-keys)
+    - Dictionary of extraction results (same format as /extract-keys)
     """
     if not llm_extractor:
         raise HTTPException(
@@ -602,7 +553,7 @@ async def extract_keys_from_template(request: ExcelTemplateExtractionRequest) ->
 
     # Extract all keys using LLM
     try:
-        results = llm_extractor.extract_multiple_keys(
+        results = llm_extractor.extract_keys(
             key_names=keys,
             pdf_data=pdf_data_list,
             additional_context=request.additional_context or ""
@@ -750,8 +701,8 @@ async def download_extraction_excel(request: ExcelDownloadRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Error generating Excel file: {str(e)}"
-        )
 
+        )
 
 if __name__ == "__main__":
     import uvicorn

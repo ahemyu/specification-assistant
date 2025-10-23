@@ -5,14 +5,6 @@ class KeyExtractionRequest(BaseModel):
     """Request model for key extraction endpoint."""
 
     file_ids: list[str]
-    key_name: str
-    additional_context: str | None = None
-
-
-class MultipleKeysExtractionRequest(BaseModel):
-    """Request model for extracting multiple keys."""
-
-    file_ids: list[str]
     key_names: list[str]
     additional_context: str | None = None
 

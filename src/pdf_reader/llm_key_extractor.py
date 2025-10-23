@@ -44,7 +44,7 @@ class LLMKeyExtractor:
         self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
         logger.info(f"Initialized LLM key extractor with model: {model_name}")
 
-    def extract_key(
+    def _extract_key(
         self,
         key_name: str,
         pdf_data: list[dict],
@@ -96,7 +96,7 @@ class LLMKeyExtractor:
             logger.error(f"Error extracting key '{key_name}': {str(e)}")
             raise
 
-    def extract_multiple_keys(
+    def extract_keys(
         self,
         key_names: list[str],
         pdf_data: list[dict],
@@ -116,7 +116,7 @@ class LLMKeyExtractor:
         results = {}
         for key_name in key_names:
             try:
-                results[key_name] = self.extract_key(key_name, pdf_data, additional_context)
+                results[key_name] = self._extract_key(key_name, pdf_data, additional_context)
             except Exception as e:
                 logger.error(f"Failed to extract key '{key_name}': {str(e)}")
                 # Continue with other keys even if one fails

@@ -444,11 +444,7 @@ extractExcelBtn.addEventListener('click', async function() {
         showExtractStatus('Extraction complete! Review results below and download when ready.', 'success');
 
         // Display results with download button
-        // For single key, unwrap the result to match the format expected by displayExtractionResults
-        const dataToDisplay = uploadedTemplateKeys.length === 1
-            ? data[uploadedTemplateKeys[0]]
-            : data;
-        displayExtractionResultsWithDownload(dataToDisplay, uploadedTemplateKeys);
+        displayExtractionResultsWithDownload(data, uploadedTemplateKeys);
 
     } catch (error) {
         extractSpinner.style.display = 'none';
@@ -688,25 +684,16 @@ extractBtn.addEventListener('click', async function() {
     showExtractStatus('Extracting keys using AI...', 'info');
 
     try {
-        const endpoint = keyNames.length === 1 ? '/extract-key' : '/extract-multiple-keys';
-        const requestBody = keyNames.length === 1
-            ? {
-                file_ids: uploadedFileIds,
-                key_name: keyNames[0],
-                additional_context: additionalContext || undefined
-              }
-            : {
-                file_ids: uploadedFileIds,
-                key_names: keyNames,
-                additional_context: additionalContext || undefined
-              };
-
-        const response = await fetch(endpoint, {
+        const response = await fetch('/extract-keys', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                file_ids: uploadedFileIds,
+                key_names: keyNames,
+                additional_context: additionalContext || undefined
+            })
         });
 
         if (!response.ok) {
@@ -720,8 +707,7 @@ extractBtn.addEventListener('click', async function() {
         showExtractStatus(`Successfully extracted ${keyNames.length} key(s)`, 'success');
 
         // Store extraction results for Excel download
-        // For single key, wrap result in a dictionary with the key name
-        extractionResultsData = keyNames.length === 1 ? {[keyNames[0]]: data} : data;
+        extractionResultsData = data;
 
         displayExtractionResults(data, keyNames);
 
@@ -743,14 +729,9 @@ function displayExtractionResults(data, keyNames) {
     let resultsHTML = '<div class="extraction-results-container">';
 
     // Show extraction results for manual mode (display-only, no download)
-
-    if (keyNames.length === 1) {
-        resultsHTML += formatSingleKeyResult(keyNames[0], data);
-    } else {
-        for (const keyName of keyNames) {
-            if (data[keyName]) {
-                resultsHTML += formatSingleKeyResult(keyName, data[keyName]);
-            }
+    for (const keyName of keyNames) {
+        if (data[keyName]) {
+            resultsHTML += formatSingleKeyResult(keyName, data[keyName]);
         }
     }
 
@@ -771,13 +752,9 @@ function displayExtractionResultsWithDownload(data, keyNames) {
     `;
 
     // Show extraction results
-    if (keyNames.length === 1) {
-        resultsHTML += formatSingleKeyResult(keyNames[0], data);
-    } else {
-        for (const keyName of keyNames) {
-            if (data[keyName]) {
-                resultsHTML += formatSingleKeyResult(keyName, data[keyName]);
-            }
+    for (const keyName of keyNames) {
+        if (data[keyName]) {
+            resultsHTML += formatSingleKeyResult(keyName, data[keyName]);
         }
     }
 
