@@ -18,19 +18,17 @@ logger = logging.getLogger(__name__)
 
 def process_single_page(page, page_number: int) -> dict:
     """
-    Process a single PDF page: extract text (excluding tables) and tables separately.
+    Process a single PDF page and format it for LLM consumption.
 
     Args:
         page: pdfplumber Page object
         page_number: 1-based page number
 
     Returns:
-        Dictionary with structured data and formatted text:
+        Dictionary with formatted text ready for LLM:
         {
             "page_number": int,
-            "text": str,
-            "tables": list,
-            "formatted_text": str
+            "text": str (pre-formatted for LLM)
         }
     """
     tables = page.find_tables()
@@ -47,9 +45,9 @@ def process_single_page(page, page_number: int) -> dict:
     # Extract text (excluding tables)
     if tables:
         filtered_page = page.filter(lambda obj: obj['object_type'] != 'char' or not is_char_in_any_table(obj))
-        text = filtered_page.extract_text()
+        raw_text = filtered_page.extract_text()
     else:
-        text = page.extract_text()
+        raw_text = page.extract_text()
 
     # Extract table data
     tables_data = []
@@ -58,49 +56,30 @@ def process_single_page(page, page_number: int) -> dict:
         if table_data:
             tables_data.append(table_data)
 
-    # Build formatted text output
-    output = []
-    output.append("=" * 80)
-    output.append(f"PAGE {page_number}")
-    output.append("=" * 80)
-    output.append("")
-    output.append("-" * 80)
-    output.append("TEXT CONTENT (excluding tables)")
-    output.append("-" * 80)
-    output.append("")
+    # Format everything for LLM consumption right here, once
+    formatted_parts = []
+    formatted_parts.append(f"\n{'='*80}\nPAGE {page_number}\n{'='*80}\n")
 
-    if text and text.strip():
-        output.append(text)
-    else:
-        output.append("[No text content found]")
-
-    output.append("")
-    output.append("-" * 80)
-    output.append("TABLES")
-    output.append("-" * 80)
-    output.append("")
+    if raw_text:
+        formatted_parts.append(f"\n{'-'*80}\nTEXT CONTENT (excluding tables)\n{'-'*80}\n\n")
+        formatted_parts.append(f"{raw_text}\n")
 
     if tables_data:
-        for i, table_data in enumerate(tables_data, 1):
-            output.append(f"Table {i} on Page {page_number}:")
-            output.append("")
-            for row in table_data:
-                output.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
-            output.append("")
-    else:
-        output.append("[No tables found on this page]")
-
-    output.append("")
+        formatted_parts.append(f"\n{'-'*80}\nTABLES\n{'-'*80}\n\n")
+        for i, table in enumerate(tables_data, 1):
+            formatted_parts.append(f"Table {i} on Page {page_number}:\n\n")
+            for row in table:
+                formatted_parts.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
+                formatted_parts.append("\n")
+            formatted_parts.append("\n")
 
     return {
         "page_number": page_number,
-        "text": text if text else "",
-        "tables": tables_data,
-        "formatted_text": "\n".join(output)
+        "text": "".join(formatted_parts)
     }
 
 
-def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: str | None = None) -> dict:
+def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str | None = None) -> dict:
     """
     Process a single PDF file and return structured data as dictionary.
 
@@ -109,7 +88,7 @@ def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: st
         filename: Optional filename for display (used when pdf_source is BytesIO or to override Path name)
 
     Returns:
-        Dictionary with total_pages, filename, and page data
+        Dictionary with total_pages, filename, page data, and pre-formatted LLM text
     """
     # Determine the display name
     if filename:
@@ -124,101 +103,20 @@ def process_single_pdf_to_dict(pdf_source: Union[Path, io.BytesIO], filename: st
         pages_data = []
 
         for i, page in enumerate(pdf.pages, 1):
-            # Extract once, get both structured and formatted data
             page_data = process_single_page(page, i)
             pages_data.append(page_data)
+
+        # Build formatted text for LLM by concatenating pre-formatted pages
+        formatted_parts = []
+        formatted_parts.append(f"{'#'*80}\nDOCUMENT: {display_name}\n{'#'*80}\n")
+        formatted_parts.append(f"\nTotal Pages: {total_pages}\n")
+
+        for page_data in pages_data:
+            formatted_parts.append(page_data["text"])
 
         return {
             "filename": display_name,
             "total_pages": total_pages,
-            "pages": pages_data
+            "pages": pages_data,
+            "formatted_text": "".join(formatted_parts)
         }
-
-
-def dict_to_formatted_text(pdf_data: dict) -> str:
-    """
-    Convert structured PDF data (from process_single_pdf_to_dict) to formatted text.
-
-    Args:
-        pdf_data: Dictionary with filename, total_pages, and pages data
-
-    Returns:
-        Formatted string with entire PDF content
-    """
-    output = []
-
-    output.append("#" * 80)
-    output.append(f"DOCUMENT: {pdf_data['filename']}")
-    output.append("#" * 80)
-    output.append("")
-    output.append(f"Total Pages: {pdf_data['total_pages']}")
-    output.append("")
-
-    # Simply concatenate the pre-formatted page texts
-    for page_data in pdf_data['pages']:
-        output.append(page_data['formatted_text'])
-
-    return "\n".join(output)
-
-
-def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str | None = None) -> str:
-    """
-    Process a single PDF file: extract content from all pages.
-
-    Args:
-        pdf_source: Path to PDF file or BytesIO object
-        filename: Optional filename for display (used when pdf_source is BytesIO)
-
-    Returns:
-        Formatted string with entire PDF content
-    """
-    # Use the dict function and convert to text
-    pdf_data = process_single_pdf_to_dict(pdf_source, filename)
-    return dict_to_formatted_text(pdf_data)
-
-
-def process_pdf_directory(input_dir: str, output_dir: str = "output"):
-    """
-    Process all PDF files in a directory and save extracted content to text files.
-    This can be used if this shall be run as a script locally.
-
-    Args:
-        input_dir: Path to directory containing PDF files
-        output_dir: Path to directory where output text files will be saved
-    """
-    input_path = Path(input_dir)
-    output_path = Path(output_dir)
-
-    if not input_path.exists():
-        logger.error(f"Input directory '{input_dir}' does not exist.")
-        return
-
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    pdf_files = list(input_path.glob("*.pdf"))
-
-    if not pdf_files:
-        logger.warning(f"No PDF files found in '{input_dir}'")
-        return
-
-    logger.info(f"Found {len(pdf_files)} PDF file(s) in '{input_dir}'")
-    logger.info(f"Output will be saved to '{output_dir}'")
-
-    for pdf_file in pdf_files:
-        logger.info(f"Processing: {pdf_file.name}...")
-
-        try:
-            content = process_single_pdf(pdf_file)
-
-            output_filename = pdf_file.stem + ".txt"
-            output_file_path = output_path / output_filename
-
-            with open(output_file_path, "w", encoding="utf-8") as f:
-                f.write(content)
-
-            logger.info(f"Saved to: {output_file_path}")
-
-        except Exception as e:
-            logger.error(f"Error processing {pdf_file.name}: {str(e)}")
-
-    logger.info("Processing complete!")

@@ -24,7 +24,7 @@ from models import (
     QuestionRequest,
 )
 from openpyxl import load_workbook
-from process_pdfs import dict_to_formatted_text, process_single_pdf_to_dict
+from process_pdfs import process_single_pdf
 
 logging.basicConfig(
     level=logging.INFO,
@@ -62,7 +62,7 @@ else:
     logger.warning("GOOGLE_API_KEY not found. LLM key extraction endpoints will not be available.")
 
 
-def process_single_file(file_contents: bytes, filename: str, output_dir: Path) -> dict:
+def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) -> dict:
     """
     Process a single PDF file synchronously.
 
@@ -80,10 +80,10 @@ def process_single_file(file_contents: bytes, filename: str, output_dir: Path) -
         logger.info(f"Processing {filename}...")
 
         # Process PDF from memory
-        pdf_data = process_single_pdf_to_dict(BytesIO(file_contents), filename=filename)
+        pdf_data = process_single_pdf(BytesIO(file_contents), filename=filename)
 
         # Convert structured data to formatted text
-        text_content = dict_to_formatted_text(pdf_data)
+        text_content = pdf_data["formatted_text"]
 
         # Save extracted text to output directory
         safe_filename = filename.replace('.pdf', '.txt')
@@ -149,7 +149,7 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
         tasks = [
             loop.run_in_executor(
                 executor,
-                process_single_file,
+                _process_single_file,
                 file_contents,
                 filename,
                 OUTPUT_DIR
@@ -231,7 +231,7 @@ async def preview_file(file_id: str):
 
 
 
-
+#TODO: why do we have two functions for the same fucking thing????????
 @app.post("/extract-key")
 async def extract_key(request: KeyExtractionRequest) -> KeyExtractionResult:
     """
@@ -406,7 +406,6 @@ async def ask_question_stream(request: QuestionRequest):
             status_code=503,
             detail="LLM service is not available. GOOGLE_API_KEY may not be configured."
         )
-
     # Load the processed PDF data for each file_id from memory
     pdf_data_list = []
     for file_id in request.file_ids:

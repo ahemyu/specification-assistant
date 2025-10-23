@@ -64,33 +64,8 @@ class LLMKeyExtractor:
         """
         logger.info(f"Extracting key '{key_name}' from {len(pdf_data)} PDF(s)")
 
-        # Build the context from all PDFs
-        context_parts = []
-        for pdf in pdf_data:
-            filename = pdf.get("filename", "unknown.pdf")
-            pages = pdf.get("pages", [])
-
-            context_parts.append(f"\n{'='*80}\nDOCUMENT: {filename}\n{'='*80}\n")
-
-            for page_data in pages:
-                page_num = page_data.get("page_number", 0)
-                text = page_data.get("text", "")
-                tables = page_data.get("tables", [])
-
-                context_parts.append(f"\n--- PAGE {page_num} ---\n")
-
-                if text:
-                    context_parts.append(f"Text content:\n{text}\n")
-
-                if tables:
-                    context_parts.append(f"\nTables on page {page_num}:\n")
-                    for i, table in enumerate(tables, 1):
-                        context_parts.append(f"Table {i}:\n")
-                        for row in table:
-                            context_parts.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
-                        context_parts.append("\n")
-
-        full_context = "".join(context_parts)
+        # Use pre-formatted text that was created during PDF processing
+        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
         # Build the prompt
         prompt = f"""
@@ -206,34 +181,8 @@ class LLMKeyExtractor:
             # First message in conversation - create system message with document context
             logger.info("Creating new system message with document context")
 
-            # Build the context from all PDFs
-            context_parts = []
-            for pdf in pdf_data:
-                filename = pdf.get("filename", "unknown.pdf")
-                pages = pdf.get("pages", [])
-
-                context_parts.append(f"\n{'='*80}\nDOCUMENT: {filename}\n{'='*80}\n")
-
-                for page_data in pages:
-                    page_num = page_data.get("page_number", 0)
-                    text = page_data.get("text", "")
-                    tables = page_data.get("tables", [])
-
-                    context_parts.append(f"\n--- PAGE {page_num} ---\n")
-
-                    if text:
-                        context_parts.append(f"Text content:\n{text}\n")
-
-                    if tables:
-                        context_parts.append(f"\nTables on page {page_num}:\n")
-                        for i, table in enumerate(tables, 1):
-                            context_parts.append(f"Table {i}:\n")
-                            for row in table:
-                                row_str = " | ".join([str(cell) if cell is not None else "" for cell in row])
-                                context_parts.append(row_str)
-                            context_parts.append("\n")
-
-            full_context = "".join(context_parts)
+            # Use pre-formatted text that was created during PDF processing
+            full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
             system_content = f"""You are an expert assistant helping users understand technical documents.
                             Below are the contents of one or more PDF documents. Each document includes page numbers.
@@ -291,7 +240,6 @@ class LLMKeyExtractor:
                                       message, None otherwise)
         """
         logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s)")
-
         # Select the appropriate Q&A LLM based on model_name
         qa_llm = self.qa_llm_pro if model_name == "gemini-2.5-pro" else self.qa_llm_flash
         logger.info(f"Using model: {model_name or 'gemini-2.5-flash'}")
@@ -323,34 +271,8 @@ class LLMKeyExtractor:
             # First message in conversation - create system message with document context
             logger.info("Creating new system message with document context")
 
-            # Build the context from all PDFs
-            context_parts = []
-            for pdf in pdf_data:
-                filename = pdf.get("filename", "unknown.pdf")
-                pages = pdf.get("pages", [])
-
-                context_parts.append(f"\n{'='*80}\nDOCUMENT: {filename}\n{'='*80}\n")
-
-                for page_data in pages:
-                    page_num = page_data.get("page_number", 0)
-                    text = page_data.get("text", "")
-                    tables = page_data.get("tables", [])
-
-                    context_parts.append(f"\n--- PAGE {page_num} ---\n")
-
-                    if text:
-                        context_parts.append(f"Text content:\n{text}\n")
-
-                    if tables:
-                        context_parts.append(f"\nTables on page {page_num}:\n")
-                        for i, table in enumerate(tables, 1):
-                            context_parts.append(f"Table {i}:\n")
-                            for row in table:
-                                row_str = " | ".join([str(cell) if cell is not None else "" for cell in row])
-                                context_parts.append(row_str)
-                            context_parts.append("\n")
-
-            full_context = "".join(context_parts)
+            # Use pre-formatted text that was created during PDF processing
+            full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
             system_content = f"""You are an expert assistant helping users understand technical documents.
                             Below are the contents of one or more PDF documents. Each document includes page numbers.
