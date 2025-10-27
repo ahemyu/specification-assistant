@@ -1,4 +1,5 @@
 """LLM-based key extraction service using LangChain and Google Gemini."""
+import asyncio
 import logging
 import sys
 from pathlib import Path
@@ -50,14 +51,14 @@ class LLMKeyExtractor:
         self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
         logger.info(f"Initialized LLM key extractor with model: {model_name}")
 
-    def _extract_key(
+    async def _extract_key(
         self,
         key_name: str,
         pdf_data: list[dict],
         additional_context: str = ""
     ) -> KeyExtractionResult:
         """
-        Extract a specific key from one or more processed PDFs.
+        Extract a specific key from one or more processed PDFs asynchronously.
 
         Args:
             key_name: The name of the key to extract (e.g., "voltage rating", "manufacturer")
@@ -95,21 +96,21 @@ class LLMKeyExtractor:
                 Now extract the key "{key_name}" and provide the structured output."""
 
         try:
-            result = self.structured_llm.invoke(prompt)
+            result = await self.structured_llm.ainvoke(prompt)
             logger.info(f"Successfully extracted key '{key_name}'")
             return result
         except Exception as e:
             logger.error(f"Error extracting key '{key_name}': {str(e)}")
             raise
 
-    def extract_keys(
+    async def extract_keys(
         self,
         key_names: list[str],
         pdf_data: list[dict],
         additional_context: str = ""
     ) -> dict:
         """
-        Extract multiple keys from the same PDF data.
+        Extract multiple keys from the same PDF data asynchronously in parallel.
 
         Args:
             key_names: List of key names to extract
@@ -119,14 +120,25 @@ class LLMKeyExtractor:
         Returns:
             Dictionary mapping key names to their extraction results
         """
-        results = {}
-        for key_name in key_names:
+        logger.info(f"Starting parallel extraction of {len(key_names)} keys")
+
+        # Create a task for each key extraction
+        async def extract_with_error_handling(key_name: str):
             try:
-                results[key_name] = self._extract_key(key_name, pdf_data, additional_context)
+                return key_name, await self._extract_key(key_name, pdf_data, additional_context)
             except Exception as e:
                 logger.error(f"Failed to extract key '{key_name}': {str(e)}")
-                # Continue with other keys even if one fails
-                results[key_name] = None
+                # Return None for failed extractions
+                return key_name, None
+
+        # Execute all extractions in parallel
+        extraction_results = await asyncio.gather(
+            *[extract_with_error_handling(key_name) for key_name in key_names]
+        )
+
+        # Convert list of tuples to dictionary
+        results = dict(extraction_results)
+        logger.info(f"Completed parallel extraction of {len(key_names)} keys")
 
         return results
 
