@@ -1045,15 +1045,15 @@ async function downloadFilledExcel() {
 }
 
 function formatSingleKeyResult(keyName, result) {
-    const value = result.key_value || 'Not found';
-    const description = result.description || 'No description available';
-    const locations = result.source_locations || [];
+    const value = (result && result.key_value) ?? 'Not found';
+    const description = (result && result.description) ?? 'No description available';
+    const locations = (result && result.source_locations) || [];
 
     let locationsHTML = '';
     if (locations.length > 0) {
         locationsHTML = '<div class="source-locations"><strong>Found in:</strong><ul>';
         for (const loc of locations) {
-            const pages = loc.page_numbers.join(', ');
+            const pages = (loc.page_numbers || []).join(', ');
             locationsHTML += `<li>${loc.pdf_filename} - Page(s): ${pages}</li>`;
         }
         locationsHTML += '</ul></div>';
