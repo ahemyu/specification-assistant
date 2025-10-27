@@ -856,6 +856,15 @@ function showExtractStatus(message, type) {
 function displayExtractionResults(data, keyNames) {
     let resultsHTML = '<div class="extraction-results-container">';
 
+    // Add download button at the top for manual input mode
+    resultsHTML += `
+        <div class="download-excel-section">
+            <button class="download-excel-btn" id="downloadManualExcelBtn">
+                Download as Excel
+            </button>
+        </div>
+    `;
+
     // Add View Results button
     resultsHTML += `
         <button class="view-results-btn" id="viewResultsBtn">
@@ -866,7 +875,13 @@ function displayExtractionResults(data, keyNames) {
     resultsHTML += '</div>';
     extractionResults.innerHTML = resultsHTML;
 
-    // Add event listener for the button
+    // Add event listener for download button
+    const downloadManualExcelBtn = document.getElementById('downloadManualExcelBtn');
+    if (downloadManualExcelBtn) {
+        downloadManualExcelBtn.addEventListener('click', downloadExtractionExcel);
+    }
+
+    // Add event listener for view results button
     const viewResultsBtn = document.getElementById('viewResultsBtn');
     if (viewResultsBtn) {
         viewResultsBtn.addEventListener('click', function() {

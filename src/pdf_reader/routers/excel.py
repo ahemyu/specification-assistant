@@ -24,6 +24,7 @@ async def upload_excel_template(file: UploadFile = File(...)) -> ExcelTemplateRe
 
     The 'Key' column should be filled with keys to extract.
     The 'Value' column should be empty (will be filled by LLM).
+    'Description' and 'Reference' columns will be automatically added with extraction details.
 
     Returns:
     - template_id: Unique ID for this template
@@ -160,17 +161,46 @@ async def extract_keys_from_template(
         headers = [cell.value for cell in sheet[1]]
         value_col_index = headers.index("Value") + 1
 
-        # Fill in the Value column
+        # Check if Description column exists, if not add it
+        if "Description" not in headers:
+            desc_col_index = len(headers) + 1
+            sheet.cell(row=1, column=desc_col_index, value="Description")
+        else:
+            desc_col_index = headers.index("Description") + 1
+
+        # Check if Reference column exists, if not add it
+        if "Reference" not in headers:
+            ref_col_index = desc_col_index + 1
+            sheet.cell(row=1, column=ref_col_index, value="Reference")
+        else:
+            ref_col_index = headers.index("Reference") + 1
+
+        # Fill in the Value, Description, and Reference columns
         current_row = 2  # Start after header
         for key in keys:
             result = results.get(key)
             if result:
                 value = result.key_value if result.key_value else "Not found"
+                description = result.description if result.description else "No description"
+
+                # Format references
+                if result.source_locations:
+                    references = []
+                    for source in result.source_locations:
+                        pages_str = ", ".join(map(str, source.page_numbers))
+                        references.append(f"{source.pdf_filename} (Pages: {pages_str})")
+                    reference = "; ".join(references)
+                else:
+                    reference = "No reference"
             else:
                 value = "Extraction failed"
+                description = "Extraction failed"
+                reference = "Extraction failed"
 
-            # Write value to the Value column
+            # Write value, description, and reference to the respective columns
             sheet.cell(row=current_row, column=value_col_index, value=value)
+            sheet.cell(row=current_row, column=desc_col_index, value=description)
+            sheet.cell(row=current_row, column=ref_col_index, value=reference)
             current_row += 1
 
         # Save filled Excel to storage for later download
@@ -238,13 +268,13 @@ async def download_filled_excel(template_id: str):
 @router.post("/download-extraction-excel")
 async def download_extraction_excel(request: ExcelDownloadRequest):
     """
-    Download extraction results as an Excel file with two columns: Key and Value.
+    Download extraction results as an Excel file with four columns: Key, Value, Description, and Reference.
 
     Requires:
     - extraction_results: Dictionary mapping key names to their extraction results
 
     Returns:
-    - Excel file (.xlsx) with extracted key-value pairs
+    - Excel file (.xlsx) with extracted key-value pairs, descriptions, and references
     """
     try:
         # Prepare data for Excel
@@ -255,20 +285,46 @@ async def download_extraction_excel(request: ExcelDownloadRequest):
             if result is None:
                 data_rows.append({
                     "Key": key_name,
-                    "Value": "Extraction failed"
+                    "Value": "Extraction failed",
+                    "Description": "Extraction failed",
+                    "Reference": "Extraction failed"
                 })
                 continue
 
-            # Extract value from result
+            # Extract value and description from result
             # Handle both single key results and multiple key results
             if isinstance(result, dict):
                 key_value = result.get("key_value", "Not found")
+                description = result.get("description", "No description")
+                source_locations = result.get("source_locations", [])
             else:
                 key_value = getattr(result, "key_value", "Not found")
+                description = getattr(result, "description", "No description")
+                source_locations = getattr(result, "source_locations", [])
+
+            # Format references
+            if source_locations:
+                references = []
+                for source in source_locations:
+                    # Handle both dict and object source formats
+                    if isinstance(source, dict):
+                        pdf_filename = source.get("pdf_filename", "Unknown")
+                        page_numbers = source.get("page_numbers", [])
+                    else:
+                        pdf_filename = getattr(source, "pdf_filename", "Unknown")
+                        page_numbers = getattr(source, "page_numbers", [])
+
+                    pages_str = ", ".join(map(str, page_numbers))
+                    references.append(f"{pdf_filename} (Pages: {pages_str})")
+                reference = "; ".join(references)
+            else:
+                reference = "No reference"
 
             data_rows.append({
                 "Key": key_name,
-                "Value": key_value if key_value is not None else "Not found"
+                "Value": key_value if key_value is not None else "Not found",
+                "Description": description,
+                "Reference": reference
             })
 
         # Create DataFrame
