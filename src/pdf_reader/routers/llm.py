@@ -42,9 +42,9 @@ async def extract_keys(
 
         pdf_data_list.append(pdf_storage[file_id])
 
-    # Extract all keys using LLM
+    # Extract all keys using LLM (now parallelized)
     try:
-        results = llm_extractor.extract_keys(
+        results = await llm_extractor.extract_keys(
             key_names=request.key_names,
             pdf_data=pdf_data_list,
             additional_context=request.additional_context or ""
