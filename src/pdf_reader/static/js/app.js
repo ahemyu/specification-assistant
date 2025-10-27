@@ -51,6 +51,15 @@ const previewFilename = document.getElementById('previewFilename');
 const previewSize = document.getElementById('previewSize');
 const previewContent = document.getElementById('previewContent');
 
+// Carousel modal elements
+const resultsCarouselModal = document.getElementById('resultsCarouselModal');
+const closeCarousel = document.getElementById('closeCarousel');
+const carouselCard = document.getElementById('carouselCard');
+const prevCardBtn = document.getElementById('prevCardBtn');
+const nextCardBtn = document.getElementById('nextCardBtn');
+const currentCardNumber = document.getElementById('currentCardNumber');
+const totalCards = document.getElementById('totalCards');
+
 let uploadedFileIds = [];
 let processedFiles = [];
 let extractionResultsData = null;
@@ -58,6 +67,11 @@ let currentExtractionMode = 'excel'; // 'excel' or 'manual'
 let uploadedTemplateId = null;
 let uploadedTemplateKeys = [];
 let allUploadedFiles = []; // Track all files across multiple uploads
+
+// Carousel state
+let carouselResults = [];
+let carouselKeyNames = [];
+let currentCardIndex = 0;
 
 // Chat history management
 let conversationHistory = [];
@@ -842,15 +856,23 @@ function showExtractStatus(message, type) {
 function displayExtractionResults(data, keyNames) {
     let resultsHTML = '<div class="extraction-results-container">';
 
-    // Show extraction results for manual mode (display-only, no download)
-    for (const keyName of keyNames) {
-        if (data[keyName]) {
-            resultsHTML += formatSingleKeyResult(keyName, data[keyName]);
-        }
-    }
+    // Add View Results button
+    resultsHTML += `
+        <button class="view-results-btn" id="viewResultsBtn">
+            View Extraction Results
+        </button>
+    `;
 
     resultsHTML += '</div>';
     extractionResults.innerHTML = resultsHTML;
+
+    // Add event listener for the button
+    const viewResultsBtn = document.getElementById('viewResultsBtn');
+    if (viewResultsBtn) {
+        viewResultsBtn.addEventListener('click', function() {
+            openResultsCarousel(data, keyNames);
+        });
+    }
 }
 
 function displayExtractionResultsWithDownload(data, keyNames) {
@@ -859,21 +881,34 @@ function displayExtractionResultsWithDownload(data, keyNames) {
     // Add download button at the top for Excel template mode
     resultsHTML += `
         <div class="download-excel-section">
-            <button class="download-excel-btn" onclick="downloadFilledExcel()">
+            <button class="download-excel-btn" id="downloadExcelBtn">
                 Download Filled Excel
             </button>
         </div>
     `;
 
-    // Show extraction results
-    for (const keyName of keyNames) {
-        if (data[keyName]) {
-            resultsHTML += formatSingleKeyResult(keyName, data[keyName]);
-        }
-    }
+    // Add View Results button
+    resultsHTML += `
+        <button class="view-results-btn" id="viewResultsExcelBtn">
+            View Extraction Results
+        </button>
+    `;
 
     resultsHTML += '</div>';
     extractionResults.innerHTML = resultsHTML;
+
+    // Add event listeners for the buttons
+    const downloadExcelBtn = document.getElementById('downloadExcelBtn');
+    if (downloadExcelBtn) {
+        downloadExcelBtn.addEventListener('click', downloadFilledExcel);
+    }
+
+    const viewResultsExcelBtn = document.getElementById('viewResultsExcelBtn');
+    if (viewResultsExcelBtn) {
+        viewResultsExcelBtn.addEventListener('click', function() {
+            openResultsCarousel(data, keyNames);
+        });
+    }
 }
 
 async function downloadFilledExcel() {
@@ -1040,3 +1075,95 @@ async function downloadExtractionExcel() {
         showExtractStatus(`Error downloading Excel: ${error.message}`, 'error');
     }
 }
+
+// Carousel functions
+function openResultsCarousel(data, keyNames) {
+    carouselResults = data;
+    carouselKeyNames = keyNames;
+    currentCardIndex = 0;
+
+    totalCards.textContent = keyNames.length;
+    showCarouselCard(0);
+    updateCarouselNavButtons();
+
+    resultsCarouselModal.classList.add('show');
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+}
+
+function showCarouselCard(index, direction = 'none') {
+    if (index < 0 || index >= carouselKeyNames.length) return;
+
+    currentCardIndex = index;
+    const keyName = carouselKeyNames[index];
+    const result = carouselResults[keyName];
+
+    // Add animation class based on direction
+    if (direction !== 'none') {
+        carouselCard.classList.add(direction === 'next' ? 'slide-out-left' : 'slide-out-right');
+
+        setTimeout(() => {
+            carouselCard.innerHTML = formatSingleKeyResult(keyName, result);
+            carouselCard.classList.remove('slide-out-left', 'slide-out-right');
+            carouselCard.classList.add(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
+
+            setTimeout(() => {
+                carouselCard.classList.remove('slide-in-left', 'slide-in-right');
+            }, 300);
+        }, 300);
+    } else {
+        carouselCard.innerHTML = formatSingleKeyResult(keyName, result);
+    }
+
+    currentCardNumber.textContent = index + 1;
+    updateCarouselNavButtons();
+}
+
+function updateCarouselNavButtons() {
+    prevCardBtn.disabled = currentCardIndex === 0;
+    nextCardBtn.disabled = currentCardIndex === carouselKeyNames.length - 1;
+}
+
+function nextCard() {
+    if (currentCardIndex < carouselKeyNames.length - 1) {
+        showCarouselCard(currentCardIndex + 1, 'next');
+    }
+}
+
+function prevCard() {
+    if (currentCardIndex > 0) {
+        showCarouselCard(currentCardIndex - 1, 'prev');
+    }
+}
+
+function closeResultsCarousel() {
+    resultsCarouselModal.classList.remove('show');
+    document.body.style.overflow = ''; // Restore scrolling
+}
+
+// Carousel event listeners
+closeCarousel.addEventListener('click', closeResultsCarousel);
+
+prevCardBtn.addEventListener('click', prevCard);
+
+nextCardBtn.addEventListener('click', nextCard);
+
+resultsCarouselModal.addEventListener('click', function(e) {
+    if (e.target === resultsCarouselModal) {
+        closeResultsCarousel();
+    }
+});
+
+// Keyboard navigation for carousel
+document.addEventListener('keydown', function(e) {
+    if (resultsCarouselModal.classList.contains('show')) {
+        if (e.key === 'ArrowLeft') {
+            e.preventDefault();
+            prevCard();
+        } else if (e.key === 'ArrowRight') {
+            e.preventDefault();
+            nextCard();
+        } else if (e.key === 'Escape') {
+            closeResultsCarousel();
+        }
+    }
+});
