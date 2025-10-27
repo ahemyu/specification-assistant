@@ -190,6 +190,39 @@
         </div>
     </div>
 
+    <!-- Results Carousel Modal -->
+    <div id="resultsCarouselModal" class="modal">
+        <div class="carousel-modal-content">
+            <div class="carousel-modal-header">
+                <h2 id="carouselTitle">Extraction Results</h2>
+                <div class="carousel-counter">
+                    <span id="currentCardNumber">1</span> / <span id="totalCards">1</span>
+                </div>
+                <button class="modal-close" id="closeCarousel" aria-label="Close results">&times;</button>
+            </div>
+            <div class="carousel-body">
+                <button class="carousel-nav-btn carousel-prev" id="prevCardBtn" aria-label="Previous result">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                <div class="carousel-card-container">
+                    <div class="carousel-card" id="carouselCard">
+                        <!-- Card content will be inserted here -->
+                    </div>
+                </div>
+                <button class="carousel-nav-btn carousel-next" id="nextCardBtn" aria-label="Next result">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            <div class="carousel-keyboard-hint">
+                Use arrow keys to navigate or press ESC to close
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/marked@16.4.1/lib/marked.umd.min.js"></script>
     <script src="/static/js/app.js"></script>
 </body>
