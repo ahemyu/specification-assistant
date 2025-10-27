@@ -1321,6 +1321,31 @@ h1 {
     flex-wrap: wrap;
 }
 
+/* Delete button styling */
+.delete-btn {
+    display: inline-block;
+    padding: 10px 24px;
+    background: #ffffff;
+    color: #c53030;
+    border: 2px solid #fc8181;
+    border-radius: 20px;
+    cursor: pointer;
+    margin-top: 16px;
+    margin-right: 12px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 0.95em;
+    box-shadow: 0 4px 12px rgba(252, 129, 129, 0.25);
+}
+
+.delete-btn:hover {
+    background: #c53030;
+    color: white;
+    border-color: #c53030;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(197, 48, 48, 0.35);
+}
+
 /* Excel download button styles */
 .download-excel-section {
     margin: 0 0 32px 0;

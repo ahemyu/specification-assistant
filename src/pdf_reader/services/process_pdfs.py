@@ -99,9 +99,8 @@ def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str | None
         display_name = "document.pdf"
 
     with pdfplumber.open(pdf_source) as pdf:
-        total_pages = len(pdf.pages)
         pages_data = []
-
+        total_pages = len(pdf.pages)
         for i, page in enumerate(pdf.pages, 1):
             page_data = process_single_page(page, i)
             pages_data.append(page_data)

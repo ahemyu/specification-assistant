@@ -63,6 +63,9 @@ let allUploadedFiles = []; // Track all files across multiple uploads
 let conversationHistory = [];
 const CHAT_STORAGE_KEY = 'specification_assistant_chat_history';
 
+// PDF storage management
+const PDF_STORAGE_KEY = 'specification_assistant_uploaded_pdfs';
+
 // Load chat history from localStorage on page load
 function loadChatHistory() {
     try {
@@ -104,6 +107,54 @@ function removeChatWelcome() {
     if (welcome) {
         welcome.remove();
     }
+}
+
+// Save PDF state to localStorage
+function savePdfState() {
+    try {
+        const pdfState = {
+            uploadedFileIds,
+            processedFiles,
+            allUploadedFiles
+        };
+        localStorage.setItem(PDF_STORAGE_KEY, JSON.stringify(pdfState));
+    } catch (error) {
+        console.error('Error saving PDF state:', error);
+    }
+}
+
+// Load PDF state from localStorage
+function loadPdfState() {
+    try {
+        const stored = localStorage.getItem(PDF_STORAGE_KEY);
+        if (stored) {
+            const pdfState = JSON.parse(stored);
+            uploadedFileIds = pdfState.uploadedFileIds || [];
+            processedFiles = pdfState.processedFiles || [];
+            allUploadedFiles = pdfState.allUploadedFiles || [];
+
+            if (allUploadedFiles.length > 0) {
+                displayResults(allUploadedFiles);
+                showStatus(`Restored ${allUploadedFiles.length} previously uploaded PDF(s)`, 'success');
+                enableMainTabs();
+            }
+        }
+    } catch (error) {
+        console.error('Error loading PDF state:', error);
+        uploadedFileIds = [];
+        processedFiles = [];
+        allUploadedFiles = [];
+    }
+}
+
+// Clear PDF state
+function clearPdfState() {
+    uploadedFileIds = [];
+    processedFiles = [];
+    allUploadedFiles = [];
+    localStorage.removeItem(PDF_STORAGE_KEY);
+    resultsDiv.innerHTML = '';
+    statusDiv.style.display = 'none';
 }
 
 // Append a message to the chat
@@ -270,6 +321,9 @@ uploadBtn.addEventListener('click', async function() {
 
         spinner.style.display = 'none';
 
+        // Clear chat history when new files are uploaded
+        clearChatHistory();
+
         // Add new files to the cumulative list
         uploadedFileIds.push(...data.processed.map(p => p.file_id));
         processedFiles.push(...data.processed);
@@ -278,6 +332,9 @@ uploadBtn.addEventListener('click', async function() {
         showStatus(`Successfully processed ${data.processed.length} PDF(s). Total PDFs: ${uploadedFileIds.length}`, 'success');
 
         displayResults(allUploadedFiles);
+
+        // Save PDF state to localStorage
+        savePdfState();
 
         // Enable Extract Keys and Ask Questions tabs after first successful upload
         if (uploadedFileIds.length > 0) {
@@ -307,16 +364,70 @@ function showStatus(message, type) {
 
 function displayResults(results) {
     resultsDiv.innerHTML = results.map(result => `
-        <div class="result-item">
+        <div class="result-item" data-file-id="${result.file_id}">
             <h3>${result.filename}</h3>
             <p><strong>Pages:</strong> ${result.total_pages}</p>
             <p><strong>File ID:</strong> ${result.file_id}</p>
             <div class="result-actions">
                 <button class="preview-btn" onclick="openPreview('${result.file_id}', '${result.filename}')">Preview Text</button>
                 <a href="/download/${result.file_id}" class="download-btn" download>Download Text File</a>
+                <button class="delete-btn" onclick="deleteFile('${result.file_id}')">Delete</button>
             </div>
         </div>
     `).join('');
+}
+
+// Delete a file from the uploaded files list
+async function deleteFile(fileId) {
+    if (!confirm('Are you sure you want to delete this file?')) {
+        return;
+    }
+
+    try {
+        // Remove from backend storage
+        const response = await fetch(`/delete-pdf/${fileId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to delete file: ${response.status}`);
+        }
+
+        // Remove from frontend arrays
+        uploadedFileIds = uploadedFileIds.filter(id => id !== fileId);
+        processedFiles = processedFiles.filter(f => f.file_id !== fileId);
+        allUploadedFiles = allUploadedFiles.filter(f => f.file_id !== fileId);
+
+        // Update localStorage
+        savePdfState();
+
+        // Update display
+        displayResults(allUploadedFiles);
+
+        // Clear chat history when deleting files
+        clearChatHistory();
+
+        // Update status
+        if (allUploadedFiles.length === 0) {
+            showStatus('All files deleted', 'info');
+            // Disable tabs if no files remain
+            const extractTab = document.querySelector('[data-tab="extract"]');
+            const qaTab = document.querySelector('[data-tab="qa"]');
+            if (extractTab) {
+                extractTab.classList.add('disabled');
+            }
+            if (qaTab) {
+                qaTab.classList.add('disabled');
+            }
+            // Switch back to upload tab
+            switchMainTab('upload');
+        } else {
+            showStatus(`File deleted. ${allUploadedFiles.length} file(s) remaining`, 'success');
+        }
+
+    } catch (error) {
+        showStatus(`Error deleting file: ${error.message}`, 'error');
+    }
 }
 
 // Tab switching functionality
@@ -655,8 +766,11 @@ clearChatBtn.addEventListener('click', function() {
     }
 });
 
-// Load chat history when page loads
-window.addEventListener('DOMContentLoaded', loadChatHistory);
+// Load chat history and PDF state when page loads
+window.addEventListener('DOMContentLoaded', () => {
+    loadChatHistory();
+    loadPdfState();
+});
 
 extractBtn.addEventListener('click', async function() {
     const keysText = keyInput.value.trim();

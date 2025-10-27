@@ -23,7 +23,7 @@ uv sync
 
 ```bash
 # From project root, activate the virtual environment and run
-uv run python src/pdf_reader/api.py
+uv run src/pdf_reader/api.py
 ```
 
 Or with uvicorn directly:

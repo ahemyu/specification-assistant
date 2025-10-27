@@ -177,3 +177,37 @@ async def preview_file(file_id: str):
             status_code=500,
             detail=f"Error reading file: {str(e)}"
         )
+
+
+@router.delete("/delete-pdf/{file_id}")
+async def delete_pdf(file_id: str):
+    """
+    Delete a PDF from storage (both the text file and in-memory data).
+
+    Args:
+        file_id: The ID of the file to delete
+
+    Returns:
+        Success message
+    """
+    pdf_storage = get_pdf_storage()
+
+    # Remove from in-memory storage
+    if file_id in pdf_storage:
+        del pdf_storage[file_id]
+        logger.info(f"Removed {file_id} from in-memory storage")
+
+    # Remove the text file from disk
+    file_path = OUTPUT_DIR / f"{file_id}.txt"
+    if file_path.exists():
+        try:
+            file_path.unlink()
+            logger.info(f"Deleted file {file_path}")
+        except Exception as e:
+            logger.error(f"Error deleting file {file_path}: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail=f"Error deleting file: {str(e)}"
+            )
+
+    return {"message": f"File {file_id} deleted successfully"}
