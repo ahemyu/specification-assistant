@@ -1188,22 +1188,8 @@ function showCarouselCard(index, direction = 'none') {
     const keyName = carouselKeyNames[index];
     const result = carouselResults[keyName];
 
-    // Add animation class based on direction
-    if (direction !== 'none') {
-        carouselCard.classList.add(direction === 'next' ? 'slide-out-left' : 'slide-out-right');
-
-        setTimeout(() => {
-            carouselCard.innerHTML = formatSingleKeyResult(keyName, result);
-            carouselCard.classList.remove('slide-out-left', 'slide-out-right');
-            carouselCard.classList.add(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
-
-            setTimeout(() => {
-                carouselCard.classList.remove('slide-in-left', 'slide-in-right');
-            }, 300);
-        }, 300);
-    } else {
-        carouselCard.innerHTML = formatSingleKeyResult(keyName, result);
-    }
+    // Render instantly without any animation for faster navigation
+    carouselCard.innerHTML = formatSingleKeyResult(keyName, result);
 
     currentCardNumber.textContent = index + 1;
     updateCarouselNavButtons();
