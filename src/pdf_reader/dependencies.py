@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 OUTPUT_DIR = Path("output")
 OUTPUT_DIR.mkdir(exist_ok=True)
 
+# Directory for storing uploaded PDF files persistently
+UPLOADED_PDFS_DIR = Path("uploaded_pdfs")
+UPLOADED_PDFS_DIR.mkdir(exist_ok=True)
+
 # In-memory storage for processed PDF data
 # Key: file_id, Value: processed pdf_data dict from process_single_pdf
 pdf_storage: dict[str, dict] = {}
@@ -52,3 +56,44 @@ def get_pdf_storage() -> dict[str, dict]:
 def get_excel_storage() -> dict[str, dict]:
     """Dependency to get the Excel template storage."""
     return excel_template_storage
+
+
+def load_existing_pdfs() -> None:
+    """
+    Load existing PDF files from disk on startup and populate pdf_storage.
+    This ensures PDFs persist across app restarts.
+    """
+    from services.process_pdfs import process_single_pdf
+
+    logger.info("Loading existing PDFs from disk...")
+    loaded_count = 0
+
+    # Check for existing PDF files
+    if not UPLOADED_PDFS_DIR.exists():
+        logger.info("No uploaded PDFs directory found")
+        return
+
+    pdf_files = list(UPLOADED_PDFS_DIR.glob("*.pdf"))
+
+    if not pdf_files:
+        logger.info("No existing PDFs found")
+        return
+
+    for pdf_file in pdf_files:
+        try:
+            # Process the PDF
+            pdf_data = process_single_pdf(pdf_file, filename=pdf_file.name)
+
+            # Use the file stem (filename without extension) as file_id
+            file_id = pdf_file.stem
+
+            # Store in memory
+            pdf_storage[file_id] = pdf_data
+
+            loaded_count += 1
+            logger.info(f"Loaded {pdf_file.name} with file_id: {file_id}")
+
+        except Exception as e:
+            logger.error(f"Error loading {pdf_file.name}: {str(e)}")
+
+    logger.info(f"Successfully loaded {loaded_count} PDF(s) from disk")

@@ -6,7 +6,7 @@ from concurrent.futures import ProcessPoolExecutor
 from io import BytesIO
 from pathlib import Path
 
-from dependencies import OUTPUT_DIR, get_pdf_storage
+from dependencies import OUTPUT_DIR, UPLOADED_PDFS_DIR, get_pdf_storage
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from services.process_pdfs import process_single_pdf
@@ -70,6 +70,7 @@ def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) 
 async def upload_pdfs(files: list[UploadFile] = File(...)):
     """
     Upload and process multiple PDF files in-memory with parallel processing.
+    Also saves the original PDF files to disk for persistence across restarts.
 
     Returns JSON with extracted content and file IDs for download.
     """
@@ -85,6 +86,22 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
             continue
 
         contents = await file.read()
+
+        # Save the original PDF file to disk for persistence
+        try:
+            # Create a safe filename based on the original name
+            safe_filename = file.filename.replace('.pdf', '') + '.pdf'
+            pdf_file_path = UPLOADED_PDFS_DIR / safe_filename
+
+            with open(pdf_file_path, 'wb') as f:
+                f.write(contents)
+
+            logger.info(f"Saved PDF file to {pdf_file_path}")
+        except Exception as e:
+            logger.error(f"Error saving PDF file {file.filename}: {str(e)}")
+            failed.append(f"{file.filename} (error saving to disk)")
+            continue
+
         valid_files.append((contents, file.filename))
 
     if not valid_files:
@@ -182,7 +199,7 @@ async def preview_file(file_id: str):
 @router.delete("/delete-pdf/{file_id}")
 async def delete_pdf(file_id: str):
     """
-    Delete a PDF from storage (both the text file and in-memory data).
+    Delete a PDF from storage (text file, original PDF, and in-memory data).
 
     Args:
         file_id: The ID of the file to delete
@@ -198,16 +215,26 @@ async def delete_pdf(file_id: str):
         logger.info(f"Removed {file_id} from in-memory storage")
 
     # Remove the text file from disk
-    file_path = OUTPUT_DIR / f"{file_id}.txt"
-    if file_path.exists():
+    text_file_path = OUTPUT_DIR / f"{file_id}.txt"
+    if text_file_path.exists():
         try:
-            file_path.unlink()
-            logger.info(f"Deleted file {file_path}")
+            text_file_path.unlink()
+            logger.info(f"Deleted text file {text_file_path}")
         except Exception as e:
-            logger.error(f"Error deleting file {file_path}: {str(e)}")
+            logger.error(f"Error deleting text file {text_file_path}: {str(e)}")
             raise HTTPException(
                 status_code=500,
-                detail=f"Error deleting file: {str(e)}"
+                detail=f"Error deleting text file: {str(e)}"
             )
+
+    # Remove the original PDF file from disk
+    pdf_file_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
+    if pdf_file_path.exists():
+        try:
+            pdf_file_path.unlink()
+            logger.info(f"Deleted PDF file {pdf_file_path}")
+        except Exception as e:
+            logger.error(f"Error deleting PDF file {pdf_file_path}: {str(e)}")
+            # Don't raise exception here, just log the error
 
     return {"message": f"File {file_id} deleted successfully"}

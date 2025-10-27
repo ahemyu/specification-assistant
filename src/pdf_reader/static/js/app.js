@@ -3,6 +3,8 @@ const selectedFilesDiv = document.getElementById('selectedFiles');
 const uploadBtn = document.getElementById('uploadBtn');
 const statusDiv = document.getElementById('status');
 const resultsDiv = document.getElementById('results');
+const resultsHeader = document.getElementById('resultsHeader');
+const deleteAllBtn = document.getElementById('deleteAllBtn');
 const spinner = document.getElementById('spinner');
 
 // Main view elements
@@ -377,6 +379,12 @@ function showStatus(message, type) {
 }
 
 function displayResults(results) {
+    if (results.length > 0) {
+        resultsHeader.style.display = 'flex';
+    } else {
+        resultsHeader.style.display = 'none';
+    }
+
     resultsDiv.innerHTML = results.map(result => `
         <div class="result-item" data-file-id="${result.file_id}">
             <h3>${result.filename}</h3>
@@ -443,6 +451,74 @@ async function deleteFile(fileId) {
         showStatus(`Error deleting file: ${error.message}`, 'error');
     }
 }
+
+// Delete all uploaded files
+async function deleteAllFiles() {
+    if (allUploadedFiles.length === 0) {
+        showStatus('No files to delete', 'info');
+        return;
+    }
+
+    if (!confirm(`Are you sure you want to delete all ${allUploadedFiles.length} file(s)? This action cannot be undone.`)) {
+        return;
+    }
+
+    const fileCount = allUploadedFiles.length;
+    const fileIds = [...uploadedFileIds];
+
+    try {
+        // Delete all files from backend
+        const deletePromises = fileIds.map(fileId =>
+            fetch(`/delete-pdf/${fileId}`, { method: 'DELETE' })
+        );
+
+        const results = await Promise.all(deletePromises);
+
+        // Check if all deletions were successful
+        const failedDeletions = results.filter(r => !r.ok);
+        if (failedDeletions.length > 0) {
+            throw new Error(`Failed to delete ${failedDeletions.length} file(s)`);
+        }
+
+        // Clear all frontend state
+        uploadedFileIds = [];
+        processedFiles = [];
+        allUploadedFiles = [];
+
+        // Clear localStorage
+        clearPdfState();
+
+        // Clear chat history
+        clearChatHistory();
+
+        // Update display
+        resultsDiv.innerHTML = '';
+        resultsHeader.style.display = 'none';
+
+        // Disable tabs
+        const extractTab = document.querySelector('[data-tab="extract"]');
+        const qaTab = document.querySelector('[data-tab="qa"]');
+        if (extractTab) {
+            extractTab.classList.add('disabled');
+        }
+        if (qaTab) {
+            qaTab.classList.add('disabled');
+        }
+
+        // Switch back to upload tab
+        switchMainTab('upload');
+
+        showStatus(`Successfully deleted all ${fileCount} file(s)`, 'success');
+
+    } catch (error) {
+        showStatus(`Error deleting files: ${error.message}`, 'error');
+        // Reload state in case of partial failure
+        loadPdfState();
+    }
+}
+
+// Add event listener for delete all button
+deleteAllBtn.addEventListener('click', deleteAllFiles);
 
 // Tab switching functionality
 excelTab.addEventListener('click', function() {
