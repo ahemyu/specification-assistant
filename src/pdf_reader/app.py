@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 
 from dependencies import load_existing_pdfs
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from routers import excel, llm, pdf
@@ -29,6 +30,15 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
+
+# Configure CORS for separate frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Svelte dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")

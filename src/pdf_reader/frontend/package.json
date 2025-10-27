@@ -1,0 +1,20 @@
+{
+  "name": "specification-assistant-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --port 5173",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-static": "^3.0.5",
+    "@sveltejs/kit": "^2.11.1",
+    "@sveltejs/vite-plugin-svelte": "^4.0.3",
+    "svelte": "^5.3.4",
+    "vite": "^5.4.11"
+  },
+  "dependencies": {
+    "marked": "^16.4.1"
+  }
+}
