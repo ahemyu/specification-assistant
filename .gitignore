@@ -39,6 +39,7 @@ env/
 output/
 *.txt
 /src/pdf_reader/uploads
+/src/pdf_reader/uploaded_pdfs
 
 # Environment variables
 .env

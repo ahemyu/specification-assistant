@@ -1,6 +1,8 @@
 """FastAPI service for PDF text extraction, question answering and key extraction."""
 import logging
+from contextlib import asynccontextmanager
 
+from dependencies import load_existing_pdfs
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -13,7 +15,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="PDF Text Extraction API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Handle application lifespan events (startup and shutdown)."""
+    # Startup: Load existing PDFs from disk
+    logger.info("Application starting up...")
+    load_existing_pdfs()
+    logger.info("Startup complete")
+    yield
+    # Shutdown: Clean up resources if needed
+    logger.info("Application shutting down...")
+
+
+app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
