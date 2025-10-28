@@ -17,6 +17,15 @@ FastAPI web service for extracting and analyzing PDF documents with LLM-powered 
 # From project root
 uv sync
 ```
+
+## Configuration
+
+Set your Azure OpenAI API key as an environment variable:
+
+```bash
+export OPENAI_API_KEY="your-azure-openai-api-key"
+```
+
 ## Running the Service
 
 ### Start the FastAPI server:
@@ -48,7 +57,7 @@ Access at: http://localhost:8000
 
 - **FastAPI**: Web API framework
 - **pdfplumber**: PDF text/table extraction
-- **LangChain + Google Gemini**: LLM key extraction and Q&A
+- **LangChain + Azure OpenAI**: LLM key extraction and Q&A
 - **pandas + openpyxl**: Excel export
 
 ## API Docs

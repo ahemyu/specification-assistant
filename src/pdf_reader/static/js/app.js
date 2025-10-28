@@ -721,7 +721,7 @@ async function submitQuestion() {
     };
 
     try {
-        const selectedModel = modelSelect ? modelSelect.value : 'gemini-2.5-flash';
+        const selectedModel = modelSelect ? modelSelect.value : 'gpt-4o-mini';
 
         const response = await fetch('/ask-question-stream', { //Here we can change it back to full response generatioon
             method: 'POST',

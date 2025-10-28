@@ -1,11 +1,11 @@
-"""LLM-based key extraction service using LangChain and Google Gemini."""
+"""LLM-based key extraction service using LangChain and OpenAI."""
 import asyncio
 import logging
 import sys
 from pathlib import Path
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 
 # Add parent directory to path to allow imports from pdf_reader root
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -24,28 +24,28 @@ logger = logging.getLogger(__name__)
 class LLMKeyExtractor:
     """Service class for extracting specific keys from PDF text using LLM."""
 
-    def __init__(self, api_key: str, model_name: str = "gemini-2.5-flash"):
+    def __init__(self, api_key: str, model_name: str = "gpt-4o-mini"):
         """
         Initialize the LLM key extractor.
 
         Args:
-            api_key: Google API key for Gemini
-            model_name: Name of the Gemini model to use for key extraction (default: gemini-2.5-flash)
+            api_key: Azure OpenAI API key
+            model_name: Name of the OpenAI model to use for key extraction (default: gpt-4o-mini)
         """
-        self.llm = ChatGoogleGenerativeAI(
+        # Azure OpenAI endpoint from azure_demo.txt
+        base_url = "https://westeurope.api.cognitive.microsoft.com/openai/v1/"
+
+        self.llm = ChatOpenAI(
             model=model_name,
-            google_api_key=api_key,
+            api_key=api_key,
+            base_url=base_url,
             temperature=0  # Use deterministic output for extraction tasks
         )
-        # Initialize Q&A LLM instances for both supported models
-        self.qa_llm_flash = ChatGoogleGenerativeAI(
-            model="gemini-2.5-flash",
-            google_api_key=api_key,
-            temperature=0.3
-        )
-        self.qa_llm_pro = ChatGoogleGenerativeAI(
-            model="gemini-2.5-pro",
-            google_api_key=api_key,
+        # Initialize Q&A LLM instance (single model for now as we only have gpt-4o-mini)
+        self.qa_llm = ChatOpenAI(
+            model="gpt-4o-mini",
+            api_key=api_key,
+            base_url=base_url,
             temperature=0.3
         )
         self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
@@ -159,8 +159,7 @@ class LLMKeyExtractor:
                       Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
             conversation_history: Optional list of previous messages in format
                                   [{"role": "system"|"user"|"assistant", "content": str}]
-            model_name: Optional model name ("gemini-2.5-flash" or "gemini-2.5-pro",
-                        defaults to flash)
+            model_name: Optional model name (defaults to gpt-4o-mini)
 
         Yields:
             Tuples of (chunk_content, system_message_content)
@@ -169,9 +168,9 @@ class LLMKeyExtractor:
                                       message, None otherwise)
         """
         logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s)")
-        # Select the appropriate Q&A LLM based on model_name
-        qa_llm = self.qa_llm_pro if model_name == "gemini-2.5-pro" else self.qa_llm_flash
-        logger.info(f"Using model: {model_name or 'gemini-2.5-flash'}")
+        # Use the Q&A LLM instance
+        qa_llm = self.qa_llm
+        logger.info(f"Using model: {model_name or 'gpt-4o-mini'}")
 
         # Check if we have a system message in conversation history
         has_system_message = (

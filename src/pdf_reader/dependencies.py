@@ -25,16 +25,16 @@ excel_template_storage: dict[str, dict] = {}
 
 # Initialize LLM key extractor
 llm_extractor: LLMKeyExtractor | None = None
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
-if GOOGLE_API_KEY:
+if OPENAI_API_KEY:
     try:
-        llm_extractor = LLMKeyExtractor(api_key=GOOGLE_API_KEY)
+        llm_extractor = LLMKeyExtractor(api_key=OPENAI_API_KEY)
         logger.info("LLM key extractor initialized successfully")
     except Exception as e:
         logger.warning(f"Failed to initialize LLM key extractor: {str(e)}")
 else:
-    logger.warning("GOOGLE_API_KEY not found. LLM key extraction endpoints will not be available.")
+    logger.warning("OPENAI_API_KEY not found. LLM key extraction endpoints will not be available.")
 
 
 def get_llm_extractor() -> LLMKeyExtractor:
@@ -43,7 +43,7 @@ def get_llm_extractor() -> LLMKeyExtractor:
         from fastapi import HTTPException
         raise HTTPException(
             status_code=503,
-            detail="LLM service is not available. GOOGLE_API_KEY may not be configured."
+            detail="LLM service is not available. OPENAI_API_KEY may not be configured."
         )
     return llm_extractor
 
