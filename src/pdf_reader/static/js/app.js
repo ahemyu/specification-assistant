@@ -55,6 +55,7 @@ const previewContent = document.getElementById('previewContent');
 
 // Carousel modal elements
 const resultsCarouselModal = document.getElementById('resultsCarouselModal');
+const carouselModalContent = document.getElementById('carouselModalContent');
 const closeCarousel = document.getElementById('closeCarousel');
 const carouselCard = document.getElementById('carouselCard');
 const prevCardBtn = document.getElementById('prevCardBtn');
@@ -64,14 +65,14 @@ const totalCards = document.getElementById('totalCards');
 
 // PDF Viewer elements
 const pdfViewerPanel = document.getElementById('pdfViewerPanel');
-const closePdfViewer = document.getElementById('closePdfViewer');
-const pdfReferenceTabs = document.getElementById('pdfReferenceTabs');
+const pdfControls = document.querySelector('.pdf-controls');
 const pdfCanvas = document.getElementById('pdfCanvas');
 const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
 const pdfTextLayer = document.getElementById('pdfTextLayer');
 const pdfHighlightLayer = document.getElementById('pdfHighlightLayer');
 const pdfLoading = document.getElementById('pdfLoading');
 const pdfError = document.getElementById('pdfError');
+const pdfNoReference = document.getElementById('pdfNoReference');
 const zoomInBtn = document.getElementById('zoomIn');
 const zoomOutBtn = document.getElementById('zoomOut');
 const zoomResetBtn = document.getElementById('zoomReset');
@@ -95,10 +96,9 @@ let currentCardIndex = 0;
 // PDF Viewer state
 let currentPdfDoc = null;
 let currentPdfPage = null;
-let currentPdfScale = 1.0;
+let currentPdfScale = 1.5; // Higher default scale for better quality
 let currentReferences = [];
 let currentReferenceIndex = 0;
-let currentExtractedValue = null;
 
 // Chat history management
 let conversationHistory = [];
@@ -1082,8 +1082,7 @@ function formatSingleKeyResult(keyName, result) {
             const pages = (loc.page_numbers || []).join(', ');
             const refData = JSON.stringify({
                 filename: loc.pdf_filename,
-                pages: loc.page_numbers || [],
-                value: value
+                pages: loc.page_numbers || []
             }).replace(/"/g, '&quot;');
             locationsHTML += `<button class="reference-btn" data-reference="${refData}" data-ref-index="${i}">
                 ${loc.pdf_filename} - p.${pages}
@@ -1212,6 +1211,11 @@ function openResultsCarousel(data, keyNames) {
 
     resultsCarouselModal.classList.add('show');
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+    // Auto-load PDF viewer for first card
+    const firstKeyName = keyNames[0];
+    const firstResult = data[firstKeyName];
+    loadPdfForResult(firstResult);
 }
 
 function showCarouselCard(index) {
@@ -1227,26 +1231,8 @@ function showCarouselCard(index) {
     currentCardNumber.textContent = index + 1;
     updateCarouselNavButtons();
 
-    // Auto-update PDF viewer if it's open and the new card has references
-    if (pdfViewerPanel.classList.contains('active')) {
-        const locations = (result && result.source_locations) || [];
-        const value = (result && result.key_value) ?? 'Not found';
-
-        if (locations.length > 0) {
-            // Convert locations to references format
-            const references = locations.map(loc => ({
-                filename: loc.pdf_filename,
-                pages: loc.page_numbers || [],
-                value: value
-            }));
-
-            // Auto-open PDF viewer with new references
-            openPdfViewer(references, value);
-        } else {
-            // No references in this card, close PDF viewer
-            closePdfViewerPanel();
-        }
-    }
+    // Auto-load PDF for the new card
+    loadPdfForResult(result);
 }
 
 function updateCarouselNavButtons() {
@@ -1270,10 +1256,8 @@ function closeResultsCarousel() {
     resultsCarouselModal.classList.remove('show');
     document.body.style.overflow = ''; // Restore scrolling
 
-    // Close PDF viewer if it's open
-    if (pdfViewerPanel.classList.contains('active')) {
-        closePdfViewerPanel();
-    }
+    // Clear PDF viewer state
+    showNoPdfReference();
 }
 
 // Carousel event listeners
@@ -1319,56 +1303,76 @@ let pdfjsLib;
     }
 })();
 
+// Helper function to load PDF for a result
+async function loadPdfForResult(result) {
+    const locations = (result && result.source_locations) || [];
+
+    if (locations.length > 0) {
+        // Convert locations to references format
+        const references = locations.map(loc => ({
+            filename: loc.pdf_filename,
+            pages: loc.page_numbers || []
+        }));
+
+        // Open PDF viewer with references
+        await openPdfViewer(references);
+    } else {
+        // No references, show "no reference" message
+        showNoPdfReference();
+    }
+}
+
+// Show "no PDF reference" message
+function showNoPdfReference() {
+    // Hide PDF content
+    pdfCanvas.style.display = 'none';
+    pdfLoading.classList.add('hidden');
+    pdfError.style.display = 'none';
+    pdfControls.style.display = 'none';
+
+    // Show no reference message
+    pdfNoReference.classList.remove('hidden');
+
+    // Clear current PDF state
+    currentPdfDoc = null;
+    currentReferences = [];
+}
+
 // Open PDF Viewer with references from carousel card
-async function openPdfViewer(references, extractedValue) {
+async function openPdfViewer(references) {
     if (!references || references.length === 0) {
-        console.warn('No references to display');
+        showNoPdfReference();
         return;
     }
 
     currentReferences = references;
-    currentExtractedValue = extractedValue;
     currentReferenceIndex = 0;
 
-    // Create tabs for all references
-    createReferenceTabs();
+    // Show PDF controls and hide no reference message
+    pdfNoReference.classList.add('hidden');
+    pdfControls.style.display = 'flex';
 
-    // Load the first reference
+    // Set first reference button as active
+    const allRefButtons = document.querySelectorAll('.reference-btn');
+    allRefButtons.forEach((btn, i) => {
+        btn.classList.toggle('active', i === 0);
+    });
+
+    // Load the first reference directly
     await loadReference(0);
-
-    // Show the PDF viewer panel
-    pdfViewerPanel.classList.add('active');
 }
 
-// Create tabs for multiple references
-function createReferenceTabs() {
-    pdfReferenceTabs.innerHTML = '';
-
-    currentReferences.forEach((ref, index) => {
-        const tab = document.createElement('button');
-        tab.className = 'pdf-reference-tab';
-        if (index === 0) tab.classList.add('active');
-
-        const pages = ref.pages.join(', ');
-        tab.textContent = `${ref.filename} - p.${pages}`;
-        tab.dataset.refIndex = index;
-
-        tab.addEventListener('click', () => switchReferenceTab(index));
-        pdfReferenceTabs.appendChild(tab);
-    });
-}
-
-// Switch between reference tabs
-async function switchReferenceTab(index) {
-    if (index === currentReferenceIndex) return;
-
-    // Update active tab styling
-    const tabs = pdfReferenceTabs.querySelectorAll('.pdf-reference-tab');
-    tabs.forEach((tab, i) => {
-        tab.classList.toggle('active', i === index);
-    });
-
+// Load a specific reference by index
+async function loadReferenceByIndex(index) {
+    if (index < 0 || index >= currentReferences.length) return;
     currentReferenceIndex = index;
+
+    // Update active state of reference buttons
+    const allRefButtons = document.querySelectorAll('.reference-btn');
+    allRefButtons.forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+    });
+
     await loadReference(index);
 }
 
@@ -1420,14 +1424,24 @@ async function renderPdfPage(pageNumber) {
         currentPdfPageSpan.textContent = pageNumber;
         totalPdfPagesSpan.textContent = currentPdfDoc.numPages;
 
-        // Calculate scale
+        // Calculate scale with device pixel ratio for crisp rendering
+        const devicePixelRatio = window.devicePixelRatio || 1;
         const viewport = page.getViewport({ scale: currentPdfScale });
 
         // Set canvas dimensions
         const canvas = pdfCanvas;
         const context = canvas.getContext('2d');
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
+
+        // Set display size (css pixels)
+        canvas.style.width = viewport.width + 'px';
+        canvas.style.height = viewport.height + 'px';
+
+        // Set actual size in memory (scaled to account for extra pixel density)
+        canvas.width = Math.floor(viewport.width * devicePixelRatio);
+        canvas.height = Math.floor(viewport.height * devicePixelRatio);
+
+        // Normalize coordinate system to use css pixels
+        context.scale(devicePixelRatio, devicePixelRatio);
 
         // Render PDF page
         const renderContext = {
@@ -1437,82 +1451,8 @@ async function renderPdfPage(pageNumber) {
 
         await page.render(renderContext).promise;
 
-        // Attempt text highlighting if we have an extracted value
-        if (currentExtractedValue && currentExtractedValue !== 'Not found') {
-            await highlightTextOnPage(page, viewport);
-        }
-
     } catch (error) {
         console.error('Error rendering PDF page:', error);
-    }
-}
-
-// Highlight extracted text on the PDF page
-async function highlightTextOnPage(page, viewport) {
-    try {
-        // Clear existing highlights
-        pdfHighlightLayer.innerHTML = '';
-
-        // Get text content from the page
-        const textContent = await page.getTextContent();
-
-        // Search for the extracted value in the text
-        const searchText = currentExtractedValue.toLowerCase();
-        const matches = [];
-
-        // Find all text items that match (fuzzy matching)
-        textContent.items.forEach((item, index) => {
-            const text = item.str.toLowerCase();
-            if (text.includes(searchText) || searchText.includes(text)) {
-                matches.push({ item, index });
-            }
-        });
-
-        // If exact match not found, try word-by-word matching
-        if (matches.length === 0) {
-            const searchWords = searchText.split(/\s+/).filter(w => w.length > 3);
-            textContent.items.forEach((item, index) => {
-                const text = item.str.toLowerCase();
-                for (const word of searchWords) {
-                    if (text.includes(word)) {
-                        matches.push({ item, index });
-                        break;
-                    }
-                }
-            });
-        }
-
-        // Create highlight overlays for matches
-        matches.forEach(match => {
-            const item = match.item;
-            const transform = pdfjsLib.Util.transform(
-                viewport.transform,
-                item.transform
-            );
-
-            const x = transform[4];
-            const y = transform[5];
-            const width = item.width * viewport.scale;
-            const height = item.height * viewport.scale;
-
-            // Create highlight element
-            const highlight = document.createElement('div');
-            highlight.className = 'pdf-highlight';
-            highlight.style.left = `${x}px`;
-            highlight.style.top = `${viewport.height - y - height}px`;
-            highlight.style.width = `${width}px`;
-            highlight.style.height = `${height}px`;
-
-            pdfHighlightLayer.appendChild(highlight);
-        });
-
-        // Position the highlight layer to match canvas
-        pdfHighlightLayer.style.width = `${viewport.width}px`;
-        pdfHighlightLayer.style.height = `${viewport.height}px`;
-
-    } catch (error) {
-        console.error('Error highlighting text:', error);
-        // Silently fail - highlighting is a nice-to-have feature
     }
 }
 
@@ -1528,7 +1468,7 @@ function zoomOut() {
 }
 
 function resetZoom() {
-    currentPdfScale = 1.0;
+    currentPdfScale = 1.5; // Reset to default higher scale
     updateZoom();
 }
 
@@ -1539,24 +1479,7 @@ async function updateZoom() {
     }
 }
 
-// Close PDF Viewer
-function closePdfViewerPanel() {
-    pdfViewerPanel.classList.remove('active');
-    currentPdfDoc = null;
-    currentPdfPageNum = null;
-    currentReferences = [];
-    currentReferenceIndex = 0;
-    currentExtractedValue = null;
-
-    // Clear canvas and highlights
-    const context = pdfCanvas.getContext('2d');
-    context.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
-    pdfHighlightLayer.innerHTML = '';
-}
-
 // PDF Viewer event listeners
-closePdfViewer.addEventListener('click', closePdfViewerPanel);
-
 zoomInBtn.addEventListener('click', zoomIn);
 zoomOutBtn.addEventListener('click', zoomOut);
 zoomResetBtn.addEventListener('click', resetZoom);
@@ -1564,22 +1487,11 @@ zoomResetBtn.addEventListener('click', resetZoom);
 // Handle clicks on reference buttons in carousel cards
 document.addEventListener('click', function(e) {
     if (e.target.classList.contains('reference-btn')) {
-        const refData = JSON.parse(e.target.dataset.reference.replace(/&quot;/g, '"'));
-
-        // Get all reference buttons in the same container
-        const container = e.target.closest('.reference-buttons');
-        const allRefs = Array.from(container.querySelectorAll('.reference-btn')).map(btn => {
-            return JSON.parse(btn.dataset.reference.replace(/&quot;/g, '"'));
-        });
-
-        // Open PDF viewer with all references, starting with the clicked one
+        // Get the clicked reference index
         const clickedIndex = parseInt(e.target.dataset.refIndex);
-        const reorderedRefs = [
-            ...allRefs.slice(clickedIndex),
-            ...allRefs.slice(0, clickedIndex)
-        ];
 
-        openPdfViewer(reorderedRefs, refData.value);
+        // Load that specific reference
+        loadReferenceByIndex(clickedIndex);
     }
 });
 
