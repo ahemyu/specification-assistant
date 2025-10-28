@@ -3,6 +3,7 @@ import { TabNavigation } from './components/TabNavigation'
 import { UploadView } from './components/views/UploadView'
 import { ExtractionView } from './components/views/ExtractionView'
 import { QAView } from './components/views/QAView'
+import { CompareView } from './components/views/CompareView'
 import { Notifications } from './components/Notifications'
 import './styles/styles.css'
 import './styles/modules/base.css'
@@ -16,6 +17,7 @@ import './styles/modules/extraction.css'
 import './styles/modules/carousel.css'
 import './styles/modules/summary.css'
 import './styles/modules/chat.css'
+import './styles/modules/compare.css'
 
 function App() {
   return (
@@ -39,6 +41,7 @@ function App() {
             <Route path="/" element={<UploadView />} />
             <Route path="/extract" element={<ExtractionView />} />
             <Route path="/qa" element={<QAView />} />
+            <Route path="/compare" element={<CompareView />} />
           </Routes>
         </main>
       </div>

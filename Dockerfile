@@ -22,7 +22,7 @@ RUN uv pip install --system --no-cache -r pyproject.toml
 COPY src/ ./src/
 
 # Create necessary directories for uploads and outputs
-RUN mkdir -p /app/src/pdf_reader/uploads /app/src/pdf_reader/output
+RUN mkdir -p /app/src/pdf_reader/uploads /app/src/pdf_reader/output /app/src/pdf_reader/uploaded_pdfs
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -39,4 +39,4 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000').read()" || exit 1
 
 # Run the FastAPI application with uvicorn
-CMD ["uvicorn", "api:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

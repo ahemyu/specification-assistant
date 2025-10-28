@@ -31,3 +31,12 @@ class ExcelTemplateExtractionRequest(BaseModel):
 
     template_id: str
     file_ids: list[str]
+    additional_context: str | None = None
+
+
+class PDFComparisonRequest(BaseModel):
+    """Request model for comparing two PDF versions."""
+
+    base_file_id: str  # The original/old version
+    new_file_id: str   # The updated/new version
+    additional_context: str | None = None

@@ -40,3 +40,22 @@ export interface ChatMessage {
 export interface PDFCache {
   [fileId: string]: any
 }
+
+// PDF Comparison types
+export interface ComparisonChange {
+  specification_name: string
+  change_type: 'added' | 'modified' | 'removed'
+  old_value: string | null
+  new_value: string | null
+  description: string
+  pages_old: number[]
+  pages_new: number[]
+}
+
+export interface ComparisonResult {
+  summary: string
+  total_changes: number
+  changes: ComparisonChange[]
+}
+
+export type ChangeFilter = 'all' | 'added' | 'modified' | 'removed'

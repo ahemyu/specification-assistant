@@ -3,7 +3,11 @@ import json
 import logging
 
 from backend.dependencies import get_llm_extractor, get_pdf_storage
-from backend.schemas.requests import KeyExtractionRequest, QuestionRequest
+from backend.schemas.requests import (
+    KeyExtractionRequest,
+    PDFComparisonRequest,
+    QuestionRequest,
+)
 from backend.services.llm_key_extractor import LLMKeyExtractor
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -143,3 +147,53 @@ async def ask_question_stream(
             "X-Accel-Buffering": "no"
         }
     )
+
+
+@router.post("/compare-pdfs")
+async def compare_pdfs(
+    request: PDFComparisonRequest,
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+) -> dict:
+    """
+    Compare two versions of a PDF to identify changes in specifications.
+
+    Requires:
+    - base_file_id: File ID of the original/old version
+    - new_file_id: File ID of the new/updated version
+    - additional_context (optional): Context about what types of changes to focus on
+
+    Returns:
+    - PDFComparisonResult with summary and list of changes
+    """
+    pdf_storage = get_pdf_storage()
+
+    # Validate that both PDFs exist
+    if request.base_file_id not in pdf_storage:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Base file with ID {request.base_file_id} not found. Please upload the file first."
+        )
+
+    if request.new_file_id not in pdf_storage:
+        raise HTTPException(
+            status_code=404,
+            detail=f"New file with ID {request.new_file_id} not found. Please upload the file first."
+        )
+
+    base_pdf_data = pdf_storage[request.base_file_id]
+    new_pdf_data = pdf_storage[request.new_file_id]
+
+    # Compare the PDFs using LLM
+    try:
+        result = await llm_extractor.compare_pdfs(
+            base_pdf_data=base_pdf_data,
+            new_pdf_data=new_pdf_data,
+            additional_context=request.additional_context or ""
+        )
+        return result.model_dump()
+    except Exception as e:
+        logger.error(f"Error during PDF comparison: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error during PDF comparison: {str(e)}"
+        )

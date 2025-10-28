@@ -3,10 +3,9 @@ import logging
 from contextlib import asynccontextmanager
 
 from backend.dependencies import load_existing_pdfs
-from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
-# from fastapi.templating import Jinja2Templates  # DEPRECATED: Vanilla JS templates no longer used
 from backend.routers import excel, llm, pdf
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,6 +40,7 @@ app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespa
 #     """Serve the main HTML page."""
 #     return templates.TemplateResponse("index.html", {"request": request})
 # ============================================================================
+
 
 # Include routers (must be before catch-all static mount)
 app.include_router(pdf.router)

@@ -7,9 +7,9 @@ from io import BytesIO
 from pathlib import Path
 
 from backend.dependencies import OUTPUT_DIR, UPLOADED_PDFS_DIR, get_pdf_storage
+from backend.services.process_pdfs import process_single_pdf
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from backend.services.process_pdfs import process_single_pdf
 
 logger = logging.getLogger(__name__)
 
@@ -196,26 +196,26 @@ async def preview_file(file_id: str):
         )
 
 
-@router.get("/pdf/{file_id}")
-async def get_pdf(file_id: str):
+@router.get("/view-pdf/{file_id}")
+async def view_pdf(file_id: str):
     """
-    Serve the original PDF file for viewing in the browser.
+    Serve the original uploaded PDF file for viewing in browser.
 
-    Args:
-        file_id: The ID of the file to serve
-
-    Returns:
-        PDF file with proper headers for browser viewing
+    Returns the PDF file with inline content disposition for browser viewing.
     """
-    pdf_file_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
+    # The PDF file should be in the uploaded_pdfs directory
+    pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
 
-    if not pdf_file_path.exists():
+    logger.info(f"Serving PDF {file_id} from {pdf_path} (exists: {pdf_path.exists()})")
+
+    if not pdf_path.exists():
         raise HTTPException(status_code=404, detail="PDF file not found")
 
     return FileResponse(
-        path=pdf_file_path,
+        path=pdf_path,
         media_type="application/pdf",
-        filename=f"{file_id}.pdf"
+        filename=f"{file_id}.pdf",
+        headers={"Content-Disposition": f"inline; filename={file_id}.pdf"}
     )
 
 
@@ -232,17 +232,16 @@ async def delete_pdf(file_id: str):
     """
     pdf_storage = get_pdf_storage()
 
+
     # Remove from in-memory storage
     if file_id in pdf_storage:
         del pdf_storage[file_id]
-        logger.info(f"Removed {file_id} from in-memory storage")
 
     # Remove the text file from disk
     text_file_path = OUTPUT_DIR / f"{file_id}.txt"
     if text_file_path.exists():
         try:
             text_file_path.unlink()
-            logger.info(f"Deleted text file {text_file_path}")
         except Exception as e:
             logger.error(f"Error deleting text file {text_file_path}: {str(e)}")
             raise HTTPException(
@@ -255,7 +254,6 @@ async def delete_pdf(file_id: str):
     if pdf_file_path.exists():
         try:
             pdf_file_path.unlink()
-            logger.info(f"Deleted PDF file {pdf_file_path}")
         except Exception as e:
             logger.error(f"Error deleting PDF file {pdf_file_path}: {str(e)}")
             # Don't raise exception here, just log the error

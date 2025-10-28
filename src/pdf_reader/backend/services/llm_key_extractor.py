@@ -10,7 +10,12 @@ from langchain_openai import ChatOpenAI
 # Add parent directory to path to allow imports from pdf_reader root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backend.schemas.domain import KeyExtractionResult
+from backend.schemas.domain import KeyExtractionResult, PDFComparisonResult
+from backend.services.llm_prompts import (
+    KEY_EXTRACTION_PROMPT,
+    PDF_COMPARISON_PROMPT,
+    QA_SYSTEM_PROMPT,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -68,25 +73,12 @@ class LLMKeyExtractor:
         # Use pre-formatted text that was created during PDF processing
         full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
-        # Build the prompt
-        prompt = f"""
-                You are an expert at extracting specific information from technical documents.
-                Your task is to find and extract the value for the key: "{key_name}"
-                Below are the contents of one or more PDF documents. Each document includes
-                page numbers to help you track where information is found.
-                IMPORTANT INSTRUCTIONS:
-                1. Extract the exact value/s for the requested key
-                2. Record ALL PDF filenames and page numbers where you found relevant information
-                   (they COULD be spread to different pdfs/pages)
-                3. Provide a clear description of where and how you found the information
-                4. If the key is not found in any document, set key_value to null and explain
-                   in the description
-                5. Be precise about page numbers - always reference the specific pages where
-                   information was found
-
-                DOCUMENT CONTENTS:
-                {full_context}
-                Now extract the key "{key_name}" and provide the structured output."""
+        # Build the prompt using the template
+        prompt = KEY_EXTRACTION_PROMPT.format(
+            key_name=key_name,
+            additional_context_section="",
+            document_contents=full_context
+        )
 
         try:
             result = await self.structured_llm.ainvoke(prompt)
@@ -197,20 +189,8 @@ class LLMKeyExtractor:
             # Use pre-formatted text that was created during PDF processing
             full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
-            system_content = f"""You are an expert assistant helping users understand technical documents.
-                            Below are the contents of one or more PDF documents. Each document includes page numbers.
-
-                            IMPORTANT INSTRUCTIONS:
-                            1. ALWAYS answer in THE SAME LANGUAGE the question was asked in.
-                            2. Provide a clear, comprehensive answer based on the document contents
-                            3. If referencing specific information, mention which document and page number it came from
-                            4. If the answer cannot be found in the documents, clearly state that
-                            5. Be precise and cite page numbers when possible
-                            6. If the question is ambiguous, provide the most reasonable interpretation
-                            7. Take into account the previous conversation context when answering
-
-                            DOCUMENT CONTENTS:
-                            {full_context}"""
+            # Build system message using the template
+            system_content = QA_SYSTEM_PROMPT.format(document_contents=full_context)
 
             messages.append(SystemMessage(content=system_content))
             system_message_to_return = system_content
@@ -239,4 +219,56 @@ class LLMKeyExtractor:
             logger.info("Successfully answered question with streaming")
         except Exception as e:
             logger.error(f"Error answering question with streaming: {str(e)}")
+            raise
+
+    async def compare_pdfs(
+        self,
+        base_pdf_data: dict,
+        new_pdf_data: dict,
+        additional_context: str = ""
+    ) -> PDFComparisonResult:
+        """
+        Compare two PDF versions and identify changes in specifications.
+
+        Args:
+            base_pdf_data: Dictionary containing the base/old PDF data
+            new_pdf_data: Dictionary containing the new/updated PDF data
+            additional_context: Optional additional context to help the LLM understand
+                                what types of changes are most relevant
+
+        Returns:
+            PDFComparisonResult with summary and list of changes
+        """
+        logger.info(
+            f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}'"
+        )
+
+        # Use pre-formatted text from both PDFs
+        base_context = base_pdf_data.get("formatted_text", "")
+        new_context = new_pdf_data.get("formatted_text", "")
+
+        # Build the comparison prompt using the template
+        additional_context_section = (
+            f"Additional context about what to focus on: {additional_context}"
+            if additional_context
+            else ""
+        )
+        prompt = PDF_COMPARISON_PROMPT.format(
+            additional_context_section=additional_context_section,
+            base_filename=base_pdf_data['filename'],
+            base_context=base_context,
+            new_filename=new_pdf_data['filename'],
+            new_context=new_context
+        )
+
+        try:
+            # Create a structured output LLM for comparison
+            structured_comparison_llm = self.llm.with_structured_output(PDFComparisonResult)
+            result = await structured_comparison_llm.ainvoke(prompt)
+            logger.info(
+                f"Successfully compared PDFs. Found {result.total_changes} changes."
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Error comparing PDFs: {str(e)}")
             raise

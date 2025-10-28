@@ -46,6 +46,15 @@ export function TabNavigation() {
       >
         Ask Questions
       </NavLink>
+      <NavLink
+        to="/compare"
+        className={({ isActive }) =>
+          `main-tab-btn ${isActive ? 'active' : ''}`
+        }
+        data-tab="compare"
+      >
+        Compare PDFs
+      </NavLink>
     </nav>
   )
 }
