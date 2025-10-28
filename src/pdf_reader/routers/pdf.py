@@ -196,6 +196,29 @@ async def preview_file(file_id: str):
         )
 
 
+@router.get("/pdf/{file_id}")
+async def get_pdf(file_id: str):
+    """
+    Serve the original PDF file for viewing in the browser.
+
+    Args:
+        file_id: The ID of the file to serve
+
+    Returns:
+        PDF file with proper headers for browser viewing
+    """
+    pdf_file_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
+
+    if not pdf_file_path.exists():
+        raise HTTPException(status_code=404, detail="PDF file not found")
+
+    return FileResponse(
+        path=pdf_file_path,
+        media_type="application/pdf",
+        filename=f"{file_id}.pdf"
+    )
+
+
 @router.delete("/delete-pdf/{file_id}")
 async def delete_pdf(file_id: str):
     """

@@ -62,6 +62,23 @@ const nextCardBtn = document.getElementById('nextCardBtn');
 const currentCardNumber = document.getElementById('currentCardNumber');
 const totalCards = document.getElementById('totalCards');
 
+// PDF Viewer elements
+const pdfViewerPanel = document.getElementById('pdfViewerPanel');
+const closePdfViewer = document.getElementById('closePdfViewer');
+const pdfReferenceTabs = document.getElementById('pdfReferenceTabs');
+const pdfCanvas = document.getElementById('pdfCanvas');
+const pdfCanvasContainer = document.getElementById('pdfCanvasContainer');
+const pdfTextLayer = document.getElementById('pdfTextLayer');
+const pdfHighlightLayer = document.getElementById('pdfHighlightLayer');
+const pdfLoading = document.getElementById('pdfLoading');
+const pdfError = document.getElementById('pdfError');
+const zoomInBtn = document.getElementById('zoomIn');
+const zoomOutBtn = document.getElementById('zoomOut');
+const zoomResetBtn = document.getElementById('zoomReset');
+const zoomLevel = document.getElementById('zoomLevel');
+const currentPdfPageSpan = document.getElementById('currentPdfPage');
+const totalPdfPagesSpan = document.getElementById('totalPdfPages');
+
 let uploadedFileIds = [];
 let processedFiles = [];
 let extractionResultsData = null;
@@ -74,6 +91,14 @@ let allUploadedFiles = []; // Track all files across multiple uploads
 let carouselResults = [];
 let carouselKeyNames = [];
 let currentCardIndex = 0;
+
+// PDF Viewer state
+let currentPdfDoc = null;
+let currentPdfPage = null;
+let currentPdfScale = 1.0;
+let currentReferences = [];
+let currentReferenceIndex = 0;
+let currentExtractedValue = null;
 
 // Chat history management
 let conversationHistory = [];
@@ -1051,12 +1076,20 @@ function formatSingleKeyResult(keyName, result) {
 
     let locationsHTML = '';
     if (locations.length > 0) {
-        locationsHTML = '<div class="source-locations"><strong>Found in:</strong><ul>';
-        for (const loc of locations) {
+        locationsHTML = '<div class="source-locations"><strong>References:</strong><div class="reference-buttons">';
+        for (let i = 0; i < locations.length; i++) {
+            const loc = locations[i];
             const pages = (loc.page_numbers || []).join(', ');
-            locationsHTML += `<li>${loc.pdf_filename} - Page(s): ${pages}</li>`;
+            const refData = JSON.stringify({
+                filename: loc.pdf_filename,
+                pages: loc.page_numbers || [],
+                value: value
+            }).replace(/"/g, '&quot;');
+            locationsHTML += `<button class="reference-btn" data-reference="${refData}" data-ref-index="${i}">
+                ${loc.pdf_filename} - p.${pages}
+            </button>`;
         }
-        locationsHTML += '</ul></div>';
+        locationsHTML += '</div></div>';
     }
 
     return `
@@ -1181,7 +1214,7 @@ function openResultsCarousel(data, keyNames) {
     document.body.style.overflow = 'hidden'; // Prevent background scrolling
 }
 
-function showCarouselCard(index, direction = 'none') {
+function showCarouselCard(index) {
     if (index < 0 || index >= carouselKeyNames.length) return;
 
     currentCardIndex = index;
@@ -1193,6 +1226,27 @@ function showCarouselCard(index, direction = 'none') {
 
     currentCardNumber.textContent = index + 1;
     updateCarouselNavButtons();
+
+    // Auto-update PDF viewer if it's open and the new card has references
+    if (pdfViewerPanel.classList.contains('active')) {
+        const locations = (result && result.source_locations) || [];
+        const value = (result && result.key_value) ?? 'Not found';
+
+        if (locations.length > 0) {
+            // Convert locations to references format
+            const references = locations.map(loc => ({
+                filename: loc.pdf_filename,
+                pages: loc.page_numbers || [],
+                value: value
+            }));
+
+            // Auto-open PDF viewer with new references
+            openPdfViewer(references, value);
+        } else {
+            // No references in this card, close PDF viewer
+            closePdfViewerPanel();
+        }
+    }
 }
 
 function updateCarouselNavButtons() {
@@ -1215,6 +1269,11 @@ function prevCard() {
 function closeResultsCarousel() {
     resultsCarouselModal.classList.remove('show');
     document.body.style.overflow = ''; // Restore scrolling
+
+    // Close PDF viewer if it's open
+    if (pdfViewerPanel.classList.contains('active')) {
+        closePdfViewerPanel();
+    }
 }
 
 // Carousel event listeners
@@ -1244,3 +1303,285 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// =====================================================
+// PDF Viewer Functions
+// =====================================================
+
+// Initialize PDF.js worker
+let pdfjsLib;
+(async function initPdfJs() {
+    try {
+        pdfjsLib = await import('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.mjs');
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.mjs';
+    } catch (error) {
+        console.error('Failed to load PDF.js:', error);
+    }
+})();
+
+// Open PDF Viewer with references from carousel card
+async function openPdfViewer(references, extractedValue) {
+    if (!references || references.length === 0) {
+        console.warn('No references to display');
+        return;
+    }
+
+    currentReferences = references;
+    currentExtractedValue = extractedValue;
+    currentReferenceIndex = 0;
+
+    // Create tabs for all references
+    createReferenceTabs();
+
+    // Load the first reference
+    await loadReference(0);
+
+    // Show the PDF viewer panel
+    pdfViewerPanel.classList.add('active');
+}
+
+// Create tabs for multiple references
+function createReferenceTabs() {
+    pdfReferenceTabs.innerHTML = '';
+
+    currentReferences.forEach((ref, index) => {
+        const tab = document.createElement('button');
+        tab.className = 'pdf-reference-tab';
+        if (index === 0) tab.classList.add('active');
+
+        const pages = ref.pages.join(', ');
+        tab.textContent = `${ref.filename} - p.${pages}`;
+        tab.dataset.refIndex = index;
+
+        tab.addEventListener('click', () => switchReferenceTab(index));
+        pdfReferenceTabs.appendChild(tab);
+    });
+}
+
+// Switch between reference tabs
+async function switchReferenceTab(index) {
+    if (index === currentReferenceIndex) return;
+
+    // Update active tab styling
+    const tabs = pdfReferenceTabs.querySelectorAll('.pdf-reference-tab');
+    tabs.forEach((tab, i) => {
+        tab.classList.toggle('active', i === index);
+    });
+
+    currentReferenceIndex = index;
+    await loadReference(index);
+}
+
+// Load a specific reference (PDF + page)
+async function loadReference(index) {
+    const ref = currentReferences[index];
+    if (!ref) return;
+
+    // Show loading, hide error
+    pdfLoading.classList.remove('hidden');
+    pdfError.style.display = 'none';
+    pdfCanvas.style.display = 'none';
+
+    try {
+        // Extract file ID from filename (remove .pdf extension)
+        const fileId = ref.filename.replace('.pdf', '');
+
+        // Load PDF document
+        const pdfUrl = `/pdf/${fileId}`;
+        const loadingTask = pdfjsLib.getDocument(pdfUrl);
+        currentPdfDoc = await loadingTask.promise;
+
+        // Load the first page from the reference
+        const pageNum = ref.pages[0] || 1;
+        await renderPdfPage(pageNum);
+
+        // Hide loading
+        pdfLoading.classList.add('hidden');
+        pdfCanvas.style.display = 'block';
+
+    } catch (error) {
+        console.error('Error loading PDF:', error);
+        pdfLoading.classList.add('hidden');
+        pdfError.style.display = 'block';
+        pdfError.querySelector('p').textContent = `Failed to load PDF: ${error.message}`;
+    }
+}
+
+// Render a specific page of the current PDF
+async function renderPdfPage(pageNumber) {
+    if (!currentPdfDoc) return;
+
+    try {
+        // Get the page
+        const page = await currentPdfDoc.getPage(pageNumber);
+        currentPdfPageNum = pageNumber;
+
+        // Update page info
+        currentPdfPageSpan.textContent = pageNumber;
+        totalPdfPagesSpan.textContent = currentPdfDoc.numPages;
+
+        // Calculate scale
+        const viewport = page.getViewport({ scale: currentPdfScale });
+
+        // Set canvas dimensions
+        const canvas = pdfCanvas;
+        const context = canvas.getContext('2d');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+
+        // Render PDF page
+        const renderContext = {
+            canvasContext: context,
+            viewport: viewport
+        };
+
+        await page.render(renderContext).promise;
+
+        // Attempt text highlighting if we have an extracted value
+        if (currentExtractedValue && currentExtractedValue !== 'Not found') {
+            await highlightTextOnPage(page, viewport);
+        }
+
+    } catch (error) {
+        console.error('Error rendering PDF page:', error);
+    }
+}
+
+// Highlight extracted text on the PDF page
+async function highlightTextOnPage(page, viewport) {
+    try {
+        // Clear existing highlights
+        pdfHighlightLayer.innerHTML = '';
+
+        // Get text content from the page
+        const textContent = await page.getTextContent();
+
+        // Search for the extracted value in the text
+        const searchText = currentExtractedValue.toLowerCase();
+        const matches = [];
+
+        // Find all text items that match (fuzzy matching)
+        textContent.items.forEach((item, index) => {
+            const text = item.str.toLowerCase();
+            if (text.includes(searchText) || searchText.includes(text)) {
+                matches.push({ item, index });
+            }
+        });
+
+        // If exact match not found, try word-by-word matching
+        if (matches.length === 0) {
+            const searchWords = searchText.split(/\s+/).filter(w => w.length > 3);
+            textContent.items.forEach((item, index) => {
+                const text = item.str.toLowerCase();
+                for (const word of searchWords) {
+                    if (text.includes(word)) {
+                        matches.push({ item, index });
+                        break;
+                    }
+                }
+            });
+        }
+
+        // Create highlight overlays for matches
+        matches.forEach(match => {
+            const item = match.item;
+            const transform = pdfjsLib.Util.transform(
+                viewport.transform,
+                item.transform
+            );
+
+            const x = transform[4];
+            const y = transform[5];
+            const width = item.width * viewport.scale;
+            const height = item.height * viewport.scale;
+
+            // Create highlight element
+            const highlight = document.createElement('div');
+            highlight.className = 'pdf-highlight';
+            highlight.style.left = `${x}px`;
+            highlight.style.top = `${viewport.height - y - height}px`;
+            highlight.style.width = `${width}px`;
+            highlight.style.height = `${height}px`;
+
+            pdfHighlightLayer.appendChild(highlight);
+        });
+
+        // Position the highlight layer to match canvas
+        pdfHighlightLayer.style.width = `${viewport.width}px`;
+        pdfHighlightLayer.style.height = `${viewport.height}px`;
+
+    } catch (error) {
+        console.error('Error highlighting text:', error);
+        // Silently fail - highlighting is a nice-to-have feature
+    }
+}
+
+// Zoom controls
+function zoomIn() {
+    currentPdfScale = Math.min(currentPdfScale + 0.25, 3.0);
+    updateZoom();
+}
+
+function zoomOut() {
+    currentPdfScale = Math.max(currentPdfScale - 0.25, 0.5);
+    updateZoom();
+}
+
+function resetZoom() {
+    currentPdfScale = 1.0;
+    updateZoom();
+}
+
+async function updateZoom() {
+    zoomLevel.textContent = `${Math.round(currentPdfScale * 100)}%`;
+    if (currentPdfDoc && currentPdfPageNum) {
+        await renderPdfPage(currentPdfPageNum);
+    }
+}
+
+// Close PDF Viewer
+function closePdfViewerPanel() {
+    pdfViewerPanel.classList.remove('active');
+    currentPdfDoc = null;
+    currentPdfPageNum = null;
+    currentReferences = [];
+    currentReferenceIndex = 0;
+    currentExtractedValue = null;
+
+    // Clear canvas and highlights
+    const context = pdfCanvas.getContext('2d');
+    context.clearRect(0, 0, pdfCanvas.width, pdfCanvas.height);
+    pdfHighlightLayer.innerHTML = '';
+}
+
+// PDF Viewer event listeners
+closePdfViewer.addEventListener('click', closePdfViewerPanel);
+
+zoomInBtn.addEventListener('click', zoomIn);
+zoomOutBtn.addEventListener('click', zoomOut);
+zoomResetBtn.addEventListener('click', resetZoom);
+
+// Handle clicks on reference buttons in carousel cards
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('reference-btn')) {
+        const refData = JSON.parse(e.target.dataset.reference.replace(/&quot;/g, '"'));
+
+        // Get all reference buttons in the same container
+        const container = e.target.closest('.reference-buttons');
+        const allRefs = Array.from(container.querySelectorAll('.reference-btn')).map(btn => {
+            return JSON.parse(btn.dataset.reference.replace(/&quot;/g, '"'));
+        });
+
+        // Open PDF viewer with all references, starting with the clicked one
+        const clickedIndex = parseInt(e.target.dataset.refIndex);
+        const reorderedRefs = [
+            ...allRefs.slice(clickedIndex),
+            ...allRefs.slice(0, clickedIndex)
+        ];
+
+        openPdfViewer(reorderedRefs, refData.value);
+    }
+});
+
+// Track current PDF page number
+let currentPdfPageNum = 1;
