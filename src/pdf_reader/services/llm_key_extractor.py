@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 class LLMKeyExtractor:
     """Service class for extracting specific keys from PDF text using LLM."""
 
-    def __init__(self, api_key: str, model_name: str = "gpt-4o-mini"):
+    def __init__(self, api_key: str, model_name: str = "gpt-4.1"):
         """
         Initialize the LLM key extractor.
 
         Args:
             api_key: Azure OpenAI API key
-            model_name: Name of the OpenAI model to use for key extraction (default: gpt-4o-mini)
+            model_name: Name of the OpenAI model to use for key extraction (default: gpt-4.1)
         """
         # Azure OpenAI endpoint from azure_demo.txt
         base_url = "https://westeurope.api.cognitive.microsoft.com/openai/v1/"
@@ -41,13 +41,9 @@ class LLMKeyExtractor:
             base_url=base_url,
             temperature=0  # Use deterministic output for extraction tasks
         )
-        # Initialize Q&A LLM instance (single model for now as we only have gpt-4o-mini)
-        self.qa_llm = ChatOpenAI(
-            model="gpt-4o-mini",
-            api_key=api_key,
-            base_url=base_url,
-            temperature=0.3
-        )
+        # Store API credentials for creating Q&A LLM instances with different models
+        self.api_key = api_key
+        self.base_url = base_url
         self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
         logger.info(f"Initialized LLM key extractor with model: {model_name}")
 
@@ -159,7 +155,7 @@ class LLMKeyExtractor:
                       Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
             conversation_history: Optional list of previous messages in format
                                   [{"role": "system"|"user"|"assistant", "content": str}]
-            model_name: Optional model name (defaults to gpt-4o-mini)
+            model_name: Optional model name (defaults to gpt-4.1)
 
         Yields:
             Tuples of (chunk_content, system_message_content)
@@ -168,9 +164,15 @@ class LLMKeyExtractor:
                                       message, None otherwise)
         """
         logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s)")
-        # Use the Q&A LLM instance
-        qa_llm = self.qa_llm
-        logger.info(f"Using model: {model_name or 'gpt-4o-mini'}")
+        # Create Q&A LLM instance with the specified model
+        selected_model = model_name or "gpt-4.1"
+        qa_llm = ChatOpenAI(
+            model=selected_model,
+            api_key=self.api_key,
+            base_url=self.base_url,
+            temperature=0.3
+        )
+        logger.info(f"Using model: {selected_model}")
 
         # Check if we have a system message in conversation history
         has_system_message = (
