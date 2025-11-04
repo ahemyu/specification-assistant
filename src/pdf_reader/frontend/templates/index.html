@@ -103,12 +103,12 @@
 
                     <!-- Tab Navigation -->
                     <div class="extraction-tabs">
-                        <button class="tab-btn active" id="excelTab" data-tab="excel">Excel Template</button>
-                        <button class="tab-btn" id="manualTab" data-tab="manual">Manual Input</button>
+                        <button class="tab-btn" id="excelTab" data-tab="excel">Excel Template</button>
+                        <button class="tab-btn active" id="manualTab" data-tab="manual">Manual Input</button>
                     </div>
 
                     <!-- Excel Template Tab Content -->
-                    <div class="tab-content active" id="excelTabContent">
+                    <div class="tab-content" id="excelTabContent">
                         <div class="excel-upload-area">
                             <div class="file-input-group">
                                 <label for="excelFileInput" class="excel-upload-label">
@@ -139,11 +139,12 @@
                             </div>
 
                             <button class="extract-btn" id="extractExcelBtn" disabled>Extract Keys from Template</button>
+                            <div class="extraction-action-buttons" id="excelActionButtons" style="display: none;"></div>
                         </div>
                     </div>
 
                     <!-- Manual Input Tab Content -->
-                    <div class="tab-content" id="manualTabContent">
+                    <div class="tab-content active" id="manualTabContent">
                         <div class="key-input-area">
                             <div class="key-input-group">
                                 <label for="keyInput">Keys to Extract (one per line):</label>
@@ -164,6 +165,7 @@
                             </div>
 
                             <button class="extract-btn" id="extractBtn">Extract Keys</button>
+                            <div class="extraction-action-buttons" id="manualActionButtons" style="display: none;"></div>
                         </div>
                     </div>
 

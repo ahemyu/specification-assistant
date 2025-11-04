@@ -19,7 +19,6 @@ import {
     extractStatus,
     extractionResults,
     uploadedFileIds,
-    currentExtractionMode,
     uploadedTemplateId,
     uploadedTemplateKeys,
     extractionResultsData,
@@ -60,24 +59,20 @@ function switchTab(mode) {
 
 // Display extraction results with download button (for Excel mode)
 function displayExtractionResultsWithDownload(data, keyNames) {
-    let resultsHTML = '<div class="extraction-results-container">';
+    const actionButtonsContainer = document.getElementById('excelActionButtons');
+    if (!actionButtonsContainer) return;
 
-    resultsHTML += `
-        <div class="download-excel-section">
-            <button class="download-excel-btn" id="downloadExcelBtn">
-                Download Filled Excel
-            </button>
-        </div>
-    `;
-
-    resultsHTML += `
-        <button class="view-results-btn" id="viewResultsExcelBtn">
-            View Extraction Results
+    let buttonsHTML = `
+        <button class="view-results-btn-inline" id="viewResultsExcelBtn">
+            View Results
+        </button>
+        <button class="download-excel-btn-inline" id="downloadExcelBtn">
+            Download Excel
         </button>
     `;
 
-    resultsHTML += '</div>';
-    extractionResults.innerHTML = resultsHTML;
+    actionButtonsContainer.innerHTML = buttonsHTML;
+    actionButtonsContainer.style.display = 'flex';
 
     const downloadExcelBtn = document.getElementById('downloadExcelBtn');
     if (downloadExcelBtn) {
@@ -90,28 +85,27 @@ function displayExtractionResultsWithDownload(data, keyNames) {
             openResultsCarousel(data, keyNames);
         });
     }
+
+    // Automatically open the carousel
+    openResultsCarousel(data, keyNames);
 }
 
 // Display extraction results (for manual mode)
 function displayExtractionResults(data, keyNames) {
-    let resultsHTML = '<div class="extraction-results-container">';
+    const actionButtonsContainer = document.getElementById('manualActionButtons');
+    if (!actionButtonsContainer) return;
 
-    resultsHTML += `
-        <div class="download-excel-section">
-            <button class="download-excel-btn" id="downloadManualExcelBtn">
-                Download as Excel
-            </button>
-        </div>
-    `;
-
-    resultsHTML += `
-        <button class="view-results-btn" id="viewResultsBtn">
-            View Extraction Results
+    let buttonsHTML = `
+        <button class="view-results-btn-inline" id="viewResultsBtn">
+            View Results
+        </button>
+        <button class="download-excel-btn-inline" id="downloadManualExcelBtn">
+            Download Excel
         </button>
     `;
 
-    resultsHTML += '</div>';
-    extractionResults.innerHTML = resultsHTML;
+    actionButtonsContainer.innerHTML = buttonsHTML;
+    actionButtonsContainer.style.display = 'flex';
 
     const downloadManualExcelBtn = document.getElementById('downloadManualExcelBtn');
     if (downloadManualExcelBtn) {
@@ -124,6 +118,9 @@ function displayExtractionResults(data, keyNames) {
             openResultsCarousel(data, keyNames);
         });
     }
+
+    // Automatically open the carousel
+    openResultsCarousel(data, keyNames);
 }
 
 // Download filled Excel template
@@ -280,7 +277,7 @@ async function extractFromExcel() {
 
         const data = await response.json();
         extractSpinner.style.display = 'none';
-        showExtractStatus('Extraction complete! Review results below and download when ready.', 'success');
+        extractStatus.style.display = 'none';
         displayExtractionResultsWithDownload(data, uploadedTemplateKeys);
     } catch (error) {
         extractSpinner.style.display = 'none';
@@ -329,7 +326,7 @@ async function extractManually() {
 
         const data = await response.json();
         extractSpinner.style.display = 'none';
-        showExtractStatus(`Successfully extracted ${keyNames.length} key(s)`, 'success');
+        extractStatus.style.display = 'none';
         setExtractionResultsData(data);
         displayExtractionResults(data, keyNames);
     } catch (error) {

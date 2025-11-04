@@ -329,63 +329,63 @@
     transform: translateY(0);
 }
 
-/* Excel download section */
-.download-excel-section {
-    margin: 0 0 32px 0;
-    padding: 24px;
-    background: linear-gradient(135deg, #f5fce8 0%, #e8f5d5 100%);
-    border-radius: 20px;
-    border: 3px solid #87BD25;
-    text-align: center;
-    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.15);
+/* Extraction action buttons container - appears centered below Extract Keys button */
+.extraction-action-buttons {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 0;
 }
 
-.download-excel-btn {
-    padding: 14px 48px;
-    background: #87BD25;
-    color: white;
-    border: none;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 1.05em;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.25);
-}
-
-.download-excel-btn:hover {
-    background: #6a971d;
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(135, 189, 37, 0.35);
-}
-
-.download-excel-btn:active {
-    transform: translateY(0);
-    box-shadow: 0 2px 8px rgba(135, 189, 37, 0.25);
-}
-
-/* View Results Button */
-.view-results-btn {
-    padding: 16px 56px;
+/* View Results Button - Primary Action */
+.view-results-btn-inline {
+    padding: 12px 28px;
     background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%);
     color: white;
     border: none;
-    border-radius: 20px;
+    border-radius: 12px;
     cursor: pointer;
-    font-size: 1.15em;
+    font-size: 1em;
     font-weight: 600;
     transition: all 0.3s ease;
-    display: block;
-    margin: 32px auto;
-    box-shadow: 0 6px 20px rgba(28, 44, 140, 0.3);
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
+    white-space: nowrap;
 }
 
-.view-results-btn:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 30px rgba(28, 44, 140, 0.4);
+.view-results-btn-inline:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
-.view-results-btn:active {
+.view-results-btn-inline:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(28, 44, 140, 0.3);
+}
+
+/* Download Excel Button - Secondary Action (green but smaller) */
+.download-excel-btn-inline {
+    padding: 10px 22px;
+    background: #87BD25;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 8px rgba(135, 189, 37, 0.25);
+    white-space: nowrap;
+}
+
+.download-excel-btn-inline:hover {
+    background: #6a971d;
     transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(28, 44, 140, 0.3);
+    box-shadow: 0 4px 10px rgba(135, 189, 37, 0.35);
+}
+
+.download-excel-btn-inline:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(135, 189, 37, 0.25);
 }
