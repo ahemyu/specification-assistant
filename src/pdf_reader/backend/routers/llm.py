@@ -2,11 +2,11 @@
 import json
 import logging
 
-from dependencies import get_llm_extractor, get_pdf_storage
+from backend.dependencies import get_llm_extractor, get_pdf_storage
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
-from schemas.requests import KeyExtractionRequest, QuestionRequest
-from services.llm_key_extractor import LLMKeyExtractor
+from backend.schemas.requests import KeyExtractionRequest, QuestionRequest
+from backend.services.llm_key_extractor import LLMKeyExtractor
 
 logger = logging.getLogger(__name__)
 

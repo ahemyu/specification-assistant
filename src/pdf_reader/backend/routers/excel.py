@@ -4,13 +4,13 @@ import uuid
 from io import BytesIO
 
 import pandas as pd
-from dependencies import get_excel_storage, get_llm_extractor, get_pdf_storage
+from backend.dependencies import get_excel_storage, get_llm_extractor, get_pdf_storage
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from fastapi.responses import StreamingResponse
 from openpyxl import load_workbook
-from schemas.requests import ExcelDownloadRequest, ExcelTemplateExtractionRequest
-from schemas.responses import ExcelTemplateResponse
-from services.llm_key_extractor import LLMKeyExtractor
+from backend.schemas.requests import ExcelDownloadRequest, ExcelTemplateExtractionRequest
+from backend.schemas.responses import ExcelTemplateResponse
+from backend.services.llm_key_extractor import LLMKeyExtractor
 
 logger = logging.getLogger(__name__)
 

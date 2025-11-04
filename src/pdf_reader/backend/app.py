@@ -2,11 +2,11 @@
 import logging
 from contextlib import asynccontextmanager
 
-from dependencies import load_existing_pdfs
+from backend.dependencies import load_existing_pdfs
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from routers import excel, llm, pdf
+from backend.routers import excel, llm, pdf
 
 logging.basicConfig(
     level=logging.INFO,
@@ -31,10 +31,10 @@ async def lifespan(_app: FastAPI):
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
 
 # Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
 
 # Templates
-templates = Jinja2Templates(directory="templates")
+templates = Jinja2Templates(directory="frontend/templates")
 
 
 @app.get("/")

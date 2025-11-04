@@ -10,7 +10,7 @@ from langchain_openai import ChatOpenAI
 # Add parent directory to path to allow imports from pdf_reader root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from schemas.domain import KeyExtractionResult
+from backend.schemas.domain import KeyExtractionResult
 
 logging.basicConfig(
     level=logging.INFO,

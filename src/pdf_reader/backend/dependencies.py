@@ -3,7 +3,7 @@ import logging
 import os
 from pathlib import Path
 
-from services.llm_key_extractor import LLMKeyExtractor
+from backend.services.llm_key_extractor import LLMKeyExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +63,7 @@ def load_existing_pdfs() -> None:
     Load existing PDF files from disk on startup and populate pdf_storage.
     This ensures PDFs persist across app restarts.
     """
-    from services.process_pdfs import process_single_pdf
+    from backend.services.process_pdfs import process_single_pdf
 
     logger.info("Loading existing PDFs from disk...")
     loaded_count = 0

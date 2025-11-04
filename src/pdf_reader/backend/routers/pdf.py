@@ -6,10 +6,10 @@ from concurrent.futures import ProcessPoolExecutor
 from io import BytesIO
 from pathlib import Path
 
-from dependencies import OUTPUT_DIR, UPLOADED_PDFS_DIR, get_pdf_storage
+from backend.dependencies import OUTPUT_DIR, UPLOADED_PDFS_DIR, get_pdf_storage
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
-from services.process_pdfs import process_single_pdf
+from backend.services.process_pdfs import process_single_pdf
 
 logger = logging.getLogger(__name__)
 
