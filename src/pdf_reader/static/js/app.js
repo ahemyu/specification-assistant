@@ -79,6 +79,8 @@ const zoomResetBtn = document.getElementById('zoomReset');
 const zoomLevel = document.getElementById('zoomLevel');
 const currentPdfPageSpan = document.getElementById('currentPdfPage');
 const totalPdfPagesSpan = document.getElementById('totalPdfPages');
+const prevPageBtn = document.getElementById('prevPage');
+const nextPageBtn = document.getElementById('nextPage');
 
 let uploadedFileIds = [];
 let processedFiles = [];
@@ -96,9 +98,11 @@ let currentCardIndex = 0;
 // PDF Viewer state
 let currentPdfDoc = null;
 let currentPdfPage = null;
-let currentPdfScale = 1.5; // Higher default scale for better quality
+let currentPdfScale = 1.0; // Default 100% zoom
 let currentReferences = [];
 let currentReferenceIndex = 0;
+let currentRenderTask = null; // Track current render task to cancel it if needed
+let pdfCache = {}; // Cache loaded PDF documents
 
 // Chat history management
 let conversationHistory = [];
@@ -1256,8 +1260,17 @@ function closeResultsCarousel() {
     resultsCarouselModal.classList.remove('show');
     document.body.style.overflow = ''; // Restore scrolling
 
+    // Cancel any ongoing render task
+    if (currentRenderTask) {
+        currentRenderTask.cancel();
+        currentRenderTask = null;
+    }
+
     // Clear PDF viewer state
     showNoPdfReference();
+
+    // Clear PDF cache to free memory
+    pdfCache = {};
 }
 
 // Carousel event listeners
@@ -1336,6 +1349,9 @@ function showNoPdfReference() {
     // Clear current PDF state
     currentPdfDoc = null;
     currentReferences = [];
+
+    // Disable page navigation buttons
+    updatePageNavButtons();
 }
 
 // Open PDF Viewer with references from carousel card
@@ -1381,6 +1397,12 @@ async function loadReference(index) {
     const ref = currentReferences[index];
     if (!ref) return;
 
+    // Cancel any ongoing render task
+    if (currentRenderTask) {
+        currentRenderTask.cancel();
+        currentRenderTask = null;
+    }
+
     // Show loading, hide error
     pdfLoading.classList.remove('hidden');
     pdfError.style.display = 'none';
@@ -1390,10 +1412,16 @@ async function loadReference(index) {
         // Extract file ID from filename (remove .pdf extension)
         const fileId = ref.filename.replace('.pdf', '');
 
-        // Load PDF document
-        const pdfUrl = `/pdf/${fileId}`;
-        const loadingTask = pdfjsLib.getDocument(pdfUrl);
-        currentPdfDoc = await loadingTask.promise;
+        // Check if PDF is already cached
+        if (pdfCache[fileId]) {
+            currentPdfDoc = pdfCache[fileId];
+        } else {
+            // Load PDF document and cache it
+            const pdfUrl = `/pdf/${fileId}`;
+            const loadingTask = pdfjsLib.getDocument(pdfUrl);
+            currentPdfDoc = await loadingTask.promise;
+            pdfCache[fileId] = currentPdfDoc;
+        }
 
         // Load the first page from the reference
         const pageNum = ref.pages[0] || 1;
@@ -1416,6 +1444,12 @@ async function renderPdfPage(pageNumber) {
     if (!currentPdfDoc) return;
 
     try {
+        // Cancel any ongoing render task
+        if (currentRenderTask) {
+            currentRenderTask.cancel();
+            currentRenderTask = null;
+        }
+
         // Get the page
         const page = await currentPdfDoc.getPage(pageNumber);
         currentPdfPageNum = pageNumber;
@@ -1449,10 +1483,19 @@ async function renderPdfPage(pageNumber) {
             viewport: viewport
         };
 
-        await page.render(renderContext).promise;
+        currentRenderTask = page.render(renderContext);
+        await currentRenderTask.promise;
+        currentRenderTask = null;
+
+        // Update page navigation buttons
+        updatePageNavButtons();
 
     } catch (error) {
-        console.error('Error rendering PDF page:', error);
+        // Only log error if it's not a cancellation
+        if (error.name !== 'RenderingCancelledException') {
+            console.error('Error rendering PDF page:', error);
+        }
+        currentRenderTask = null;
     }
 }
 
@@ -1468,7 +1511,7 @@ function zoomOut() {
 }
 
 function resetZoom() {
-    currentPdfScale = 1.5; // Reset to default higher scale
+    currentPdfScale = 1.0; // Reset to default 100% zoom
     updateZoom();
 }
 
@@ -1479,10 +1522,35 @@ async function updateZoom() {
     }
 }
 
+// Page navigation functions
+function nextPdfPage() {
+    if (currentPdfDoc && currentPdfPageNum < currentPdfDoc.numPages) {
+        renderPdfPage(currentPdfPageNum + 1);
+    }
+}
+
+function prevPdfPage() {
+    if (currentPdfDoc && currentPdfPageNum > 1) {
+        renderPdfPage(currentPdfPageNum - 1);
+    }
+}
+
+function updatePageNavButtons() {
+    if (currentPdfDoc) {
+        prevPageBtn.disabled = currentPdfPageNum <= 1;
+        nextPageBtn.disabled = currentPdfPageNum >= currentPdfDoc.numPages;
+    } else {
+        prevPageBtn.disabled = true;
+        nextPageBtn.disabled = true;
+    }
+}
+
 // PDF Viewer event listeners
 zoomInBtn.addEventListener('click', zoomIn);
 zoomOutBtn.addEventListener('click', zoomOut);
 zoomResetBtn.addEventListener('click', resetZoom);
+prevPageBtn.addEventListener('click', prevPdfPage);
+nextPageBtn.addEventListener('click', nextPdfPage);
 
 // Handle clicks on reference buttons in carousel cards
 document.addEventListener('click', function(e) {
