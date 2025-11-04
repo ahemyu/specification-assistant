@@ -31,15 +31,18 @@ export OPENAI_API_KEY="your-azure-openai-api-key"
 ### Start the FastAPI server:
 
 ```bash
-# From project root, activate the virtual environment and run
-uv run src/pdf_reader/api.py
+# From project root
+uv run src/pdf_reader/main.py
 ```
-
+Or inside src/pdf_reader/ : 
+```bash
+uv run main.py
+```
 Or with uvicorn directly:
 
 ```bash
 # From project root
-uv run uvicorn src.pdf_reader.api:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn src.pdf_reader.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 Access at: http://localhost:8000
@@ -53,12 +56,33 @@ Access at: http://localhost:8000
 5. Ask questions about uploaded PDFs
 6. Download results as Excel
 
+## Project Structure
+
+```
+pdf_reader/
+├── backend/          # Backend code
+│   ├── routers/      # API endpoints
+│   ├── services/     # Business logic
+│   ├── schemas/      # Data models
+│   ├── dependencies.py
+│   └── app.py        # FastAPI app
+├── frontend/         # Frontend code
+│   ├── static/       # CSS & JS 
+│   │   ├── css/modules/
+│   │   └── js/modules/
+│   └── templates/    # HTML templates
+├── main.py          # Entry point
+├── output/          # Extracted text files
+└── uploaded_pdfs/   # Uploaded PDF storage
+```
+
 ## Tech Stack
 
 - **FastAPI**: Web API framework
 - **pdfplumber**: PDF text/table extraction
 - **LangChain + Azure OpenAI**: LLM key extraction and Q&A
 - **pandas + openpyxl**: Excel export
+- **Vanilla JS Modules**: Modular frontend architecture
 
 ## API Docs
 
