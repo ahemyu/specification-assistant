@@ -25,6 +25,7 @@ wheels/
 
 # Virtual environments
 venv/
+.venv/
 ENV/
 env/
 
@@ -40,6 +41,7 @@ output/
 *.txt
 /src/pdf_reader/uploads
 /src/pdf_reader/uploaded_pdfs
+/uploaded_pdfs
 
 # Environment variables
 .env
@@ -56,6 +58,7 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
 
 # Code CLI 
 CLAUDE.md
