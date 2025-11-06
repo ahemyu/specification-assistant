@@ -22,10 +22,12 @@ import {
     setCurrentRenderTask,
     setPdfCache,
     setReviewedKeys,
-    setIsEditMode
+    setIsEditMode,
+    setCurrentExtractionState
 } from './state.js';
 
 import { loadPdfForResult, showNoPdfReference } from './pdfviewer.js';
+import { showSummaryView } from './summary.js';
 
 // Format a single key result for display
 function formatSingleKeyResult(keyName, result) {
@@ -113,27 +115,37 @@ function formatSingleKeyResult(keyName, result) {
 }
 
 // Open results carousel
-export function openResultsCarousel(data, keyNames) {
+export function openResultsCarousel(data, keyNames, startIndex = 0) {
     setCarouselResults(data);
     setCarouselKeyNames(keyNames);
-    setCurrentCardIndex(0);
+    setCurrentCardIndex(startIndex);
 
-    // Initialize review state for all keys
+    // Transition to review state
+    setCurrentExtractionState('review');
+
+    // Initialize review state for all keys (only if not already reviewed)
+    const existingReviewedKeys = { ...reviewedKeys };
     const initialReviewedKeys = {};
     keyNames.forEach(keyName => {
-        const result = data[keyName];
-        const originalValue = (result && result.key_value) ?? 'Not found';
-        initialReviewedKeys[keyName] = {
-            status: 'pending',
-            value: originalValue,
-            originalValue: originalValue
-        };
+        if (existingReviewedKeys[keyName]) {
+            // Keep existing review state
+            initialReviewedKeys[keyName] = existingReviewedKeys[keyName];
+        } else {
+            // Initialize new key
+            const result = data[keyName];
+            const originalValue = (result && result.key_value) ?? 'Not found';
+            initialReviewedKeys[keyName] = {
+                status: 'pending',
+                value: originalValue,
+                originalValue: originalValue
+            };
+        }
     });
     setReviewedKeys(initialReviewedKeys);
     setIsEditMode(false);
 
     totalCards.textContent = keyNames.length;
-    showCarouselCard(0);
+    showCarouselCard(startIndex);
     updateCarouselNavButtons();
     updateCompletionBanner();
 
@@ -169,7 +181,7 @@ function updateCompletionBanner() {
                 counter.style.background = 'linear-gradient(135deg, #87BD25 0%, #6a971d 100%)';
             }
             if (keyboardHint) {
-                keyboardHint.textContent = 'Press D to download, ESC to close';
+                keyboardHint.textContent = 'Press D to download, ESC to view summary';
             }
         } else {
             banner.style.display = 'none';
@@ -178,7 +190,7 @@ function updateCompletionBanner() {
                 counter.style.background = 'linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%)';
             }
             if (keyboardHint) {
-                keyboardHint.textContent = 'Use arrow keys to navigate or press ESC to close';
+                keyboardHint.textContent = 'Use arrow keys to navigate';
             }
         }
     }
@@ -393,6 +405,20 @@ function closeResultsCarousel() {
 
     // Clear PDF cache to free memory
     setPdfCache({});
+
+    // If all keys are reviewed, automatically show summary view
+    const allReviewed = checkAllKeysReviewed();
+    if (allReviewed) {
+        showSummaryView();
+    }
+}
+
+// Handle view summary button click
+function handleViewSummary() {
+    // Close the carousel
+    closeResultsCarousel();
+    // Show the summary view
+    showSummaryView();
 }
 
 // Handle download from completion banner
@@ -406,7 +432,7 @@ function handleCompletionDownload() {
 }
 
 // Download reviewed results
-async function downloadReviewedResults(reviewedResults) {
+export async function downloadReviewedResults(reviewedResults) {
     try {
         const response = await fetch('/download-extraction-excel', {
             method: 'POST',
@@ -440,15 +466,15 @@ export function initCarousel() {
     nextCardBtn.addEventListener('click', nextCard);
 
     // Completion banner buttons
+    const completionViewSummaryBtn = document.getElementById('completionViewSummaryBtn');
     const completionDownloadBtn = document.getElementById('completionDownloadBtn');
-    const completionCloseBtn = document.getElementById('completionCloseBtn');
+
+    if (completionViewSummaryBtn) {
+        completionViewSummaryBtn.addEventListener('click', handleViewSummary);
+    }
 
     if (completionDownloadBtn) {
         completionDownloadBtn.addEventListener('click', handleCompletionDownload);
-    }
-
-    if (completionCloseBtn) {
-        completionCloseBtn.addEventListener('click', closeResultsCarousel);
     }
 
     // Close on background click
@@ -484,7 +510,12 @@ export function initCarousel() {
                     const keyName = carouselKeyNames[currentCardIndex];
                     cancelEdit(keyName);
                 } else {
-                    closeResultsCarousel();
+                    // If review is complete, ESC closes carousel and shows summary
+                    const allReviewed = checkAllKeysReviewed();
+                    if (allReviewed) {
+                        e.preventDefault();
+                        closeResultsCarousel();
+                    }
                 }
             } else if (e.key === 'Enter' && !isEditMode) {
                 e.preventDefault();

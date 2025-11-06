@@ -8,12 +8,10 @@ import {
     manualTabContent,
     excelFileInput,
     excelFileName,
-    excelContextInput,
     extractExcelBtn,
     keysPreview,
     keysPreviewList,
     keyInput,
-    contextInput,
     extractBtn,
     extractSpinner,
     extractStatus,
@@ -25,7 +23,10 @@ import {
     setCurrentExtractionMode,
     setUploadedTemplateId,
     setUploadedTemplateKeys,
-    setExtractionResultsData
+    setExtractionResultsData,
+    setReviewedKeys,
+    setCarouselResults,
+    setCarouselKeyNames
 } from './state.js';
 
 import { openResultsCarousel, getReviewedResults } from './carousel.js';
@@ -256,7 +257,6 @@ async function extractFromExcel() {
         return;
     }
 
-    const additionalContext = excelContextInput.value.trim();
     extractExcelBtn.disabled = true;
     extractSpinner.style.display = 'block';
     extractStatus.style.display = 'none';
@@ -269,8 +269,7 @@ async function extractFromExcel() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 template_id: uploadedTemplateId,
-                file_ids: uploadedFileIds,
-                additional_context: additionalContext || undefined
+                file_ids: uploadedFileIds
             })
         });
 
@@ -305,7 +304,6 @@ async function extractManually() {
         return;
     }
 
-    const additionalContext = contextInput.value.trim();
     extractBtn.disabled = true;
     extractSpinner.style.display = 'block';
     extractStatus.style.display = 'none';
@@ -318,8 +316,7 @@ async function extractManually() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 file_ids: uploadedFileIds,
-                key_names: keyNames,
-                additional_context: additionalContext || undefined
+                key_names: keyNames
             })
         });
 
@@ -339,6 +336,56 @@ async function extractManually() {
     } finally {
         extractBtn.disabled = false;
     }
+}
+
+// Reset extraction view to virgin state
+export function resetExtractionView() {
+    // Clear manual input fields
+    if (keyInput) keyInput.value = '';
+
+    // Clear Excel input fields
+    if (excelFileInput) excelFileInput.value = '';
+    if (excelFileName) excelFileName.textContent = '';
+
+    // Hide and clear keys preview
+    if (keysPreview) {
+        keysPreview.style.display = 'none';
+        if (keysPreviewList) keysPreviewList.innerHTML = '';
+    }
+
+    // Hide action buttons
+    const excelActionButtons = document.getElementById('excelActionButtons');
+    const manualActionButtons = document.getElementById('manualActionButtons');
+    if (excelActionButtons) {
+        excelActionButtons.style.display = 'none';
+        excelActionButtons.innerHTML = '';
+    }
+    if (manualActionButtons) {
+        manualActionButtons.style.display = 'none';
+        manualActionButtons.innerHTML = '';
+    }
+
+    // Clear status and results
+    if (extractStatus) {
+        extractStatus.style.display = 'none';
+        extractStatus.textContent = '';
+    }
+    if (extractionResults) {
+        extractionResults.innerHTML = '';
+    }
+
+    // Disable extract button for Excel mode (re-enabled when file is uploaded)
+    if (extractExcelBtn) {
+        extractExcelBtn.disabled = true;
+    }
+
+    // Reset state
+    setUploadedTemplateId(null);
+    setUploadedTemplateKeys([]);
+    setExtractionResultsData(null);
+    setReviewedKeys({});
+    setCarouselResults([]);
+    setCarouselKeyNames([]);
 }
 
 // Initialize extraction event listeners

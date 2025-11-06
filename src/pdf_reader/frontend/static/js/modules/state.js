@@ -24,6 +24,12 @@ export let currentCardIndex = 0;
 export let reviewedKeys = {};
 export let isEditMode = false;
 
+// Extraction workflow state - tracks the current phase
+// 'setup' - Initial state, user configures extraction (Excel/Manual tabs)
+// 'review' - User is reviewing extracted keys in carousel
+// 'summary' - Review complete, showing summary table view
+export let currentExtractionState = 'setup';
+
 // PDF Viewer state
 export let currentPdfDoc = null;
 export let currentPdfPage = null;
@@ -49,6 +55,7 @@ export function setCarouselKeyNames(names) { carouselKeyNames = names; }
 export function setCurrentCardIndex(index) { currentCardIndex = index; }
 export function setReviewedKeys(keys) { reviewedKeys = keys; }
 export function setIsEditMode(mode) { isEditMode = mode; }
+export function setCurrentExtractionState(state) { currentExtractionState = state; }
 export function setCurrentPdfDoc(doc) { currentPdfDoc = doc; }
 export function setCurrentPdfPage(page) { currentPdfPage = page; }
 export function setCurrentPdfScale(scale) { currentPdfScale = scale; }
@@ -91,14 +98,12 @@ export const manualTabContent = document.getElementById('manualTabContent');
 // Excel template elements
 export const excelFileInput = document.getElementById('excelFileInput');
 export const excelFileName = document.getElementById('excelFileName');
-export const excelContextInput = document.getElementById('excelContextInput');
 export const extractExcelBtn = document.getElementById('extractExcelBtn');
 export const keysPreview = document.getElementById('keysPreview');
 export const keysPreviewList = document.getElementById('keysPreviewList');
 
 // Manual input elements
 export const keyInput = document.getElementById('keyInput');
-export const contextInput = document.getElementById('contextInput');
 export const extractBtn = document.getElementById('extractBtn');
 
 // Shared elements
@@ -142,3 +147,11 @@ export const currentPdfPageSpan = document.getElementById('currentPdfPage');
 export const totalPdfPagesSpan = document.getElementById('totalPdfPages');
 export const prevPageBtn = document.getElementById('prevPage');
 export const nextPageBtn = document.getElementById('nextPage');
+
+// Summary view elements
+export const extractionSetupView = document.getElementById('extractionSetupView');
+export const extractionSummaryView = document.getElementById('extractionSummaryView');
+export const summaryTableBody = document.getElementById('summaryTableBody');
+export const summaryKeyCount = document.getElementById('summaryKeyCount');
+export const extractMoreKeysBtn = document.getElementById('extractMoreKeysBtn');
+export const downloadSummaryBtn = document.getElementById('downloadSummaryBtn');

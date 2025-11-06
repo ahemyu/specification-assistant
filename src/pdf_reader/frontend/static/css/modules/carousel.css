@@ -226,6 +226,33 @@
     transform: translateY(0);
 }
 
+.completion-view-summary-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #1C2C8C 0%, #152160 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.completion-view-summary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
+    background: linear-gradient(135deg, #152160 0%, #0e1640 100%);
+}
+
+.completion-view-summary-btn:active {
+    transform: translateY(0);
+}
+
 .completion-close-btn {
     padding: 12px 24px;
     background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);

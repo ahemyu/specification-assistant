@@ -3,10 +3,10 @@ import json
 import logging
 
 from backend.dependencies import get_llm_extractor, get_pdf_storage
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 from backend.schemas.requests import KeyExtractionRequest, QuestionRequest
 from backend.services.llm_key_extractor import LLMKeyExtractor
+from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,6 @@ async def extract_keys(
     Requires:
     - file_ids: List of file IDs from previous /upload requests
     - key_names: List of keys to extract
-    - additional_context (optional): Additional context to help the LLM
 
     Returns:
     - Dictionary mapping each key name to its KeyExtractionResult
@@ -46,8 +45,7 @@ async def extract_keys(
     try:
         results = await llm_extractor.extract_keys(
             key_names=request.key_names,
-            pdf_data=pdf_data_list,
-            additional_context=request.additional_context or ""
+            pdf_data=pdf_data_list
         )
         # Convert results to dict with serializable values
         return {

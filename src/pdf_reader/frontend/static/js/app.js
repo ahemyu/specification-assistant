@@ -8,6 +8,7 @@ import { initExtraction } from './modules/extraction.js';
 import { initCarousel } from './modules/carousel.js';
 import { initPdfViewer } from './modules/pdfviewer.js';
 import { initModals } from './modules/modals.js';
+import { initializeSummary } from './modules/summary.js';
 import { loadChatHistory, loadPdfState } from './modules/storage.js';
 
 // Initialize application when DOM is ready
@@ -24,4 +25,5 @@ window.addEventListener('DOMContentLoaded', () => {
     initCarousel();
     initPdfViewer();
     initModals();
+    initializeSummary();
 });

@@ -17,6 +17,9 @@
 /* Extraction - Key extraction forms and results */
 @import url('./modules/extraction.css');
 
+/* Summary - Extraction summary view */
+@import url('./modules/summary.css');
+
 /* Carousel - Results viewer */
 @import url('./modules/carousel.css');
 

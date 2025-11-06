@@ -50,8 +50,7 @@ class LLMKeyExtractor:
     async def _extract_key(
         self,
         key_name: str,
-        pdf_data: list[dict],
-        additional_context: str = ""
+        pdf_data: list[dict]
     ) -> KeyExtractionResult:
         """
         Extract a specific key from one or more processed PDFs asynchronously.
@@ -60,7 +59,6 @@ class LLMKeyExtractor:
             key_name: The name of the key to extract (e.g., "voltage rating", "manufacturer")
             pdf_data: List of dictionaries containing PDF data from process_single_pdf_to_dict()
                       Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
-            additional_context: Optional additional context to help the LLM understand what to look for
 
         Returns:
             KeyExtractionResult with the extracted key value and source locations
@@ -74,7 +72,6 @@ class LLMKeyExtractor:
         prompt = f"""
                 You are an expert at extracting specific information from technical documents.
                 Your task is to find and extract the value for the key: "{key_name}"
-                {f"Additional context: {additional_context}" if additional_context else ""}
                 Below are the contents of one or more PDF documents. Each document includes
                 page numbers to help you track where information is found.
                 IMPORTANT INSTRUCTIONS:
@@ -102,8 +99,7 @@ class LLMKeyExtractor:
     async def extract_keys(
         self,
         key_names: list[str],
-        pdf_data: list[dict],
-        additional_context: str = ""
+        pdf_data: list[dict]
     ) -> dict:
         """
         Extract multiple keys from the same PDF data asynchronously in parallel.
@@ -111,7 +107,6 @@ class LLMKeyExtractor:
         Args:
             key_names: List of key names to extract
             pdf_data: List of dictionaries containing PDF data
-            additional_context: Optional additional context
 
         Returns:
             Dictionary mapping key names to their extraction results
@@ -121,7 +116,7 @@ class LLMKeyExtractor:
         # Create a task for each key extraction
         async def extract_with_error_handling(key_name: str):
             try:
-                return key_name, await self._extract_key(key_name, pdf_data, additional_context)
+                return key_name, await self._extract_key(key_name, pdf_data)
             except Exception as e:
                 logger.error(f"Failed to extract key '{key_name}': {str(e)}")
                 # Return None for failed extractions

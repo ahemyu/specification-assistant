@@ -14,11 +14,15 @@ import {
     allUploadedFiles,
     setUploadedFileIds,
     setProcessedFiles,
-    setAllUploadedFiles
+    setAllUploadedFiles,
+    setCurrentExtractionState,
+    setReviewedKeys,
+    setExtractionResultsData
 } from './state.js';
 
 import { showStatus, savePdfState, clearPdfState, clearChatHistory } from './storage.js';
 import { enableMainTabs, switchMainTab } from './navigation.js';
+import { showSetupView } from './summary.js';
 
 // Display results
 export function displayResults(results) {
@@ -153,6 +157,12 @@ async function handleUpload() {
         const data = await response.json();
         spinner.style.display = 'none';
         clearChatHistory();
+
+        // Reset extraction state when new PDFs are uploaded
+        setCurrentExtractionState('setup');
+        setReviewedKeys({});
+        setExtractionResultsData(null);
+        showSetupView();
 
         uploadedFileIds.push(...data.processed.map(p => p.file_id));
         processedFiles.push(...data.processed);

@@ -97,11 +97,13 @@
 
             <!-- Extract Keys View -->
             <div class="tab-view" id="extractView">
-                <section class="key-extraction-section">
-                    <h2>Extract Keys from Uploaded PDFs</h2>
-                    <p class="section-subtitle">Use AI to extract specificied keys from your PDFs</p>
+                <!-- Setup View - Initial extraction configuration -->
+                <div id="extractionSetupView">
+                    <section class="key-extraction-section">
+                        <h2>Extract Keys from Uploaded PDFs</h2>
+                        <p class="section-subtitle">Use AI to extract specificied keys from your PDFs</p>
 
-                    <!-- Tab Navigation -->
+                        <!-- Tab Navigation -->
                     <div class="extraction-tabs">
                         <button class="tab-btn" id="excelTab" data-tab="excel">Excel Template</button>
                         <button class="tab-btn active" id="manualTab" data-tab="manual">Manual Input</button>
@@ -122,15 +124,6 @@
                                     style="display: none;"
                                     aria-label="Upload Excel template">
                                 <div id="excelFileName" class="excel-filename"></div>
-                            </div>
-
-                            <div class="key-input-group">
-                                <label for="excelContextInput">Additional Context (optional):</label>
-                                <textarea
-                                    id="excelContextInput"
-                                    rows="3"
-                                    placeholder="e.g., This is an electrical specification document"
-                                    aria-label="Enter additional context for Excel extraction"></textarea>
                             </div>
 
                             <div id="keysPreview" class="keys-preview" style="display: none;">
@@ -155,25 +148,62 @@
                                     aria-label="Enter keys to extract"></textarea>
                             </div>
 
-                            <div class="key-input-group">
-                                <label for="contextInput">Additional Context (optional):</label>
-                                <textarea
-                                    id="contextInput"
-                                    rows="3"
-                                    placeholder="e.g., This is an electrical specification document"
-                                    aria-label="Enter additional context"></textarea>
-                            </div>
-
                             <button class="extract-btn" id="extractBtn">Extract Keys</button>
                             <div class="extraction-action-buttons" id="manualActionButtons" style="display: none;"></div>
                         </div>
                     </div>
 
-                    <!-- Shared spinner, status, and results -->
-                    <div class="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting"></div>
-                    <div class="status" id="extractStatus" role="status" aria-live="polite"></div>
-                    <div class="extraction-results" id="extractionResults"></div>
-                </section>
+                        <!-- Shared spinner, status, and results -->
+                        <div class="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting"></div>
+                        <div class="status" id="extractStatus" role="status" aria-live="polite"></div>
+                        <div class="extraction-results" id="extractionResults"></div>
+                    </section>
+                </div>
+
+                <!-- Summary View - Shows completed extraction results -->
+                <div id="extractionSummaryView" style="display: none;">
+                    <section class="summary-section">
+                        <div class="summary-header">
+                            <div class="summary-title-group">
+                                <h2>Key Extraction Complete</h2>
+                                <p class="summary-subtitle">
+                                    <span id="summaryKeyCount">0</span> keys successfully extracted and reviewed
+                                </p>
+                            </div>
+                            <div class="summary-actions">
+                                <button class="btn-secondary" id="extractMoreKeysBtn">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-right: 8px;">
+                                        <path d="M8 2V14M2 8H14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    </svg>
+                                    Start New Extraction
+                                </button>
+                                <button class="btn-primary" id="downloadSummaryBtn">
+                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="margin-right: 8px;">
+                                        <path d="M8 2V10M8 10L5 7M8 10L11 7M2 14H14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                    Download Results
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="summary-table-container">
+                            <table class="summary-table">
+                                <thead>
+                                    <tr>
+                                        <th>Key Name</th>
+                                        <th>Extracted Value</th>
+                                        <th>Status</th>
+                                        <th>Source</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="summaryTableBody">
+                                    <!-- Rows will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
             </div>
         </main>
     </div>
@@ -235,23 +265,29 @@
                         </svg>
                         <div class="completion-message">
                             <h3>All Keys Reviewed</h3>
-                            <p>You've reviewed all extraction results. Ready to download?</p>
                         </div>
                     </div>
                     <div class="completion-actions">
+                        <button id="completionViewSummaryBtn" class="completion-view-summary-btn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 3h18v18H3z"></path>
+                                <line x1="3" y1="9" x2="21" y2="9"></line>
+                                <line x1="9" y1="3" x2="9" y2="21"></line>
+                            </svg>
+                            View Summary
+                        </button>
                         <button id="completionDownloadBtn" class="completion-download-btn">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="7 10 12 15 17 10"></polyline>
                                 <line x1="12" y1="15" x2="12" y2="3"></line>
                             </svg>
-                            Download Results (D)
+                            Download (D)
                         </button>
-                        <button id="completionCloseBtn" class="completion-close-btn">Close Carousel</button>
                     </div>
                 </div>
                 <div class="carousel-keyboard-hint">
-                    Use arrow keys to navigate or press ESC to close
+                    Use arrow keys to navigate
                 </div>
             </div>
 

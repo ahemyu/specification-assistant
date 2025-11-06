@@ -113,7 +113,6 @@ async def extract_keys_from_template(
     Requires:
     - template_id: ID from previous /upload-excel-template request
     - file_ids: List of file IDs from /upload requests
-    - additional_context (optional): Additional context for extraction
 
     Returns:
     - Dictionary of extraction results (same format as /extract-keys)
@@ -148,8 +147,7 @@ async def extract_keys_from_template(
     try:
         results = await llm_extractor.extract_keys(
             key_names=keys,
-            pdf_data=pdf_data_list,
-            additional_context=request.additional_context or ""
+            pdf_data=pdf_data_list
         )
 
         # Load Excel template with openpyxl to preserve formatting

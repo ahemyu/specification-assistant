@@ -9,7 +9,6 @@ class KeyExtractionRequest(BaseModel):
 
     file_ids: list[str]
     key_names: list[str]
-    additional_context: str | None = None
 
 
 class QuestionRequest(BaseModel):
@@ -32,4 +31,3 @@ class ExcelTemplateExtractionRequest(BaseModel):
 
     template_id: str
     file_ids: list[str]
-    additional_context: str | None = None
