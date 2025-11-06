@@ -11,6 +11,8 @@ import './styles/modules/navigation.css'
 import './styles/modules/upload.css'
 import './styles/modules/modals.css'
 import './styles/modules/notifications.css'
+import './styles/modules/pdfviewer.css'
+import './styles/modules/extraction.css'
 
 function App() {
   return (
