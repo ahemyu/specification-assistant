@@ -19,6 +19,11 @@ export let carouselResults = [];
 export let carouselKeyNames = [];
 export let currentCardIndex = 0;
 
+// Review state for key extraction
+// Structure: { keyName: { status: 'pending'|'accepted'|'edited', value: string, originalValue: string } }
+export let reviewedKeys = {};
+export let isEditMode = false;
+
 // PDF Viewer state
 export let currentPdfDoc = null;
 export let currentPdfPage = null;
@@ -42,6 +47,8 @@ export function setUploadedTemplateKeys(keys) { uploadedTemplateKeys = keys; }
 export function setCarouselResults(results) { carouselResults = results; }
 export function setCarouselKeyNames(names) { carouselKeyNames = names; }
 export function setCurrentCardIndex(index) { currentCardIndex = index; }
+export function setReviewedKeys(keys) { reviewedKeys = keys; }
+export function setIsEditMode(mode) { isEditMode = mode; }
 export function setCurrentPdfDoc(doc) { currentPdfDoc = doc; }
 export function setCurrentPdfPage(page) { currentPdfPage = page; }
 export function setCurrentPdfScale(scale) { currentPdfScale = scale; }

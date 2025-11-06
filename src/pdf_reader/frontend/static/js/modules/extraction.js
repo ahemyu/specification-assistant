@@ -28,7 +28,7 @@ import {
     setExtractionResultsData
 } from './state.js';
 
-import { openResultsCarousel } from './carousel.js';
+import { openResultsCarousel, getReviewedResults } from './carousel.js';
 
 // Show extraction status
 function showExtractStatus(message, type) {
@@ -171,10 +171,14 @@ async function downloadExtractionExcel() {
     }
 
     try {
+        // Use reviewed results if available, otherwise use original extraction results
+        const reviewedResults = getReviewedResults();
+        const resultsToDownload = Object.keys(reviewedResults).length > 0 ? reviewedResults : extractionResultsData;
+
         const response = await fetch('/download-extraction-excel', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ extraction_results: extractionResultsData })
+            body: JSON.stringify({ extraction_results: resultsToDownload })
         });
 
         if (!response.ok) {

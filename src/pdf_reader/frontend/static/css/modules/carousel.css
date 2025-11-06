@@ -133,6 +133,122 @@
     background: #f7fafc;
 }
 
+/* Completion Banner */
+.completion-banner {
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #e6f9f8 0%, #f0fdf4 100%);
+    border-top: 3px solid #87BD25;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    box-shadow: 0 -4px 20px rgba(135, 189, 37, 0.15);
+    animation: slideUp 0.5s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.completion-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+}
+
+.completion-icon {
+    color: #87BD25;
+    flex-shrink: 0;
+    animation: checkPulse 0.6s ease;
+}
+
+@keyframes checkPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.completion-message h3 {
+    margin: 0 0 4px 0;
+    color: #1a202c;
+    font-size: 1.1em;
+    font-weight: 700;
+}
+
+.completion-message p {
+    margin: 0;
+    color: #4a5568;
+    font-size: 0.9em;
+}
+
+.completion-actions {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.completion-download-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #87BD25 0%, #6a971d 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.3);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.completion-download-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(135, 189, 37, 0.4);
+    background: linear-gradient(135deg, #6a971d 0%, #5a7e18 100%);
+}
+
+.completion-download-btn:active {
+    transform: translateY(0);
+}
+
+.completion-close-btn {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
+    color: #4a5568;
+    border: 2px solid #cbd5e0;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.completion-close-btn:hover {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.completion-close-btn:active {
+    transform: translateY(0);
+}
+
 /* Custom scrollbar for carousel card */
 .carousel-card::-webkit-scrollbar {
     width: 10px;
