@@ -8,6 +8,9 @@
     background: #f7fafc;
     margin-bottom: 32px;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .upload-section:hover {
@@ -77,6 +80,8 @@
 .selected-files {
     margin-top: 24px;
     text-align: left;
+    width: 100%;
+    max-width: 600px;
 }
 
 .selected-files ul {
@@ -112,7 +117,7 @@
 
 /* Results header */
 .results-header {
-    display: none;
+    display: flex;
     align-items: center;
     justify-content: space-between;
     margin-top: 32px;

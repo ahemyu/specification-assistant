@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import type {
-  UploadedFile,
   ProcessedFile,
   ExtractionResult,
   ReviewedKey,
@@ -15,7 +14,7 @@ interface AppState {
   // File management state
   uploadedFileIds: string[]
   processedFiles: ProcessedFile[]
-  allUploadedFiles: UploadedFile[]
+  allUploadedFiles: ProcessedFile[]
   extractionResultsData: ExtractionResult[] | null
   currentExtractionMode: ExtractionMode
   uploadedTemplateId: string | null
@@ -48,7 +47,7 @@ interface AppState {
   // Actions
   setUploadedFileIds: (ids: string[]) => void
   setProcessedFiles: (files: ProcessedFile[]) => void
-  setAllUploadedFiles: (files: UploadedFile[]) => void
+  setAllUploadedFiles: (files: ProcessedFile[]) => void
   setExtractionResultsData: (data: ExtractionResult[] | null) => void
   setCurrentExtractionMode: (mode: ExtractionMode) => void
   setUploadedTemplateId: (id: string | null) => void
