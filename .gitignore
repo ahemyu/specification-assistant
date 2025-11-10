@@ -66,3 +66,7 @@ pymupdf_docs
 
 # Deployment
 fly.toml
+
+# frontend
+src/pdf_reader/frontend/node_modules
+.migration_plan
