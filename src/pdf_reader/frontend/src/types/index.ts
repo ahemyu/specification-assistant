@@ -33,7 +33,7 @@ export type ExtractionMode = 'excel' | 'manual'
 export type ExtractionState = 'setup' | 'review' | 'summary'
 
 export interface ChatMessage {
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'system'
   content: string
 }
 
