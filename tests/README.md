@@ -19,9 +19,15 @@ tests/
 
 ### Prerequisites
 
-1. Activate the virtual environment:
+1. Create and activate a virtual environment (if not already active):
 ```bash
-source src/pdf_reader/.venv/bin/activate
+# Create virtual environment (if needed)
+python -m venv .venv
+
+# Activate it (choose your platform)
+source .venv/bin/activate      # Linux/macOS
+.venv\Scripts\activate         # Windows (CMD)
+.venv\Scripts\Activate.ps1     # Windows (PowerShell)
 ```
 
 2. Ensure test dependencies are installed:

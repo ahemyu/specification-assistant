@@ -1,24 +1,16 @@
 """Pytest configuration and fixtures for the test suite."""
-import os
 import sys
 from pathlib import Path
 
-import pytest
-from fastapi.testclient import TestClient
-
-# Add src directory to path and change to that directory
+# Add src directory to path before other imports
 src_dir = Path(__file__).parent.parent / "src" / "pdf_reader"
 sys.path.insert(0, str(src_dir))
 
-# Change to the src directory so relative paths in app work
-original_dir = os.getcwd()
-os.chdir(str(src_dir))
+import pytest  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
 
-from app import app
-from dependencies import pdf_storage, excel_template_storage
-
-# Change back to original directory
-os.chdir(original_dir)
+from app import app  # noqa: E402
+from dependencies import excel_template_storage, pdf_storage  # noqa: E402
 
 
 @pytest.fixture(scope="function")
@@ -33,8 +25,7 @@ def clear_storage():
     pdf_storage.clear()
     excel_template_storage.clear()
     yield
-    pdf_storage.clear()
-    excel_template_storage.clear()
+    # No cleanup needed after yield - next test will clear before it runs
 
 
 @pytest.fixture

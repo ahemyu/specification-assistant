@@ -1,9 +1,5 @@
 """Unit tests for Excel template handling."""
 import pytest
-from pathlib import Path
-import sys
-
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src" / "pdf_reader"))
 
 from dependencies import excel_template_storage
 
@@ -22,8 +18,10 @@ class TestExcelTemplateUpload:
         response = client.post("/upload-excel-template", files=files)
 
         # Assert
-        # Should either reject or handle gracefully
-        assert response.status_code in [200, 400, 422]
+        # Should reject non-Excel files with 400 Bad Request
+        assert response.status_code == 400
+        assert "detail" in response.json()
+        assert "Invalid file type" in response.json()["detail"]
 
 
 @pytest.mark.unit

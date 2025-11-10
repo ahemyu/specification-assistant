@@ -5,6 +5,8 @@ stages:
 
 variables:
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # Python version should match pyproject.toml requires-python (>=3.10)
+  PYTHON_VERSION: "3.10"
 
 cache:
   paths:
@@ -13,7 +15,12 @@ cache:
 # Test job - runs pytest with coverage
 test:
   stage: test
-  image: python:3.10
+  image: python:${PYTHON_VERSION}
+  rules:
+    # Run on all branch commits
+    - if: $CI_COMMIT_BRANCH
+    # Run on merge requests
+    - if: $CI_MERGE_REQUEST_IID
   before_script:
     # Install project dependencies with test extras
     - pip install --upgrade pip

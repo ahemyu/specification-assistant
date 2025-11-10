@@ -1,16 +1,11 @@
 """Unit tests for PDF processing service."""
-import pytest
 import io
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
-import sys
+from unittest.mock import MagicMock, Mock, patch
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src" / "pdf_reader"))
+import pytest
 
-from services.process_pdfs import (
-    process_single_page,
-    process_single_pdf
-)
+from services.process_pdfs import process_single_page, process_single_pdf
 
 
 @pytest.mark.unit
