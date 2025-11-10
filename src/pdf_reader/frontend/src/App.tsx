@@ -13,6 +13,9 @@ import './styles/modules/modals.css'
 import './styles/modules/notifications.css'
 import './styles/modules/pdfviewer.css'
 import './styles/modules/extraction.css'
+import './styles/modules/carousel.css'
+import './styles/modules/summary.css'
+import './styles/modules/chat.css'
 
 function App() {
   return (

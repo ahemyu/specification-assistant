@@ -6,8 +6,37 @@ import { CarouselModal } from '../CarouselModal'
 import { SummaryView } from '../SummaryView'
 import type { ExtractionMode, ExtractionResult } from '../../types'
 
+interface BackendExtractionResult {
+  key_value: string | null
+  source_locations: Array<{
+    pdf_filename: string
+    page_numbers: number[]
+  }>
+  description: string
+}
+
 interface ExtractionResponse {
-  [key: string]: ExtractionResult
+  [key: string]: BackendExtractionResult
+}
+
+// Transform backend response to frontend format
+function transformExtractionResponse(backendData: ExtractionResponse): ExtractionResult[] {
+  return Object.entries(backendData).map(([keyName, result]) => {
+    // Flatten source_locations to references
+    const references = result.source_locations.flatMap((location) =>
+      location.page_numbers.map((pageNum) => ({
+        file_id: location.pdf_filename,
+        page_number: pageNum,
+        text: result.description || '',
+      }))
+    )
+
+    return {
+      key: keyName,
+      value: result.key_value || 'Not found',
+      references,
+    }
+  })
 }
 
 export function ExtractionView() {
@@ -110,11 +139,12 @@ export function ExtractionView() {
       }
 
       const data: ExtractionResponse = await response.json()
-      setExtractionResultsData(Object.values(data))
+      const transformedData = transformExtractionResponse(data)
+      setExtractionResultsData(transformedData)
       showNotification('Keys extracted successfully!', 'success')
 
-      // Open carousel modal
-      openCarousel()
+      // Open carousel modal immediately
+      setTimeout(() => openCarousel(), 100)
     } catch (error) {
       showNotification(
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -161,11 +191,12 @@ export function ExtractionView() {
       }
 
       const data: ExtractionResponse = await response.json()
-      setExtractionResultsData(Object.values(data))
+      const transformedData = transformExtractionResponse(data)
+      setExtractionResultsData(transformedData)
       showNotification('Keys extracted successfully!', 'success')
 
-      // Open carousel modal
-      openCarousel()
+      // Open carousel modal immediately
+      setTimeout(() => openCarousel(), 100)
     } catch (error) {
       showNotification(
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -387,11 +418,29 @@ export function ExtractionView() {
                 onClick={handleExtractFromExcel}
                 disabled={!uploadedTemplateId || uploadedFileIds.length === 0 || isExtracting}
                 isLoading={isExtracting}
+                title={
+                  uploadedFileIds.length === 0
+                    ? 'Please upload PDFs first'
+                    : !uploadedTemplateId
+                    ? 'Please upload Excel template first'
+                    : ''
+                }
               >
                 Extract Keys from Template
               </Button>
 
-              {extractionResultsData && currentTab === 'excel' && !showSummary && (
+              {uploadedFileIds.length === 0 && (
+                <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
+                  Please upload PDF files in the Upload tab first
+                </p>
+              )}
+              {uploadedFileIds.length > 0 && !uploadedTemplateId && (
+                <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
+                  Please upload an Excel template above
+                </p>
+              )}
+
+              {extractionResultsData && currentTab === 'excel' && !showSummary && !isCarouselOpen && (
                 <div className="extraction-action-buttons" id="excelActionButtons" style={{ display: 'flex' }}>
                   <button className="view-results-btn-inline" onClick={handleViewResults}>
                     View Results
@@ -431,11 +480,18 @@ export function ExtractionView() {
                 onClick={handleExtractManually}
                 disabled={uploadedFileIds.length === 0 || isExtracting}
                 isLoading={isExtracting}
+                title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : ''}
               >
                 Extract Keys
               </Button>
 
-              {extractionResultsData && currentTab === 'manual' && !showSummary && (
+              {uploadedFileIds.length === 0 && (
+                <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
+                  Please upload PDF files in the Upload tab first
+                </p>
+              )}
+
+              {extractionResultsData && currentTab === 'manual' && !showSummary && !isCarouselOpen && (
                 <div className="extraction-action-buttons" id="manualActionButtons" style={{ display: 'flex' }}>
                   <button className="view-results-btn-inline" onClick={handleViewResults}>
                     View Results

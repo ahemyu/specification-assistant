@@ -26,12 +26,12 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
 
   const {
     currentPdfDoc,
-    pdfCache,
     setCurrentPdfDoc,
     setCurrentPdfPage,
     setCurrentPdfScale,
-    setPdfCache,
   } = useAppStore()
+
+  const cacheRef = useRef<Record<string, any>>({})
 
   // Load PDF for current reference
   useEffect(() => {
@@ -54,12 +54,12 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
         const fileId = ref.filename.replace('.pdf', '')
 
         // Check cache first
-        let doc = pdfCache[fileId]
+        let doc = cacheRef.current[fileId]
         if (!doc) {
           const pdfUrl = `/pdf/${fileId}`
           const loadingTask = pdfjsLib.getDocument(pdfUrl)
           doc = await loadingTask.promise
-          setPdfCache({ ...pdfCache, [fileId]: doc })
+          cacheRef.current[fileId] = doc
         }
 
         setCurrentPdfDoc(doc)
@@ -74,7 +74,9 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
     }
 
     loadPdf()
-  }, [currentRefIndex, references, pdfCache, setPdfCache, setCurrentPdfDoc, setCurrentPdfPage])
+    // Zustand setters are stable and don't need to be in dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentRefIndex, references])
 
   // Render PDF page to canvas
   useEffect(() => {
@@ -135,7 +137,9 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
   // Sync scale with store
   useEffect(() => {
     setCurrentPdfScale(scale)
-  }, [scale, setCurrentPdfScale])
+    // Zustand setter is stable and doesn't need to be in dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scale])
 
   const handleZoomIn = () => {
     setScale((prev) => Math.min(prev + 0.25, 3.0))
