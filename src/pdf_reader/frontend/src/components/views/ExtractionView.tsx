@@ -2,6 +2,8 @@ import { useState, useRef } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { showNotification } from '../../utils/notifications'
 import { Button } from '../ui'
+import { CarouselModal } from '../CarouselModal'
+import { SummaryView } from '../SummaryView'
 import type { ExtractionMode, ExtractionResult } from '../../types'
 
 interface ExtractionResponse {
@@ -17,15 +19,21 @@ export function ExtractionView() {
   const [previewKeys, setPreviewKeys] = useState<string[]>([])
   const [isExtracting, setIsExtracting] = useState(false)
   const [manualKeys, setManualKeys] = useState('')
+  const [isCarouselOpen, setIsCarouselOpen] = useState(false)
+  const [showSummary, setShowSummary] = useState(false)
 
   const {
     uploadedFileIds,
     uploadedTemplateId,
     extractionResultsData,
+    reviewedKeys,
     setUploadedTemplateId,
     setUploadedTemplateKeys,
     setExtractionResultsData,
     setCurrentExtractionMode,
+    setCurrentExtractionState,
+    resetExtractionState,
+    setReviewedKeys,
   } = useAppStore()
 
   const handleTabSwitch = (mode: ExtractionMode) => {
@@ -105,8 +113,8 @@ export function ExtractionView() {
       setExtractionResultsData(Object.values(data))
       showNotification('Keys extracted successfully!', 'success')
 
-      // TODO: Open carousel modal (Phase 7)
-      console.log('Extraction complete, would open carousel here')
+      // Open carousel modal
+      openCarousel()
     } catch (error) {
       showNotification(
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -156,8 +164,8 @@ export function ExtractionView() {
       setExtractionResultsData(Object.values(data))
       showNotification('Keys extracted successfully!', 'success')
 
-      // TODO: Open carousel modal (Phase 7)
-      console.log('Extraction complete, would open carousel here')
+      // Open carousel modal
+      openCarousel()
     } catch (error) {
       showNotification(
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -166,6 +174,60 @@ export function ExtractionView() {
     } finally {
       setIsExtracting(false)
     }
+  }
+
+  const initializeReviewedKeys = () => {
+    if (!extractionResultsData) return
+
+    const initialReviewedKeys: Record<string, import('../../types').ReviewedKey> = {}
+    extractionResultsData.forEach((result) => {
+      const keyName = result.key
+      if (!reviewedKeys[keyName]) {
+        const originalValue = result.value || 'Not found'
+        initialReviewedKeys[keyName] = {
+          status: 'pending',
+          value: originalValue,
+          originalValue: originalValue,
+        }
+      } else {
+        initialReviewedKeys[keyName] = reviewedKeys[keyName]
+      }
+    })
+    setReviewedKeys(initialReviewedKeys)
+  }
+
+  const openCarousel = () => {
+    initializeReviewedKeys()
+    setIsCarouselOpen(true)
+  }
+
+  const handleCarouselClose = () => {
+    setIsCarouselOpen(false)
+  }
+
+  const handleCarouselComplete = () => {
+    setIsCarouselOpen(false)
+    setShowSummary(true)
+    setCurrentExtractionState('summary')
+  }
+
+  const handleReviewKey = () => {
+    // Reopen carousel for reviewing
+    setShowSummary(false)
+    openCarousel()
+  }
+
+  const handleStartNewExtraction = () => {
+    setShowSummary(false)
+    resetExtractionState()
+    setExcelFile(null)
+    setPreviewKeys([])
+    setManualKeys('')
+    setCurrentExtractionState('setup')
+  }
+
+  const handleViewResults = () => {
+    openCarousel()
   }
 
   const handleDownloadFilledExcel = async () => {
@@ -249,7 +311,14 @@ export function ExtractionView() {
 
   return (
     <div className="tab-view active" id="extractView">
-      <div id="extractionSetupView">
+      {/* Show summary view if in summary state */}
+      {showSummary ? (
+        <SummaryView
+          onReviewKey={handleReviewKey}
+          onStartNewExtraction={handleStartNewExtraction}
+        />
+      ) : (
+        <div id="extractionSetupView">
         <h2 className="view-title">Extract Keys from PDFs</h2>
         <p className="view-subtitle">
           Use an Excel template or enter keys manually to extract information from your PDFs
@@ -322,9 +391,11 @@ export function ExtractionView() {
                 Extract Keys from Template
               </Button>
 
-              {extractionResultsData && currentTab === 'excel' && (
+              {extractionResultsData && currentTab === 'excel' && !showSummary && (
                 <div className="extraction-action-buttons" id="excelActionButtons" style={{ display: 'flex' }}>
-                  <button className="view-results-btn-inline">View Results</button>
+                  <button className="view-results-btn-inline" onClick={handleViewResults}>
+                    View Results
+                  </button>
                   <button
                     className="download-excel-btn-inline"
                     onClick={handleDownloadFilledExcel}
@@ -364,9 +435,11 @@ export function ExtractionView() {
                 Extract Keys
               </Button>
 
-              {extractionResultsData && currentTab === 'manual' && (
+              {extractionResultsData && currentTab === 'manual' && !showSummary && (
                 <div className="extraction-action-buttons" id="manualActionButtons" style={{ display: 'flex' }}>
-                  <button className="view-results-btn-inline">View Results</button>
+                  <button className="view-results-btn-inline" onClick={handleViewResults}>
+                    View Results
+                  </button>
                   <button
                     className="download-excel-btn-inline"
                     onClick={handleDownloadExtractionExcel}
@@ -382,7 +455,15 @@ export function ExtractionView() {
         {isExtracting && (
           <div className="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting" />
         )}
-      </div>
+        </div>
+      )}
+
+      {/* Carousel Modal */}
+      <CarouselModal
+        isOpen={isCarouselOpen}
+        onClose={handleCarouselClose}
+        onComplete={handleCarouselComplete}
+      />
     </div>
   )
 }

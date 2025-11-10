@@ -19,8 +19,14 @@ export default defineConfig({
       '/download-extraction-excel': 'http://localhost:8000',
     }
   },
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext',
+    }
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: true,
+    target: 'esnext',
   }
 })
