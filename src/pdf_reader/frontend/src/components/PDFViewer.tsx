@@ -51,12 +51,12 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
       setError(null)
 
       try {
-        const fileId = ref.filename.replace('.pdf', '')
+        const fileId = ref.filename
 
         // Check cache first
         let doc = cacheRef.current[fileId]
         if (!doc) {
-          const pdfUrl = `/pdf/${fileId}`
+          const pdfUrl = `/view-pdf/${fileId}`
           const loadingTask = pdfjsLib.getDocument(pdfUrl)
           doc = await loadingTask.promise
           cacheRef.current[fileId] = doc

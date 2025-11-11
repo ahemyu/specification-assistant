@@ -137,6 +137,7 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
 
             processed.append({
                 "filename": result["filename"],
+                "original_filename": result["filename"],
                 "file_id": file_id,
                 "total_pages": pdf_data["total_pages"],
                 "data": pdf_data

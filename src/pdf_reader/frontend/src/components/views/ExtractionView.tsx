@@ -26,7 +26,7 @@ function transformExtractionResponse(backendData: ExtractionResponse): Extractio
     // Flatten source_locations to references
     const references = result.source_locations.flatMap((location) =>
       location.page_numbers.map((pageNum) => ({
-        file_id: location.pdf_filename,
+        file_id: location.pdf_filename.replace(/.pdf$/i, ''),
         page_number: pageNum,
         text: result.description || '',
       }))
