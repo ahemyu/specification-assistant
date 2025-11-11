@@ -8,26 +8,32 @@ interface SummaryViewProps {
 }
 
 export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewProps) {
-  const { extractionResultsData, reviewedKeys } = useAppStore()
+  const { extractionResultsData, reviewedKeys, extractionResultsBackendFormat } = useAppStore()
 
   const results = extractionResultsData || []
   const keyCount = results.length
 
-  // Get reviewed results with updated values
+  // Get reviewed results with updated values in backend format
   const getReviewedResults = useCallback(() => {
-    const reviewedData: Record<string, ExtractionResult> = {}
-    results.forEach((result) => {
-      const keyName = result.key
-      const reviewState = reviewedKeys[keyName]
-      if (reviewState) {
-        reviewedData[keyName] = {
-          ...result,
-          value: reviewState.value,
+    const reviewedData: Record<string, any> = {}
+
+    // Use backend format and update key_value with reviewed values
+    if (extractionResultsBackendFormat) {
+      Object.entries(extractionResultsBackendFormat).forEach(([keyName, backendResult]) => {
+        const reviewState = reviewedKeys[keyName]
+
+        // Create a copy of the backend result
+        reviewedData[keyName] = { ...backendResult }
+
+        // Update key_value with reviewed value if available
+        if (reviewState) {
+          reviewedData[keyName].key_value = reviewState.value
         }
-      }
-    })
+      })
+    }
+
     return reviewedData
-  }, [results, reviewedKeys])
+  }, [extractionResultsBackendFormat, reviewedKeys])
 
   // Download results
   const handleDownload = useCallback(async () => {

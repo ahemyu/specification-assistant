@@ -161,26 +161,17 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
     if (!allReviewed || !extractionResultsBackendFormat) return
 
     try {
-      // Transform backend format to download format with reviewed values
+      // Keep backend format and update key_value with reviewed values
       const reviewedResults: Record<string, any> = {}
       Object.entries(extractionResultsBackendFormat).forEach(([keyName, backendResult]) => {
         const reviewState = reviewedKeys[keyName]
-        if (reviewState) {
-          // Transform from backend format (key_value, source_locations, description)
-          // to download format (key, value, references)
-          const references = backendResult.source_locations.flatMap((location: any) =>
-            location.page_numbers.map((pageNum: number) => ({
-              file_id: location.pdf_filename,
-              page_number: pageNum,
-              text: backendResult.description || '',
-            }))
-          )
 
-          reviewedResults[keyName] = {
-            key: keyName,
-            value: reviewState.value,
-            references,
-          }
+        // Create a copy of the backend result
+        reviewedResults[keyName] = { ...backendResult }
+
+        // Update key_value with reviewed value if available
+        if (reviewState) {
+          reviewedResults[keyName].key_value = reviewState.value
         }
       })
 
