@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from backend.dependencies import load_existing_pdfs
 from backend.routers import excel, llm, pdf
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(
