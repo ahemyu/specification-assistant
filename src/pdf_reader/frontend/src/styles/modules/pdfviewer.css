@@ -8,6 +8,12 @@
     background: white;
 }
 
+.pdf-viewer-panel {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
 .pdf-viewer-content {
     height: 100%;
     display: flex;
@@ -21,7 +27,9 @@
     align-items: center;
     padding: 16px 24px;
     background: #f7fafc;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 2px solid #e2e8f0;
+    min-height: 72px;
+    box-sizing: border-box;
 }
 
 /* Zoom Controls */

@@ -159,6 +159,7 @@ class LLMKeyExtractor:
                                       message, None otherwise)
         """
         logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s)")
+
         # Create Q&A LLM instance with the specified model
         selected_model = model_name or "gpt-4.1"
         qa_llm = ChatOpenAI(
@@ -183,7 +184,6 @@ class LLMKeyExtractor:
 
         if has_system_message:
             # Use existing system message from history
-            logger.info("Using existing system message from conversation history")
             messages.append(SystemMessage(content=conversation_history[0]["content"]))
 
             # Add rest of conversation history (skip first system message)
@@ -193,9 +193,7 @@ class LLMKeyExtractor:
                 elif msg["role"] == "assistant":
                     messages.append(AIMessage(content=msg["content"]))
         else:
-            # First message in conversation - create system message with document context
-            logger.info("Creating new system message with document context")
-
+            # No system message in history - create new one and add conversation history
             # Use pre-formatted text that was created during PDF processing
             full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
@@ -216,6 +214,13 @@ class LLMKeyExtractor:
 
             messages.append(SystemMessage(content=system_content))
             system_message_to_return = system_content
+
+            # Add all conversation history (system messages were filtered out by frontend)
+            for msg in conversation_history or []:
+                if msg["role"] == "user":
+                    messages.append(HumanMessage(content=msg["content"]))
+                elif msg["role"] == "assistant":
+                    messages.append(AIMessage(content=msg["content"]))
 
         # Add current question
         messages.append(HumanMessage(content=question))

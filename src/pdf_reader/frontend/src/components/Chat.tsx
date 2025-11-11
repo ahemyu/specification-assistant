@@ -8,7 +8,7 @@ interface ChatProps {
   defaultModel?: string
 }
 
-export function Chat({ modelOptions = ['gpt-4.1', 'gpt-4o'], defaultModel = 'gpt-4.1' }: ChatProps) {
+export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: ChatProps) {
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedModel, setSelectedModel] = useState(defaultModel)
@@ -87,24 +87,30 @@ export function Chat({ modelOptions = ['gpt-4.1', 'gpt-4o'], defaultModel = 'gpt
 
     const userMessage: ChatMessage = { role: 'user', content: trimmedQuestion }
     addChatMessage(userMessage)
+
     setQuestion('')
     setIsLoading(true)
-    setIsStreaming(true)
+    setIsStreaming(false)
     setStreamingContent('')
 
     let fullAnswer = ''
     let systemMessage: string | null = null
     let lastRenderTime = 0
+    let isFirstChunk = true
     const RENDER_THROTTLE_MS = 32
 
     try {
+      // Send conversation history without the current user message (which is sent separately as 'question')
+      // and without system messages (similar to vanilla JS implementation)
+      const historyToSend = conversationHistory.filter(msg => msg.role !== 'system')
+
       const response = await fetch('/ask-question-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           file_ids: uploadedFileIds,
           question: trimmedQuestion,
-          conversation_history: conversationHistory.filter(msg => msg.role !== 'system'),
+          conversation_history: historyToSend,
           model_name: selectedModel,
         }),
       })
@@ -135,6 +141,12 @@ export function Chat({ modelOptions = ['gpt-4.1', 'gpt-4o'], defaultModel = 'gpt
             if (data.type === 'system_message') {
               systemMessage = data.content
             } else if (data.type === 'chunk') {
+              // First chunk - hide loading indicator and start streaming
+              if (isFirstChunk) {
+                setIsLoading(false)
+                setIsStreaming(true)
+                isFirstChunk = false
+              }
               fullAnswer += data.content
               // Throttled update
               const now = Date.now()
@@ -148,11 +160,15 @@ export function Chat({ modelOptions = ['gpt-4.1', 'gpt-4o'], defaultModel = 'gpt
               setIsStreaming(false)
 
               // Build final conversation history
-              const newHistory: ChatMessage[] = []
-              if (systemMessage) {
-                newHistory.push({ role: 'system', content: systemMessage })
+              // Start with existing history and append new messages
+              const newHistory: ChatMessage[] = [...conversationHistory]
+
+              // Add system message at the beginning ONLY if we don't have one yet
+              if (systemMessage && !newHistory.some(msg => msg.role === 'system')) {
+                newHistory.unshift({ role: 'system', content: systemMessage })
               }
-              newHistory.push(...conversationHistory)
+
+              // Append user and assistant messages
               newHistory.push(userMessage)
               newHistory.push({ role: 'assistant', content: fullAnswer })
 
