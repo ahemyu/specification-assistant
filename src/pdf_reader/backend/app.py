@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from backend.dependencies import load_existing_pdfs
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+# from fastapi.templating import Jinja2Templates  # DEPRECATED: Vanilla JS templates no longer used
 from backend.routers import excel, llm, pdf
 
 logging.basicConfig(
@@ -30,23 +30,25 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+# ============================================================================
+# DEPRECATED: Vanilla JS Static Files (Archived 2025-11-11)
+# The React build is now served from frontend/dist/ directory.
+# The old vanilla JS code is archived in frontend/archived_vanilla_js/
+# app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
+# templates = Jinja2Templates(directory="frontend/templates")
+# @app.get("/")
+# async def root(request: Request):
+#     """Serve the main HTML page."""
+#     return templates.TemplateResponse("index.html", {"request": request})
+# ============================================================================
 
-# Templates
-templates = Jinja2Templates(directory="frontend/templates")
-
-
-@app.get("/")
-async def root(request: Request):
-    """Serve the main HTML page."""
-    return templates.TemplateResponse("index.html", {"request": request})
-
-
-# Include routers
+# Include routers (must be before catch-all static mount)
 app.include_router(pdf.router)
 app.include_router(llm.router)
 app.include_router(excel.router)
+
+# Mount React production build (must be LAST - catch-all route)
+app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="react-frontend")
 
 if __name__ == "__main__":
     import uvicorn

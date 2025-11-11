@@ -101,7 +101,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
 
     try {
       // Send conversation history without the current user message (which is sent separately as 'question')
-      // and without system messages (similar to vanilla JS implementation)
+      // and without system messages 
       const historyToSend = conversationHistory.filter(msg => msg.role !== 'system')
 
       const response = await fetch('/ask-question-stream', {
@@ -163,7 +163,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               // Start with existing history and append new messages
               const newHistory: ChatMessage[] = [...conversationHistory]
 
-              // Add system message at the beginning ONLY if we don't have one yet
+              // Add system message at the beginning only if we don't have one yet
               if (systemMessage && !newHistory.some(msg => msg.role === 'system')) {
                 newHistory.unshift({ role: 'system', content: systemMessage })
               }
@@ -209,14 +209,10 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
       <div className="chat-section">
         {/* Header */}
         <div className="chat-header">
-          <div className="chat-status">
-            {uploadedFileIds.length > 0
-              ? `Ready to answer questions (${uploadedFileIds.length} PDF${uploadedFileIds.length > 1 ? 's' : ''})`
-              : 'Upload PDFs to start asking questions'}
-          </div>
           <div className="model-picker-inline">
-            <span className="model-picker-label">Model:</span>
+            <label htmlFor="modelSelect" className="model-picker-label">Model:</label>
             <select
+              id="modelSelect"
               className="model-select"
               value={selectedModel}
               onChange={(e) => setSelectedModel(e.target.value)}
@@ -228,16 +224,11 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               ))}
             </select>
           </div>
-          <button className="clear-chat-btn" onClick={handleClearChat}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              />
+          <button className="clear-chat-btn" onClick={handleClearChat} title="Start a new conversation">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
             </svg>
-            Clear
+            Clear Chat
           </button>
         </div>
 
@@ -245,7 +236,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
         <div className="chat-messages-container" ref={messagesContainerRef}>
           {visibleMessages.length === 0 && !isStreaming ? (
             <div className="chat-welcome">
-              Ask questions about your uploaded PDFs and get AI-powered answers.
+              <p>Welcome! Ask me anything about your uploaded documents.</p>
             </div>
           ) : (
             <>
@@ -262,34 +253,40 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               )}
             </>
           )}
-          {isLoading && !isStreaming && (
-            <div className="typing-indicator active">
-              <span />
-              <span />
-              <span />
-            </div>
-          )}
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Loading Indicator */}
+        {isLoading && !isStreaming && (
+          <div className="typing-indicator active">
+            <span />
+            <span />
+            <span />
+          </div>
+        )}
 
         {/* Input Area */}
         <div className="chat-input-area">
           <textarea
             ref={textareaRef}
+            id="questionInput"
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question about your PDFs..."
+            placeholder="Type your question here..."
             disabled={isLoading || uploadedFileIds.length === 0}
             rows={1}
+            aria-label="Enter your question"
           />
           <button
             className="send-btn"
+            id="askBtn"
             onClick={submitQuestion}
             disabled={isLoading || !question.trim() || uploadedFileIds.length === 0}
+            title="Send message"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
             </svg>
           </button>
         </div>

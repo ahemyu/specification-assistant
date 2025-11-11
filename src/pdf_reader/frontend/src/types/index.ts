@@ -38,6 +38,5 @@ export interface ChatMessage {
 }
 
 export interface PDFCache {
-
   [fileId: string]: any
 }

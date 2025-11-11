@@ -20,10 +20,6 @@ interface AppState {
   currentExtractionMode: ExtractionMode
   uploadedTemplateId: string | null
   uploadedTemplateKeys: string[]
-
-  // Carousel state
-  carouselResults: ExtractionResult[]
-  carouselKeyNames: string[]
   currentCardIndex: number
 
   // Review state
@@ -54,8 +50,6 @@ interface AppState {
   setCurrentExtractionMode: (mode: ExtractionMode) => void
   setUploadedTemplateId: (id: string | null) => void
   setUploadedTemplateKeys: (keys: string[]) => void
-  setCarouselResults: (results: ExtractionResult[]) => void
-  setCarouselKeyNames: (names: string[]) => void
   setCurrentCardIndex: (index: number) => void
   setReviewedKeys: (keys: Record<string, ReviewedKey>) => void
   setIsEditMode: (mode: boolean) => void
@@ -85,9 +79,6 @@ export const useAppStore = create<AppState>((set) => ({
   currentExtractionMode: 'excel',
   uploadedTemplateId: null,
   uploadedTemplateKeys: [],
-
-  carouselResults: [],
-  carouselKeyNames: [],
   currentCardIndex: 0,
 
   reviewedKeys: {},
@@ -114,8 +105,6 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentExtractionMode: (mode) => set({ currentExtractionMode: mode }),
   setUploadedTemplateId: (id) => set({ uploadedTemplateId: id }),
   setUploadedTemplateKeys: (keys) => set({ uploadedTemplateKeys: keys }),
-  setCarouselResults: (results) => set({ carouselResults: results }),
-  setCarouselKeyNames: (names) => set({ carouselKeyNames: names }),
   setCurrentCardIndex: (index) => set({ currentCardIndex: index }),
   setReviewedKeys: (keys) => set({ reviewedKeys: keys }),
   setIsEditMode: (mode) => set({ isEditMode: mode }),
@@ -137,8 +126,6 @@ export const useAppStore = create<AppState>((set) => ({
       currentExtractionMode: 'excel',
       uploadedTemplateId: null,
       uploadedTemplateKeys: [],
-      carouselResults: [],
-      carouselKeyNames: [],
       currentCardIndex: 0,
       reviewedKeys: {},
       isEditMode: false,

@@ -44,7 +44,7 @@ export function ExtractionView() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const keyTextareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const [currentTab, setCurrentTab] = useState<ExtractionMode>('excel')
+  const [currentTab, setCurrentTab] = useState<ExtractionMode>('manual')
   const [excelFile, setExcelFile] = useState<File | null>(null)
   const [previewKeys, setPreviewKeys] = useState<string[]>([])
   const [isExtracting, setIsExtracting] = useState(false)

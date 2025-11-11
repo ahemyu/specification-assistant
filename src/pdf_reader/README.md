@@ -28,13 +28,13 @@ export OPENAI_API_KEY="your-azure-openai-api-key"
 
 ## Running the Service
 
-### Start the FastAPI server:
+### Start the backend server:
 
 ```bash
 # From project root
 uv run src/pdf_reader/main.py
 ```
-Or inside src/pdf_reader/ : 
+Or inside src/pdf_reader/ :
 ```bash
 uv run main.py
 ```
@@ -45,7 +45,22 @@ Or with uvicorn directly:
 uv run uvicorn src.pdf_reader.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
-Access at: http://localhost:8000
+### Start the frontend dev server (for development):
+
+```bash
+cd src/pdf_reader/frontend
+npm run dev
+```
+
+### Production:
+Build the frontend once, then just run the backend server:
+```bash
+cd src/pdf_reader/frontend
+npm run build
+# Then start backend as shown above
+```
+
+Access at: http://localhost:8000 (production) or http://localhost:5173 (development)
 
 ## Usage
 
@@ -60,20 +75,22 @@ Access at: http://localhost:8000
 
 ```
 pdf_reader/
-├── backend/          # Backend code
-│   ├── routers/      # API endpoints
-│   ├── services/     # Business logic
-│   ├── schemas/      # Data models
+├── backend/              # Backend code
+│   ├── routers/          # API endpoints
+│   ├── services/         # Business logic
+│   ├── schemas/          # Data models
 │   ├── dependencies.py
-│   └── app.py        # FastAPI app
-├── frontend/         # Frontend code
-│   ├── static/       # CSS & JS 
-│   │   ├── css/modules/
-│   │   └── js/modules/
-│   └── templates/    # HTML templates
-├── main.py          # Entry point
-├── output/          # Extracted text files
-└── uploaded_pdfs/   # Uploaded PDF storage
+│   └── app.py            # FastAPI app
+├── frontend/             # Frontend code
+│   ├── src/              # React source
+│   │   ├── components/
+│   │   ├── store/
+│   │   └── styles/
+│   ├── dist/             # Production build
+│   └── archived_vanilla_js/  # Old code (archived)
+├── main.py               # Entry point
+├── output/               # Extracted text files
+└── uploaded_pdfs/        # Uploaded PDF storage
 ```
 
 ## Tech Stack
@@ -82,7 +99,7 @@ pdf_reader/
 - **pdfplumber**: PDF text/table extraction
 - **LangChain + Azure OpenAI**: LLM key extraction and Q&A
 - **pandas + openpyxl**: Excel export
-- **Vanilla JS Modules**: Modular frontend architecture
+- **React + TypeScript + Vite**: Modern frontend with type safety
 
 ## API Docs
 
