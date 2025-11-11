@@ -19,7 +19,12 @@ import './styles/modules/chat.css'
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter
+      future={{
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+      }}
+    >
       <Notifications />
       <div className="container">
         <header>

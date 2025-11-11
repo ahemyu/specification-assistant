@@ -6,6 +6,7 @@ import { CarouselModal } from '../CarouselModal'
 import { SummaryView } from '../SummaryView'
 import type { ExtractionMode, ExtractionResult } from '../../types'
 
+// Backend extraction response format
 interface BackendExtractionResult {
   key_value: string | null
   source_locations: Array<{
@@ -59,6 +60,7 @@ export function ExtractionView() {
     setUploadedTemplateId,
     setUploadedTemplateKeys,
     setExtractionResultsData,
+    setExtractionResultsBackendFormat,
     setCurrentExtractionMode,
     setCurrentExtractionState,
     resetExtractionState,
@@ -138,9 +140,10 @@ export function ExtractionView() {
         throw new Error(errorData.detail || 'Failed to extract keys')
       }
 
-      const data: ExtractionResponse = await response.json()
-      const transformedData = transformExtractionResponse(data)
+      const backendData: ExtractionResponse = await response.json()
+      const transformedData = transformExtractionResponse(backendData)
       setExtractionResultsData(transformedData)
+      setExtractionResultsBackendFormat(backendData)
       showNotification('Keys extracted successfully!', 'success')
 
       // Open carousel modal immediately
@@ -190,9 +193,10 @@ export function ExtractionView() {
         throw new Error(errorData.detail || 'Failed to extract keys')
       }
 
-      const data: ExtractionResponse = await response.json()
-      const transformedData = transformExtractionResponse(data)
+      const backendData: ExtractionResponse = await response.json()
+      const transformedData = transformExtractionResponse(backendData)
       setExtractionResultsData(transformedData)
+      setExtractionResultsBackendFormat(backendData)
       showNotification('Keys extracted successfully!', 'success')
 
       // Open carousel modal immediately
@@ -255,89 +259,6 @@ export function ExtractionView() {
     setPreviewKeys([])
     setManualKeys('')
     setCurrentExtractionState('setup')
-  }
-
-  const handleViewResults = () => {
-    openCarousel()
-  }
-
-  const handleDownloadFilledExcel = async () => {
-    if (!uploadedTemplateId) {
-      showNotification('No Excel file available to download', 'error')
-      return
-    }
-
-    try {
-      const response = await fetch(`/download-filled-excel/${uploadedTemplateId}`)
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to download Excel file')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-
-      const contentDisposition = response.headers.get('Content-Disposition')
-      let filename = 'filled_template.xlsx'
-      if (contentDisposition && contentDisposition.includes('filename=')) {
-        const matches = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/.exec(contentDisposition)
-        if (matches && matches[1]) {
-          filename = matches[1].replace(/['"]/g, '')
-        }
-      }
-
-      a.download = filename
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-
-      showNotification('Excel file downloaded successfully!', 'success')
-    } catch (error) {
-      showNotification(
-        `Error downloading Excel: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'error'
-      )
-    }
-  }
-
-  const handleDownloadExtractionExcel = async () => {
-    if (!extractionResultsData) {
-      showNotification('No extraction results available to download', 'error')
-      return
-    }
-
-    try {
-      const response = await fetch('/download-extraction-excel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ extraction_results: extractionResultsData }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to download Excel')
-      }
-
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = 'extracted_keys.xlsx'
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-
-      showNotification('Excel file downloaded successfully', 'success')
-    } catch (error) {
-      showNotification(
-        `Error downloading Excel: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'error'
-      )
-    }
   }
 
   return (
@@ -440,19 +361,6 @@ export function ExtractionView() {
                 </p>
               )}
 
-              {extractionResultsData && currentTab === 'excel' && !showSummary && !isCarouselOpen && (
-                <div className="extraction-action-buttons" id="excelActionButtons" style={{ display: 'flex' }}>
-                  <button className="view-results-btn-inline" onClick={handleViewResults}>
-                    View Results
-                  </button>
-                  <button
-                    className="download-excel-btn-inline"
-                    onClick={handleDownloadFilledExcel}
-                  >
-                    Download Excel
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -491,19 +399,6 @@ export function ExtractionView() {
                 </p>
               )}
 
-              {extractionResultsData && currentTab === 'manual' && !showSummary && !isCarouselOpen && (
-                <div className="extraction-action-buttons" id="manualActionButtons" style={{ display: 'flex' }}>
-                  <button className="view-results-btn-inline" onClick={handleViewResults}>
-                    View Results
-                  </button>
-                  <button
-                    className="download-excel-btn-inline"
-                    onClick={handleDownloadExtractionExcel}
-                  >
-                    Download Excel
-                  </button>
-                </div>
-              )}
             </div>
           </div>
         )}

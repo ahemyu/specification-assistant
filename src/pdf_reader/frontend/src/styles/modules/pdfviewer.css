@@ -24,12 +24,17 @@
     border-bottom: 1px solid #e2e8f0;
 }
 
+/* Zoom Controls */
+.zoom-controls,
 .pdf-zoom-controls {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
+/* Zoom and Page Buttons */
+.zoom-btn,
+.page-btn,
 .pdf-control-btn {
     background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
     border: 1px solid #cbd5e0;
@@ -43,8 +48,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 40px;
 }
 
+.zoom-btn:hover:not(:disabled),
+.page-btn:hover:not(:disabled),
 .pdf-control-btn:hover {
     background: linear-gradient(135deg, #59BDB9 0%, #3d9894 100%);
     border-color: #59BDB9;
@@ -53,10 +61,21 @@
     box-shadow: 0 4px 12px rgba(89, 189, 185, 0.2);
 }
 
+.zoom-btn:active:not(:disabled),
+.page-btn:active:not(:disabled),
 .pdf-control-btn:active {
     transform: translateY(0);
 }
 
+.zoom-btn:disabled,
+.page-btn:disabled {
+    background: #e2e8f0;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+/* Zoom Level Display */
+.zoom-level,
 .pdf-zoom-level {
     font-size: 0.95em;
     font-weight: 600;
@@ -65,18 +84,23 @@
     text-align: center;
 }
 
+/* Page Controls */
+.page-controls,
 .pdf-page-controls {
     display: flex;
     align-items: center;
     gap: 12px;
 }
 
+/* Page Info Display */
+.page-info,
 .pdf-page-info {
     font-size: 0.95em;
     color: #4a5568;
     font-weight: 500;
 }
 
+.page-info span,
 .pdf-page-info span {
     color: #1C2C8C;
     font-weight: 600;

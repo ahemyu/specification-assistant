@@ -82,20 +82,36 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
   useEffect(() => {
     if (!currentPdfDoc || !canvasRef.current) return
 
+    let cancelled = false
+
     const renderPage = async () => {
       try {
-        // Cancel any ongoing render
+        // Cancel any ongoing render task
         if (renderTaskRef.current) {
-          renderTaskRef.current.cancel()
+          try {
+            renderTaskRef.current.cancel()
+          } catch (e) {
+            // Ignore cancellation errors
+          }
           renderTaskRef.current = null
         }
 
+        // Wait a brief moment to ensure previous render is fully cancelled
+        await new Promise(resolve => setTimeout(resolve, 10))
+
+        if (cancelled) return
+
         const page = await currentPdfDoc.getPage(currentPage)
+        if (cancelled) return
+
         const canvas = canvasRef.current
-        if (!canvas) return
+        if (!canvas || cancelled) return
 
         const context = canvas.getContext('2d')
-        if (!context) return
+        if (!context || cancelled) return
+
+        // Clear the canvas before rendering
+        context.clearRect(0, 0, canvas.width, canvas.height)
 
         const devicePixelRatio = window.devicePixelRatio || 1
         const viewport = page.getViewport({ scale })
@@ -104,6 +120,8 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
         canvas.style.height = viewport.height + 'px'
         canvas.width = Math.floor(viewport.width * devicePixelRatio)
         canvas.height = Math.floor(viewport.height * devicePixelRatio)
+
+        if (cancelled) return
 
         context.scale(devicePixelRatio, devicePixelRatio)
 
@@ -116,7 +134,10 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
         renderTaskRef.current = task
 
         await task.promise
-        renderTaskRef.current = null
+
+        if (!cancelled) {
+          renderTaskRef.current = null
+        }
       } catch (err: any) {
         if (err?.name !== 'RenderingCancelledException') {
           console.error('Error rendering PDF page:', err)
@@ -127,8 +148,13 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
     renderPage()
 
     return () => {
+      cancelled = true
       if (renderTaskRef.current) {
-        renderTaskRef.current.cancel()
+        try {
+          renderTaskRef.current.cancel()
+        } catch (e) {
+          // Ignore cancellation errors
+        }
         renderTaskRef.current = null
       }
     }

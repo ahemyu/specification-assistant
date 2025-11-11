@@ -16,6 +16,7 @@ interface AppState {
   processedFiles: ProcessedFile[]
   allUploadedFiles: ProcessedFile[]
   extractionResultsData: ExtractionResult[] | null
+  extractionResultsBackendFormat: Record<string, any> | null
   currentExtractionMode: ExtractionMode
   uploadedTemplateId: string | null
   uploadedTemplateKeys: string[]
@@ -49,6 +50,7 @@ interface AppState {
   setProcessedFiles: (files: ProcessedFile[]) => void
   setAllUploadedFiles: (files: ProcessedFile[]) => void
   setExtractionResultsData: (data: ExtractionResult[] | null) => void
+  setExtractionResultsBackendFormat: (data: Record<string, any> | null) => void
   setCurrentExtractionMode: (mode: ExtractionMode) => void
   setUploadedTemplateId: (id: string | null) => void
   setUploadedTemplateKeys: (keys: string[]) => void
@@ -79,6 +81,7 @@ export const useAppStore = create<AppState>((set) => ({
   processedFiles: [],
   allUploadedFiles: [],
   extractionResultsData: null,
+  extractionResultsBackendFormat: null,
   currentExtractionMode: 'excel',
   uploadedTemplateId: null,
   uploadedTemplateKeys: [],
@@ -107,6 +110,7 @@ export const useAppStore = create<AppState>((set) => ({
   setProcessedFiles: (files) => set({ processedFiles: files }),
   setAllUploadedFiles: (files) => set({ allUploadedFiles: files }),
   setExtractionResultsData: (data) => set({ extractionResultsData: data }),
+  setExtractionResultsBackendFormat: (data) => set({ extractionResultsBackendFormat: data }),
   setCurrentExtractionMode: (mode) => set({ currentExtractionMode: mode }),
   setUploadedTemplateId: (id) => set({ uploadedTemplateId: id }),
   setUploadedTemplateKeys: (keys) => set({ uploadedTemplateKeys: keys }),
@@ -129,6 +133,7 @@ export const useAppStore = create<AppState>((set) => ({
   resetExtractionState: () =>
     set({
       extractionResultsData: null,
+      extractionResultsBackendFormat: null,
       currentExtractionMode: 'excel',
       uploadedTemplateId: null,
       uploadedTemplateKeys: [],

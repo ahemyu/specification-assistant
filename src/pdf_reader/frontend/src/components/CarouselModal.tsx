@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef, KeyboardEvent, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useAppStore } from '../store/useAppStore'
-import type { ExtractionResult } from '../types'
 import { PDFViewer } from './PDFViewer'
 
 interface CarouselModalProps {
@@ -23,11 +22,38 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
 
   const {
     extractionResultsData,
+    extractionResultsBackendFormat,
     reviewedKeys,
     setReviewedKeys,
     setCurrentExtractionState,
     setCurrentCardIndex,
   } = useAppStore()
+
+  // Initialize reviewedKeys when modal opens
+  useEffect(() => {
+    if (isOpen && extractionResultsData) {
+      // Initialize reviewedKeys for any keys that don't have review state yet
+      const updatedKeys = { ...reviewedKeys }
+      let needsUpdate = false
+
+      extractionResultsData.forEach((result) => {
+        const keyName = result.key
+        if (!updatedKeys[keyName]) {
+          needsUpdate = true
+          const originalValue = result.value || 'Not found'
+          updatedKeys[keyName] = {
+            status: 'pending',
+            value: originalValue,
+            originalValue: originalValue,
+          }
+        }
+      })
+
+      if (needsUpdate) {
+        setReviewedKeys(updatedKeys)
+      }
+    }
+  }, [isOpen, extractionResultsData])
 
   // Set extraction state when modal opens and prevent body scroll
   useEffect(() => {
@@ -132,17 +158,28 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
 
   // Download reviewed results
   const handleDownload = useCallback(async () => {
-    if (!allReviewed) return
+    if (!allReviewed || !extractionResultsBackendFormat) return
 
     try {
-      const reviewedResults: Record<string, ExtractionResult> = {}
-      keyNames.forEach((keyName) => {
-        const result = results.find((r) => r.key === keyName)
+      // Transform backend format to download format with reviewed values
+      const reviewedResults: Record<string, any> = {}
+      Object.entries(extractionResultsBackendFormat).forEach(([keyName, backendResult]) => {
         const reviewState = reviewedKeys[keyName]
-        if (result && reviewState) {
+        if (reviewState) {
+          // Transform from backend format (key_value, source_locations, description)
+          // to download format (key, value, references)
+          const references = backendResult.source_locations.flatMap((location: any) =>
+            location.page_numbers.map((pageNum: number) => ({
+              file_id: location.pdf_filename,
+              page_number: pageNum,
+              text: backendResult.description || '',
+            }))
+          )
+
           reviewedResults[keyName] = {
-            ...result,
+            key: keyName,
             value: reviewState.value,
+            references,
           }
         }
       })
@@ -170,7 +207,7 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
     } catch (error) {
       alert(`Error downloading results: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-  }, [allReviewed, keyNames, results, reviewedKeys])
+  }, [allReviewed, extractionResultsBackendFormat, reviewedKeys])
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -202,8 +239,10 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
         e.preventDefault()
         enterEditMode()
       } else if (e.key === 'Escape' && !isEditMode) {
+        e.preventDefault()
         if (allReviewed) {
-          e.preventDefault()
+          onComplete()
+        } else {
           onClose()
         }
       } else if ((e.key === 'd' || e.key === 'D') && !isEditMode && allReviewed) {
@@ -214,7 +253,7 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, isEditMode, goToPrevious, goToNext, acceptValue, enterEditMode, cancelEdit, currentReviewState, allReviewed, onClose, handleDownload])
+  }, [isOpen, isEditMode, goToPrevious, goToNext, acceptValue, enterEditMode, cancelEdit, currentReviewState, allReviewed, onClose, onComplete, handleDownload])
 
   // Handle textarea Enter key
   const handleTextareaKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -224,6 +263,32 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
     }
   }
 
+  // Prepare data BEFORE early returns (Rules of Hooks)
+  const displayValue = currentReviewState?.value || currentResult?.value || 'Not found'
+  const description = currentResult?.references?.[0]?.text || 'No description available'
+
+  // Convert references for PDFViewer - memoize to prevent infinite re-renders
+  // MUST be called before any early returns
+  const pdfReferences = useMemo(() => {
+    if (!currentResult?.references) return []
+
+    const sourceLocations = currentResult.references.map((ref) => ({
+      pdf_filename: ref.file_id,
+      page_numbers: [ref.page_number],
+    }))
+
+    return sourceLocations.map((loc) => ({
+      filename: loc.pdf_filename,
+      pages: loc.page_numbers,
+    }))
+  }, [currentKey])
+
+  const sourceLocations = pdfReferences.map((ref) => ({
+    pdf_filename: ref.filename,
+    page_numbers: ref.pages,
+  }))
+
+  // Early returns AFTER all hooks
   if (!isOpen) {
     return null
   }
@@ -231,24 +296,6 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
   if (!currentResult) {
     return null
   }
-
-  const displayValue = currentReviewState?.value || currentResult.value || 'Not found'
-  const description = currentResult.references?.[0]?.text || 'No description available'
-
-  const sourceLocations = (currentResult.references || []).map((ref) => ({
-    pdf_filename: ref.file_id,
-    page_numbers: [ref.page_number],
-  }))
-
-  // Convert references for PDFViewer - memoize to prevent infinite re-renders
-  const pdfReferences = useMemo(
-    () =>
-      sourceLocations.map((loc) => ({
-        filename: loc.pdf_filename,
-        pages: loc.page_numbers,
-      })),
-    [JSON.stringify(sourceLocations)]
-  )
 
   return createPortal(
     <div className="modal show">
@@ -261,7 +308,11 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
             <div className="carousel-counter">
               <span>{currentIndex + 1}</span> / <span>{keyNames.length}</span>
             </div>
-            <button className="modal-close" onClick={onClose} aria-label="Close results">
+            <button
+              className="modal-close"
+              onClick={allReviewed ? onComplete : onClose}
+              aria-label="Close results"
+            >
               &times;
             </button>
           </div>
@@ -475,7 +526,6 @@ function ExtractionResultCard({
                 className="reference-btn"
                 onClick={() => {
                   // TODO: Load PDF reference
-                  console.log('Load PDF:', loc)
                 }}
               >
                 {loc.pdf_filename} - p.{loc.page_numbers.join(', ')}
