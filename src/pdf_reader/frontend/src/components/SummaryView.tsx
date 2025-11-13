@@ -13,6 +13,8 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
   const results = extractionResultsData || []
   const keyCount = results.length
 
+  //neues kommentar
+
   // Get reviewed results with updated values in backend format
   const getReviewedResults = useCallback(() => {
     const reviewedData: Record<string, any> = {}
