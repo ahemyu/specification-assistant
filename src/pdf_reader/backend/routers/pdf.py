@@ -48,7 +48,6 @@ def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) 
 
         file_id = output_path.stem
 
-        print(pdf_data["line_id_map"])
         logger.info(f"Successfully processed {filename}")
 
         return {

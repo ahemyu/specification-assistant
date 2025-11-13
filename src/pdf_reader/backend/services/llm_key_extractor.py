@@ -73,12 +73,34 @@ class LLMKeyExtractor:
         # Use pre-formatted text that was created during PDF processing
         full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
-        # Build the prompt using the template
-        prompt = KEY_EXTRACTION_PROMPT.format(
-            key_name=key_name,
-            additional_context_section="",
-            document_contents=full_context
-        )
+        # Build the prompt
+        prompt = f"""
+                You are an expert at extracting specific information from technical documents.
+                Your task is to find and extract the value for the key: "{key_name}"
+                Below are the contents of one or more PDF documents. Each document includes
+                page numbers to help you track where information is found.
+
+                COORDINATE SYSTEM:
+                The text is annotated with location markers:
+                - [line_id: X_Y] for regular text lines (e.g., [line_id: 3_5] = Page 3, Line 5)
+                - [cell_id: X_tY_rZ_cW] for table cells (e.g., [cell_id: 3_t0_r1_c2] = Page 3, Table 0, Row 1, Column 2)
+
+                IMPORTANT INSTRUCTIONS:
+                1. Extract the exact value/s for the requested key
+                2. Record ALL PDF filenames and page numbers where you found relevant information
+                   (they COULD be spread to different pdfs/pages)
+                3. CRITICAL: When you find the key's value, you MUST identify and return the line_id(s)
+                   or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
+                   Put these IDs in the matched_line_ids field as a list of strings.
+                4. Provide a clear description of where and how you found the information
+                5. If the key is not found in any document, set key_value to null and explain
+                   in the description
+                6. Be precise about page numbers - always reference the specific pages where
+                   information was found
+
+                DOCUMENT CONTENTS:
+                {full_context}
+                Now extract the key "{key_name}" and provide the structured output."""
 
         try:
             result = await self.structured_llm.ainvoke(prompt)

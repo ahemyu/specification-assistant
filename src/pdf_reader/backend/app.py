@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from backend.dependencies import load_existing_pdfs
 from backend.routers import excel, llm, pdf
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(
@@ -41,13 +41,12 @@ app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespa
 #     return templates.TemplateResponse("index.html", {"request": request})
 # ============================================================================
 
-
 # Include routers (must be before catch-all static mount)
 app.include_router(pdf.router)
 app.include_router(llm.router)
 app.include_router(excel.router)
 
-# Mount React production build (must be LAST - catch-all route)
+# Mount React production build
 app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="react-frontend")
 
 if __name__ == "__main__":

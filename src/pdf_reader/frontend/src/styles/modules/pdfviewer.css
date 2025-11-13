@@ -152,6 +152,11 @@
     z-index: 1;
 }
 
+#pdfHighlightCanvas {
+    display: block;
+    z-index: 2;
+}
+
 /* PDF Text Layer - for text selection and highlighting */
 .pdf-text-layer {
     position: absolute;

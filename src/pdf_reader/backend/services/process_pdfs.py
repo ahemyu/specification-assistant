@@ -85,15 +85,48 @@ def process_single_page(page, page_number: int) -> dict:
     # Table data
     if tables:
         formatted_parts.append(f"\n{'-' * 80}\nTABLES\n{'-' * 80}\n\n")
-        for i, table_obj in enumerate(tables):
-            table_data = table_obj.extract()
-            if table_data:
-                formatted_parts.append(f"Table {i + 1} on Page {page_number}:\n\n")
-                for row in table_data:
-                    formatted_parts.append(" | ".join([str(cell) if cell is not None else "" for cell in row]))
+        for table_index, table_obj in enumerate(tables):
+            # Use table.rows to get row bboxes
+            rows = table_obj.rows
+
+            logger.info(f"[HIGHLIGHT DEBUG] Page {page_number}, Table {table_index}: {len(rows)} rows")
+
+            if rows:
+                formatted_parts.append(f"Table {table_index + 1} on Page {page_number}:\n\n")
+
+                # Extract text using the standard method
+                table_data = table_obj.extract()
+
+                # Iterate through both table_data (text) and rows (coordinates) together
+                for row_idx, (row_cells_text, row_obj) in enumerate(zip(table_data, rows)):
+                    cell_parts = []
+
+                    # For each cell in the row, we'll use the ENTIRE ROW bbox
+                    # This way any cell_id in this row will highlight the whole row
+                    row_bbox = row_obj.bbox  # (x0, top, x1, bottom) for entire row
+
+                    # row_obj.cells is ordered left-to-right, col_idx is position in that list
+                    for col_idx, cell_text in enumerate(row_cells_text):
+                        # Create unique cell_id
+                        cell_id = f"{page_number}_t{table_index}_r{row_idx}_c{col_idx}"
+
+                        # Store the ROW bbox for this cell (highlights entire row)
+                        line_id_map[cell_id] = list(row_bbox)
+                        logger.info(
+                            f"[HIGHLIGHT DEBUG] Stored line_id_map[{cell_id}] = {list(row_bbox)} "
+                            f"(row bbox)"
+                        )
+
+                        # Format cell with ID prefix
+                        cell_text_str = str(cell_text) if cell_text is not None else ""
+                        cell_parts.append(f"[cell_id: {cell_id}] {cell_text_str}")
+
+                    formatted_parts.append(" | ".join(cell_parts))
                     formatted_parts.append("\n")
                 formatted_parts.append("\n")
 
+    logger.info(f"[HIGHLIGHT DEBUG] Page {page_number} complete. Total line_id_map entries: {len(line_id_map)}")
+    logger.info(f"[HIGHLIGHT DEBUG] line_id_map keys: {list(line_id_map.keys())}")
     return {"page_number": page_number, "formatted_text": "".join(formatted_parts), "line_id_map": line_id_map}
 
 

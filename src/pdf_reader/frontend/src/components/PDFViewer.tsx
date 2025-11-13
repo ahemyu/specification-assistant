@@ -8,6 +8,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.j
 interface PDFReference {
   filename: string
   pages: number[]
+  bounding_box?: [number, number, number, number]
 }
 
 interface PDFViewerProps {
@@ -17,6 +18,7 @@ interface PDFViewerProps {
 
 export function PDFViewer({ references, className = '' }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const highlightCanvasRef = useRef<HTMLCanvasElement>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [scale, setScale] = useState(1.0)
   const [isLoading, setIsLoading] = useState(false)
@@ -137,12 +139,84 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
 
         if (!cancelled) {
           renderTaskRef.current = null
+
+          // Draw highlights after page is rendered
+          drawHighlights()
         }
       } catch (err: any) {
         if (err?.name !== 'RenderingCancelledException') {
           console.error('Error rendering PDF page:', err)
         }
       }
+    }
+
+    const drawHighlights = () => {
+      console.log('[HIGHLIGHT DEBUG] drawHighlights called')
+      console.log('[HIGHLIGHT DEBUG] references:', references)
+      console.log('[HIGHLIGHT DEBUG] currentRefIndex:', currentRefIndex)
+      console.log('[HIGHLIGHT DEBUG] currentPage:', currentPage)
+
+      const highlightCanvas = highlightCanvasRef.current
+      const mainCanvas = canvasRef.current
+      if (!highlightCanvas || !mainCanvas) {
+        console.log('[HIGHLIGHT DEBUG] Canvas refs not available')
+        return
+      }
+
+      const ref = references[currentRefIndex]
+      console.log('[HIGHLIGHT DEBUG] Current ref:', ref)
+      if (!ref || !ref.bounding_box) {
+        console.log('[HIGHLIGHT DEBUG] No ref or no bounding_box:', ref)
+        return
+      }
+
+      // Only highlight if we're on the correct page
+      if (!ref.pages.includes(currentPage)) {
+        console.log('[HIGHLIGHT DEBUG] Current page not in ref.pages:', ref.pages)
+        return
+      }
+
+      const highlightContext = highlightCanvas.getContext('2d')
+      if (!highlightContext) {
+        console.log('[HIGHLIGHT DEBUG] Could not get highlight context')
+        return
+      }
+
+      // Match the highlight canvas size to the main canvas
+      highlightCanvas.width = mainCanvas.width
+      highlightCanvas.height = mainCanvas.height
+      highlightCanvas.style.width = mainCanvas.style.width
+      highlightCanvas.style.height = mainCanvas.style.height
+
+      // Clear previous highlights
+      highlightContext.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height)
+
+      const bbox = ref.bounding_box
+      const devicePixelRatio = window.devicePixelRatio || 1
+
+      // Scale coordinates from pdfplumber (PDF points) to canvas pixels
+      // pdfplumber uses: [x0, top, x1, bottom]
+      const x = bbox[0] * scale * devicePixelRatio
+      const y = bbox[1] * scale * devicePixelRatio
+      const width = (bbox[2] - bbox[0]) * scale * devicePixelRatio
+      const height = (bbox[3] - bbox[1]) * scale * devicePixelRatio
+
+      console.log('[HIGHLIGHT DEBUG] Drawing highlight:', {
+        bbox,
+        scale,
+        devicePixelRatio,
+        x,
+        y,
+        width,
+        height,
+        canvasWidth: highlightCanvas.width,
+        canvasHeight: highlightCanvas.height
+      })
+
+      // Draw semi-transparent yellow highlight
+      highlightContext.fillStyle = 'rgba(255, 255, 0, 0.3)'
+      highlightContext.fillRect(x, y, width, height)
+      console.log('[HIGHLIGHT DEBUG] Highlight drawn successfully')
     }
 
     renderPage()
@@ -158,7 +232,7 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
         renderTaskRef.current = null
       }
     }
-  }, [currentPdfDoc, currentPage, scale])
+  }, [currentPdfDoc, currentPage, scale, references, currentRefIndex])
 
   // Sync scale with store
   useEffect(() => {
@@ -277,6 +351,16 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
 
       <div className="pdf-canvas-container" id="pdfCanvasContainer">
         <canvas ref={canvasRef} id="pdfCanvas" />
+        <canvas
+          ref={highlightCanvasRef}
+          id="pdfHighlightCanvas"
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            pointerEvents: 'none'
+          }}
+        />
       </div>
     </div>
   )
