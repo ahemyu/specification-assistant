@@ -71,5 +71,7 @@ pymupdf_docs
 fly.toml
 
 # frontend
-src/pdf_reader/frontend/node_modules
+/node_modules
+/package-lock.json
+src/pdf_reader/frontend/node_modules/
 .migration_plan

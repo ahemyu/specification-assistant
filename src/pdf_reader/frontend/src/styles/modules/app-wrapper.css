@@ -1,0 +1,10 @@
+.app-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;          /* space between sidebar and main content */
+  width: 100%;
+  background: rgba(255,255,255,1);    /* container background */
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  padding: 5px;      /* inner padding */
+}

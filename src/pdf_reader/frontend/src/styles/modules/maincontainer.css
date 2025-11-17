@@ -1,0 +1,41 @@
+/* Main container takes remaining space beside the sidebar */
+.main-content {
+  flex: 1; /* take remaining width */
+  padding: 2rem;
+  overflow-y: auto; /* scroll if content overflows vertically */
+  height: 100vh; /* full viewport height */
+  display: flex;
+  flex-direction: column;
+  border-radius: 20px;
+}
+
+/* Header inside main content */
+.main-content header {
+  margin-bottom: 1.5rem;
+}
+
+.main-content header h1 {
+  font-size: 2rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.main-content header p.subtitle {
+  font-size: 1rem;
+  color: #555;
+  margin: 0;
+}
+
+/* Tab navigation spacing */
+.main-content > .tab-navigation {
+  margin-bottom: 1.5rem;
+}
+
+/* Main view area */
+.main-content main {
+  flex: 1; /* fill remaining vertical space */
+  background-color: #fff;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  overflow-y: auto;
+}

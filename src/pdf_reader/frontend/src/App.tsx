@@ -1,10 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { TabNavigation } from './components/TabNavigation'
-import { UploadView } from './components/views/UploadView'
-import { ExtractionView } from './components/views/ExtractionView'
-import { QAView } from './components/views/QAView'
-import { CompareView } from './components/views/CompareView'
+import { BrowserRouter } from 'react-router-dom'
 import { Notifications } from './components/Notifications'
+import Sidebar from './components/Sidebar'
+import { MainContainer } from './components/MainContainer'
+
 import './styles/styles.css'
 import './styles/modules/base.css'
 import './styles/modules/utilities.css'
@@ -18,6 +16,10 @@ import './styles/modules/carousel.css'
 import './styles/modules/summary.css'
 import './styles/modules/chat.css'
 import './styles/modules/compare.css'
+import './styles/modules/sidebar.css'
+import './styles/modules/app-layout.css'  
+import './styles/modules/app-wrapper.css'  
+
 
 function App() {
   return (
@@ -28,23 +30,14 @@ function App() {
       }}
     >
       <Notifications />
-      <div className="container">
-        <header>
-          <h1>Spec Assistant</h1>
-          <p className="subtitle">Upload your PDF files and use LLMs to extract keys or ask questions</p>
-        </header>
 
-        <TabNavigation />
-
-        <main>
-          <Routes>
-            <Route path="/" element={<UploadView />} />
-            <Route path="/extract" element={<ExtractionView />} />
-            <Route path="/qa" element={<QAView />} />
-            <Route path="/compare" element={<CompareView />} />
-          </Routes>
-        </main>
+      <div className="app-layout">
+        <div className="app-wrapper">
+          <Sidebar isOpen={true} />
+          <MainContainer />
+        </div>
       </div>
+
     </BrowserRouter>
   )
 }
