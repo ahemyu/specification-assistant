@@ -282,9 +282,6 @@ export function CompareView() {
       <div className="comparison-header">
         <h2>PDF Version Comparison</h2>
         <p className="subtitle">Compare two versions of a PDF to identify changes in specifications</p>
-        <Link to="/" className="back-link">
-          ← Back to Main App
-        </Link>
       </div>
 
       {/* Upload Section */}

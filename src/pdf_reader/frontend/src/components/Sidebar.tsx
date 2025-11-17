@@ -1,20 +1,14 @@
-import { useState } from "react";
 import { FaUser, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { IoHome } from "react-icons/io5";
+import { useAppStore } from "../store/useAppStore";
 
 interface SidebarProps {
   isOpen: boolean;
-  onSelectView?: (view: string) => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isOpen, onSelectView }) => {
-  // Track currently active view, default to 'home'
-  const [activeView, setActiveView] = useState("home");
-
-  const handleSelect = (view: string) => {
-    setActiveView(view);
-    onSelectView?.(view);
-  };
+const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+  const activeView = useAppStore((state) => state.activeView);
+  const setActiveView = useAppStore((state) => state.setActiveView);
 
   return (
     <div className={`sidebar ${isOpen ? "open" : ""}`}>
@@ -24,7 +18,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onSelectView }) => {
         {/* Overview */}
         <li
           className={`menu-item ${activeView === "home" ? "active" : ""}`}
-          onClick={() => handleSelect("home")}
+          onClick={() => setActiveView("home")}
         >
           <span className="icon">
             <IoHome />
@@ -34,16 +28,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onSelectView }) => {
 
         {/* Spec - Assistant als normaler Menüpunkt */}
         <li
-          className={`menu-item ${activeView === "spec-assistant" ? "active" : ""}`}
-          onClick={() => handleSelect("spec-assistant")}
+          className={`menu-item ${activeView === "spec_assistant" ? "active" : ""}`}
+          onClick={() => setActiveView("spec_assistant")}
         >
           Spec - Assistant
         </li>
 
         {/* PDF - Comparison als normaler Menüpunkt */}
         <li
-          className={`menu-item ${activeView === "pdf-comparison" ? "active" : ""}`}
-          onClick={() => handleSelect("pdf-comparison")}
+          className={`menu-item ${activeView === "compare" ? "active" : ""}`}
+          onClick={() => setActiveView("compare")}
         >
           PDF - Comparison
         </li>
