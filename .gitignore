@@ -41,7 +41,8 @@ output/
 *.txt
 /src/pdf_reader/uploads
 /src/pdf_reader/uploaded_pdfs
-/uploaded_pdfs
+/src/pdf_reader/backend/uploaded_pdfs
+/uploaded_pdf
 
 # Environment variables
 .env
@@ -71,5 +72,7 @@ pymupdf_docs
 fly.toml
 
 # frontend
-src/pdf_reader/frontend/node_modules
+/node_modules
+/package-lock.json
+src/pdf_reader/frontend/node_modules/
 .migration_plan

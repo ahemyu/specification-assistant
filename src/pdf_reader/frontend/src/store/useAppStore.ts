@@ -10,6 +10,8 @@ import type {
   Reference,
 } from '../types'
 
+export type ActiveView = 'home' | 'spec_assistant' | 'compare';
+
 interface AppState {
   // File management state
   uploadedFileIds: string[]
@@ -41,6 +43,9 @@ interface AppState {
   // Chat state
   conversationHistory: ChatMessage[]
 
+  // View state
+  activeView: ActiveView;
+
   // Actions
   setUploadedFileIds: (ids: string[]) => void
   setProcessedFiles: (files: ProcessedFile[]) => void
@@ -62,6 +67,7 @@ interface AppState {
   setCurrentRenderTask: (task: any | null) => void
   setPdfCache: (cache: PDFCache) => void
   setConversationHistory: (history: ChatMessage[]) => void
+  setActiveView: (view: ActiveView) => void;
 
   // Helper actions
   resetExtractionState: () => void
@@ -96,6 +102,8 @@ export const useAppStore = create<AppState>((set) => ({
 
   conversationHistory: [],
 
+  activeView: 'home',
+
   // Setters
   setUploadedFileIds: (ids) => set({ uploadedFileIds: ids }),
   setProcessedFiles: (files) => set({ processedFiles: files }),
@@ -117,6 +125,7 @@ export const useAppStore = create<AppState>((set) => ({
   setCurrentRenderTask: (task) => set({ currentRenderTask: task }),
   setPdfCache: (cache) => set({ pdfCache: cache }),
   setConversationHistory: (history) => set({ conversationHistory: history }),
+  setActiveView: (view) => set({ activeView: view }),
 
   // Helper actions
   resetExtractionState: () =>

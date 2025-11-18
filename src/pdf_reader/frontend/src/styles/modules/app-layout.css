@@ -1,0 +1,18 @@
+.app-layout {
+    display: flex;
+    justify-content: center; /* center wrapper horizontally */
+    padding: 20px;
+}
+
+.app-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 20px; /* space between sidebar and main container */
+    max-width: 1400px;
+    width: 100%;
+}
+
+/* Main content sizing */
+.main-content {
+    flex: 1;
+}

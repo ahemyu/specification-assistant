@@ -1,9 +1,14 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink} from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 
 export function TabNavigation() {
   const uploadedFileIds = useAppStore((state) => state.uploadedFileIds)
   const hasUploadedFiles = uploadedFileIds.length > 0
+
+  // Only show navigation if files are uploaded
+  if (!hasUploadedFiles) {
+    return null; // Hide the entire navigation
+  }
 
   return (
     <nav className="main-tabs">
@@ -45,15 +50,6 @@ export function TabNavigation() {
         }}
       >
         Ask Questions
-      </NavLink>
-      <NavLink
-        to="/compare"
-        className={({ isActive }) =>
-          `main-tab-btn ${isActive ? 'active' : ''}`
-        }
-        data-tab="compare"
-      >
-        Compare PDFs
       </NavLink>
     </nav>
   )
