@@ -263,15 +263,22 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
   const pdfReferences = useMemo(() => {
     if (!currentResult?.references) return []
 
+    console.log('[HIGHLIGHT DEBUG] Raw currentResult.references:', currentResult.references)
+
     const sourceLocations = currentResult.references.map((ref) => ({
       pdf_filename: ref.file_id,
       page_numbers: [ref.page_number],
+      bounding_box: ref.bounding_box,
     }))
 
-    return sourceLocations.map((loc) => ({
+    const pdfRefs = sourceLocations.map((loc) => ({
       filename: loc.pdf_filename,
       pages: loc.page_numbers,
+      bounding_box: loc.bounding_box,
     }))
+
+    console.log('[HIGHLIGHT DEBUG] Transformed pdfReferences:', pdfRefs)
+    return pdfRefs
   }, [currentKey])
 
   const sourceLocations = pdfReferences.map((ref) => ({

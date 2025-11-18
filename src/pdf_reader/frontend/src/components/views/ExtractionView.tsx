@@ -12,6 +12,7 @@ interface BackendExtractionResult {
   source_locations: Array<{
     pdf_filename: string
     page_numbers: number[]
+    bounding_box?: [number, number, number, number]
   }>
   description: string
 }
@@ -29,6 +30,7 @@ function transformExtractionResponse(backendData: ExtractionResponse): Extractio
         file_id: location.pdf_filename.replace(/.pdf$/i, ''),
         page_number: pageNum,
         text: result.description || '',
+        bounding_box: location.bounding_box,
       }))
     )
 

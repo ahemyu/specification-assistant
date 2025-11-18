@@ -14,6 +14,10 @@ class SourceLocation(BaseModel):
 
     pdf_filename: str = Field(description="Name of the PDF file where the information was found")
     page_numbers: list[int] = Field(description="List of page numbers where the information was found")
+    bounding_box: list[float] | None = Field(
+        default=None,
+        description="Bounding box coordinates [x0, top, x1, bottom] for highlighting the text location"
+    )
 
 
 class KeyExtractionResult(BaseModel):
@@ -27,6 +31,10 @@ class KeyExtractionResult(BaseModel):
     )
     description: str = Field(
         description="A brief description of where and how the key was found in the documents"
+    )
+    matched_line_ids: list[str] | None = Field(
+        default=None,
+        description="Line IDs or cell IDs where the key value was found (e.g., ['3_5', '3_t0_r1_c1'])"
     )
 
 

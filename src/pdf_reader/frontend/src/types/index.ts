@@ -21,6 +21,7 @@ export interface Reference {
   file_id: string
   page_number: number
   text: string
+  bounding_box?: [number, number, number, number]
 }
 
 export interface ReviewedKey {

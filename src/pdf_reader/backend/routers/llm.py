@@ -51,6 +51,53 @@ async def extract_keys(
             key_names=request.key_names,
             pdf_data=pdf_data_list
         )
+
+        # Transform matched_line_ids to bounding_box coordinates
+        for _key, result in results.items():
+            if result and result.matched_line_ids:
+                logger.info(f"[HIGHLIGHT DEBUG] Processing key with matched_line_ids: {result.matched_line_ids}")
+                # Process each source location
+                for source_loc in result.source_locations:
+                    pdf_filename = source_loc.pdf_filename
+                    logger.info(f"[HIGHLIGHT DEBUG] Looking up coordinates for PDF: {pdf_filename}")
+
+                    # Find the corresponding pdf_data for this filename
+                    matching_pdf = next(
+                        (pdf for pdf in pdf_data_list if pdf.get("filename") == pdf_filename),
+                        None
+                    )
+
+                    if matching_pdf and "line_id_map" in matching_pdf:
+                        line_id_map = matching_pdf["line_id_map"]
+                        logger.info(f"[HIGHLIGHT DEBUG] Found line_id_map with {len(line_id_map)} entries")
+
+                        # Collect all bounding boxes for the matched line_ids
+                        bboxes = []
+                        for line_id in result.matched_line_ids:
+                            if line_id in line_id_map:
+                                bboxes.append(line_id_map[line_id])
+                                logger.info(f"[HIGHLIGHT DEBUG] Found bbox for {line_id}: {line_id_map[line_id]}")
+                            else:
+                                logger.warning(f"[HIGHLIGHT DEBUG] Line ID {line_id} NOT found in line_id_map")
+
+                        # Merge all bounding boxes into one (union)
+                        if bboxes:
+                            min_x0 = min(bbox[0] for bbox in bboxes)
+                            min_top = min(bbox[1] for bbox in bboxes)
+                            max_x1 = max(bbox[2] for bbox in bboxes)
+                            max_bottom = max(bbox[3] for bbox in bboxes)
+                            source_loc.bounding_box = [min_x0, min_top, max_x1, max_bottom]
+                            logger.info(f"[HIGHLIGHT DEBUG] Final merged bounding_box: {source_loc.bounding_box}")
+                        else:
+                            logger.warning("[HIGHLIGHT DEBUG] No bboxes found for matched_line_ids")
+                    else:
+                        logger.warning("[HIGHLIGHT DEBUG] No matching PDF or line_id_map found")
+
+                # Clear matched_line_ids before sending to frontend (internal only)
+                result.matched_line_ids = None
+            else:
+                logger.info("[HIGHLIGHT DEBUG] Result has no matched_line_ids")
+
         # Convert results to dict with serializable values
         return {
             key: result.model_dump() if result else None

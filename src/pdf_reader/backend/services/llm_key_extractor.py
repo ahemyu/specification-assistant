@@ -76,8 +76,7 @@ class LLMKeyExtractor:
         # Build the prompt using the template
         prompt = KEY_EXTRACTION_PROMPT.format(
             key_name=key_name,
-            additional_context_section="",
-            document_contents=full_context
+            full_context=full_context
         )
 
         try:
