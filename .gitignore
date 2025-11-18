@@ -41,7 +41,8 @@ output/
 *.txt
 /src/pdf_reader/uploads
 /src/pdf_reader/uploaded_pdfs
-/uploaded_pdfs
+/src/pdf_reader/backend/uploaded_pdfs
+/uploaded_pdf
 
 # Environment variables
 .env
