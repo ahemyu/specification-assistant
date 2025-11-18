@@ -20,7 +20,7 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const highlightCanvasRef = useRef<HTMLCanvasElement>(null)
   const [currentPage, setCurrentPage] = useState(1)
-  const [scale, setScale] = useState(1.0)
+  const [scale, setScale] = useState(1.25)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [currentRefIndex] = useState(0)
@@ -151,34 +151,24 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
     }
 
     const drawHighlights = () => {
-      console.log('[HIGHLIGHT DEBUG] drawHighlights called')
-      console.log('[HIGHLIGHT DEBUG] references:', references)
-      console.log('[HIGHLIGHT DEBUG] currentRefIndex:', currentRefIndex)
-      console.log('[HIGHLIGHT DEBUG] currentPage:', currentPage)
-
       const highlightCanvas = highlightCanvasRef.current
       const mainCanvas = canvasRef.current
       if (!highlightCanvas || !mainCanvas) {
-        console.log('[HIGHLIGHT DEBUG] Canvas refs not available')
         return
       }
 
       const ref = references[currentRefIndex]
-      console.log('[HIGHLIGHT DEBUG] Current ref:', ref)
       if (!ref || !ref.bounding_box) {
-        console.log('[HIGHLIGHT DEBUG] No ref or no bounding_box:', ref)
         return
       }
 
       // Only highlight if we're on the correct page
       if (!ref.pages.includes(currentPage)) {
-        console.log('[HIGHLIGHT DEBUG] Current page not in ref.pages:', ref.pages)
         return
       }
 
       const highlightContext = highlightCanvas.getContext('2d')
       if (!highlightContext) {
-        console.log('[HIGHLIGHT DEBUG] Could not get highlight context')
         return
       }
 
@@ -201,22 +191,9 @@ export function PDFViewer({ references, className = '' }: PDFViewerProps) {
       const width = (bbox[2] - bbox[0]) * scale * devicePixelRatio
       const height = (bbox[3] - bbox[1]) * scale * devicePixelRatio
 
-      console.log('[HIGHLIGHT DEBUG] Drawing highlight:', {
-        bbox,
-        scale,
-        devicePixelRatio,
-        x,
-        y,
-        width,
-        height,
-        canvasWidth: highlightCanvas.width,
-        canvasHeight: highlightCanvas.height
-      })
-
       // Draw semi-transparent yellow highlight
       highlightContext.fillStyle = 'rgba(255, 255, 0, 0.3)'
       highlightContext.fillRect(x, y, width, height)
-      console.log('[HIGHLIGHT DEBUG] Highlight drawn successfully')
     }
 
     renderPage()
