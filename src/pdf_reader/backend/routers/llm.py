@@ -4,6 +4,7 @@ import logging
 
 from backend.dependencies import get_llm_extractor, get_pdf_storage
 from backend.schemas.requests import (
+    CoreWindingCountRequest,
     KeyExtractionRequest,
     PDFComparisonRequest,
     ProductTypeDetectionRequest,
@@ -275,4 +276,50 @@ async def detect_product_type(
         raise HTTPException(
             status_code=500,
             detail=f"Error during product type detection: {str(e)}"
+        )
+
+
+@router.post("/detect-core-winding-count")
+async def detect_core_winding_count(
+    request: CoreWindingCountRequest,
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+) -> dict:
+    """
+    Detect the maximum number of cores/windings based on product type.
+
+    This endpoint analyzes PDF content to determine how many cores (Kern)
+    or windings (Wicklung) are specified, based on the product type.
+
+    Requires:
+    - file_ids: List of file IDs from previous /upload requests
+    - product_type: Product type ('Stromwandler', 'Spannungswandler', 'Kombiwandler')
+
+    Returns:
+    - CoreWindingCountResult with max_core_number and max_winding_number
+    """
+    pdf_storage = get_pdf_storage()
+
+    # Load the processed PDF data for each file_id from memory
+    pdf_data_list = []
+    for file_id in request.file_ids:
+        if file_id not in pdf_storage:
+            raise HTTPException(
+                status_code=404,
+                detail=f"File with ID {file_id} not found. Please upload the file first."
+            )
+
+        pdf_data_list.append(pdf_storage[file_id])
+
+    # Detect core/winding count using LLM
+    try:
+        result = await llm_extractor.detect_core_winding_count(
+            pdf_data=pdf_data_list,
+            product_type=request.product_type
+        )
+        return result.model_dump()
+    except Exception as e:
+        logger.error(f"Error during core/winding count detection: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error during core/winding count detection: {str(e)}"
         )

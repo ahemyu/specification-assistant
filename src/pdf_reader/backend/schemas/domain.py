@@ -77,3 +77,21 @@ class ProductTypeDetectionResult(BaseModel):
     page_numbers: list[int] = Field(
         description="Page numbers where the key evidence was found"
     )
+
+
+class CoreWindingCountResult(BaseModel):
+    """Structured output for detecting number of cores/windings in transformer specifications."""
+
+    max_core_number: int = Field(
+        description="Maximum core (Kern) number found in the document (0 if not applicable)",
+        ge=0,
+        le=7
+    )
+    max_winding_number: int = Field(
+        description="Maximum winding (Wicklung) number found in the document (0 if not applicable)",
+        ge=0,
+        le=5
+    )
+    evidence: str = Field(
+        description="Explanation of where the cores/windings were identified in the document"
+    )

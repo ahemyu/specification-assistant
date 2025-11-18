@@ -34,6 +34,7 @@ export function UploadView() {
     resetExtractionState,
     setDetectedProductType,
     setProductTypeConfidence,
+    setIsDetectingProductType,
   } = useAppStore()
 
   // Load PDF state from localStorage on mount
@@ -149,6 +150,7 @@ export function UploadView() {
       navigate('/extract')
 
       // Detect product type from uploaded PDFs in background
+      setIsDetectingProductType(true)
       fetch('/detect-product-type', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -169,6 +171,9 @@ export function UploadView() {
         })
         .catch((error) => {
           console.error('Error detecting product type:', error)
+        })
+        .finally(() => {
+          setIsDetectingProductType(false)
         })
     } catch (error) {
       showNotification(

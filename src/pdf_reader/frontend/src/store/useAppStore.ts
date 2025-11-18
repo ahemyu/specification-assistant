@@ -9,6 +9,7 @@ import type {
   PDFCache,
   Reference,
 } from '../types'
+import type { KeyWithCategory } from '../data/keyTemplates'
 
 export type ActiveView = 'home' | 'spec_assistant' | 'compare';
 
@@ -35,6 +36,8 @@ interface AppState {
   detectedProductType: string | null
   productTypeConfidence: number
   selectedProductType: string | null
+  templateKeys: KeyWithCategory[]
+  isDetectingProductType: boolean
 
   // PDF Viewer state
   currentPdfDoc: any | null
@@ -67,6 +70,8 @@ interface AppState {
   setDetectedProductType: (type: string | null) => void
   setProductTypeConfidence: (confidence: number) => void
   setSelectedProductType: (type: string | null) => void
+  setTemplateKeys: (keys: KeyWithCategory[]) => void
+  setIsDetectingProductType: (isDetecting: boolean) => void
   setCurrentPdfDoc: (doc: any | null) => void
   setCurrentPdfPage: (page: number | null) => void
   setCurrentPdfScale: (scale: number) => void
@@ -103,6 +108,8 @@ export const useAppStore = create<AppState>((set) => ({
   detectedProductType: null,
   productTypeConfidence: 0,
   selectedProductType: null,
+  templateKeys: [],
+  isDetectingProductType: false,
 
   currentPdfDoc: null,
   currentPdfPage: null,
@@ -132,6 +139,8 @@ export const useAppStore = create<AppState>((set) => ({
   setDetectedProductType: (type) => set({ detectedProductType: type }),
   setProductTypeConfidence: (confidence) => set({ productTypeConfidence: confidence }),
   setSelectedProductType: (type) => set({ selectedProductType: type }),
+  setTemplateKeys: (keys) => set({ templateKeys: keys }),
+  setIsDetectingProductType: (isDetecting) => set({ isDetectingProductType: isDetecting }),
   setCurrentPdfDoc: (doc) => set({ currentPdfDoc: doc }),
   setCurrentPdfPage: (page) => set({ currentPdfPage: page }),
   setCurrentPdfScale: (scale) => set({ currentPdfScale: scale }),
@@ -157,6 +166,8 @@ export const useAppStore = create<AppState>((set) => ({
       detectedProductType: null,
       productTypeConfidence: 0,
       selectedProductType: null,
+      templateKeys: [],
+      isDetectingProductType: false,
     }),
 
   addChatMessage: (message) =>
