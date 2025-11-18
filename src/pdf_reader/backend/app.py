@@ -1,6 +1,7 @@
 """FastAPI service for PDF text extraction, question answering and key extraction."""
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from backend.dependencies import load_existing_pdfs
 from backend.routers import excel, llm, pdf
@@ -28,6 +29,9 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
+
+# Base directory is the directory containing this file (src/pdf_reader)
+BASE_DIR = Path(__file__).parent
 
 # ============================================================================
 # DEPRECATED: Vanilla JS Static Files (Archived 2025-11-11)

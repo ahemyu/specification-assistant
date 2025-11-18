@@ -7,12 +7,15 @@ from backend.services.llm_key_extractor import LLMKeyExtractor
 
 logger = logging.getLogger(__name__)
 
+# Base directory is the directory containing this file (src/pdf_reader)
+BASE_DIR = Path(__file__).parent
+
 # Output directory for extracted text files
-OUTPUT_DIR = Path("output")
+OUTPUT_DIR = BASE_DIR / "output"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # Directory for storing uploaded PDF files persistently
-UPLOADED_PDFS_DIR = Path("uploaded_pdfs")
+UPLOADED_PDFS_DIR = BASE_DIR / "uploaded_pdfs"
 UPLOADED_PDFS_DIR.mkdir(exist_ok=True)
 
 # In-memory storage for processed PDF data
