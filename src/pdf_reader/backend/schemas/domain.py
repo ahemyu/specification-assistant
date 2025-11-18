@@ -60,3 +60,20 @@ class PDFComparisonResult(BaseModel):
         description="List of all specification changes found between the documents"
     )
     total_changes: int = Field(description="Total number of changes detected")
+
+
+class ProductTypeDetectionResult(BaseModel):
+    """Structured output for product type detection from PDF specifications."""
+
+    product_type: str = Field(
+        description="Detected product type: 'Stromwandler', 'Spannungswandler', or 'Kombiwandler'"
+    )
+    confidence: float = Field(
+        description="Confidence score between 0.0 and 1.0 indicating certainty of detection"
+    )
+    evidence: str = Field(
+        description="Explanation of the evidence found in the document that supports this classification"
+    )
+    page_numbers: list[int] = Field(
+        description="Page numbers where the key evidence was found"
+    )

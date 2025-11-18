@@ -6,6 +6,7 @@ from backend.dependencies import get_llm_extractor, get_pdf_storage
 from backend.schemas.requests import (
     KeyExtractionRequest,
     PDFComparisonRequest,
+    ProductTypeDetectionRequest,
     QuestionRequest,
 )
 from backend.services.llm_key_extractor import LLMKeyExtractor
@@ -55,11 +56,9 @@ async def extract_keys(
         # Transform matched_line_ids to bounding_box coordinates
         for _key, result in results.items():
             if result and result.matched_line_ids:
-                logger.info(f"[HIGHLIGHT DEBUG] Processing key with matched_line_ids: {result.matched_line_ids}")
                 # Process each source location
                 for source_loc in result.source_locations:
                     pdf_filename = source_loc.pdf_filename
-                    logger.info(f"[HIGHLIGHT DEBUG] Looking up coordinates for PDF: {pdf_filename}")
 
                     # Find the corresponding pdf_data for this filename
                     matching_pdf = next(
@@ -69,16 +68,12 @@ async def extract_keys(
 
                     if matching_pdf and "line_id_map" in matching_pdf:
                         line_id_map = matching_pdf["line_id_map"]
-                        logger.info(f"[HIGHLIGHT DEBUG] Found line_id_map with {len(line_id_map)} entries")
 
                         # Collect all bounding boxes for the matched line_ids
                         bboxes = []
                         for line_id in result.matched_line_ids:
                             if line_id in line_id_map:
                                 bboxes.append(line_id_map[line_id])
-                                logger.info(f"[HIGHLIGHT DEBUG] Found bbox for {line_id}: {line_id_map[line_id]}")
-                            else:
-                                logger.warning(f"[HIGHLIGHT DEBUG] Line ID {line_id} NOT found in line_id_map")
 
                         # Merge all bounding boxes into one (union)
                         if bboxes:
@@ -87,16 +82,9 @@ async def extract_keys(
                             max_x1 = max(bbox[2] for bbox in bboxes)
                             max_bottom = max(bbox[3] for bbox in bboxes)
                             source_loc.bounding_box = [min_x0, min_top, max_x1, max_bottom]
-                            logger.info(f"[HIGHLIGHT DEBUG] Final merged bounding_box: {source_loc.bounding_box}")
-                        else:
-                            logger.warning("[HIGHLIGHT DEBUG] No bboxes found for matched_line_ids")
-                    else:
-                        logger.warning("[HIGHLIGHT DEBUG] No matching PDF or line_id_map found")
 
                 # Clear matched_line_ids before sending to frontend (internal only)
                 result.matched_line_ids = None
-            else:
-                logger.info("[HIGHLIGHT DEBUG] Result has no matched_line_ids")
 
         # Convert results to dict with serializable values
         return {
@@ -243,4 +231,48 @@ async def compare_pdfs(
         raise HTTPException(
             status_code=500,
             detail=f"Error during PDF comparison: {str(e)}"
+        )
+
+
+@router.post("/detect-product-type")
+async def detect_product_type(
+    request: ProductTypeDetectionRequest,
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+) -> dict:
+    """
+    Detect product type from uploaded PDF specifications.
+
+    Uses LLM to analyze PDF content and identify whether the product is:
+    - Stromwandler (Current Instrument Transformer)
+    - Spannungswandler (Voltage Instrument Transformer)
+    - Kombiwandler (Combined Instrument Transformer)
+
+    Requires:
+    - file_ids: List of file IDs from previous /upload requests
+
+    Returns:
+    - ProductTypeDetectionResult with detected type, confidence, and evidence
+    """
+    pdf_storage = get_pdf_storage()
+
+    # Load the processed PDF data for each file_id from memory
+    pdf_data_list = []
+    for file_id in request.file_ids:
+        if file_id not in pdf_storage:
+            raise HTTPException(
+                status_code=404,
+                detail=f"File with ID {file_id} not found. Please upload the file first."
+            )
+
+        pdf_data_list.append(pdf_storage[file_id])
+
+    # Detect product type using LLM
+    try:
+        result = await llm_extractor.detect_product_type(pdf_data=pdf_data_list)
+        return result.model_dump()
+    except Exception as e:
+        logger.error(f"Error during product type detection: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error during product type detection: {str(e)}"
         )

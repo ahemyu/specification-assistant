@@ -49,6 +49,7 @@ uv run uvicorn src.pdf_reader.main:app --reload --host 0.0.0.0 --port 8000
 
 ```bash
 cd src/pdf_reader/frontend
+VITE_DEV_MODE=true npm run dev
 npm run dev
 ```
 

@@ -10,10 +10,15 @@ from langchain_openai import ChatOpenAI
 # Add parent directory to path to allow imports from pdf_reader root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backend.schemas.domain import KeyExtractionResult, PDFComparisonResult
+from backend.schemas.domain import (
+    KeyExtractionResult,
+    PDFComparisonResult,
+    ProductTypeDetectionResult,
+)
 from backend.services.llm_prompts import (
     KEY_EXTRACTION_PROMPT,
     PDF_COMPARISON_PROMPT,
+    PRODUCT_TYPE_DETECTION_PROMPT,
     QA_SYSTEM_PROMPT,
 )
 
@@ -218,6 +223,43 @@ class LLMKeyExtractor:
             logger.info("Successfully answered question with streaming")
         except Exception as e:
             logger.error(f"Error answering question with streaming: {str(e)}")
+            raise
+
+    async def detect_product_type(
+        self,
+        pdf_data: list[dict]
+    ) -> ProductTypeDetectionResult:
+        """
+        Detect the product type from PDF specifications.
+
+        Args:
+            pdf_data: List of dictionaries containing PDF data from process_single_pdf()
+                      Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
+
+        Returns:
+            ProductTypeDetectionResult with detected type, confidence, and evidence
+        """
+        logger.info(f"Detecting product type from {len(pdf_data)} PDF(s)")
+
+        # Use pre-formatted text that was created during PDF processing
+        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
+
+        # Build the prompt using the template
+        prompt = PRODUCT_TYPE_DETECTION_PROMPT.format(full_context=full_context)
+
+        try:
+            # Create a structured output LLM for product type detection
+            structured_detection_llm = self.llm.with_structured_output(
+                ProductTypeDetectionResult
+            )
+            result = await structured_detection_llm.ainvoke(prompt)
+            logger.info(
+                f"Successfully detected product type: {result.product_type} "
+                f"(confidence: {result.confidence})"
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Error detecting product type: {str(e)}")
             raise
 
     async def compare_pdfs(

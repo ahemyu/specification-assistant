@@ -40,3 +40,9 @@ class PDFComparisonRequest(BaseModel):
     base_file_id: str  # The original/old version
     new_file_id: str   # The updated/new version
     additional_context: str | None = None
+
+
+class ProductTypeDetectionRequest(BaseModel):
+    """Request model for detecting product type from PDFs."""
+
+    file_ids: list[str]

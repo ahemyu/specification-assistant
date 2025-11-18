@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { showNotification } from '../../utils/notifications'
 import { Button } from '../ui'
 import { CarouselModal } from '../CarouselModal'
 import { SummaryView } from '../SummaryView'
-import type { ExtractionMode, ExtractionResult } from '../../types'
+import type { ExtractionResult } from '../../types'
 
 // Backend extraction response format
 interface BackendExtractionResult {
@@ -42,122 +42,43 @@ function transformExtractionResponse(backendData: ExtractionResponse): Extractio
   })
 }
 
+const PRODUCT_TYPES = ['Stromwandler', 'Spannungswandler', 'Kombiwandler'] as const
+type ProductType = typeof PRODUCT_TYPES[number]
+
+const isDevMode = import.meta.env.VITE_DEV_MODE === 'true' || localStorage.getItem('dev_mode') === 'true'
+
 export function ExtractionView() {
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const keyTextareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const [currentTab, setCurrentTab] = useState<ExtractionMode>('manual')
-  const [excelFile, setExcelFile] = useState<File | null>(null)
-  const [previewKeys, setPreviewKeys] = useState<string[]>([])
   const [isExtracting, setIsExtracting] = useState(false)
   const [manualKeys, setManualKeys] = useState('')
   const [isCarouselOpen, setIsCarouselOpen] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
+  const [showDevInput, setShowDevInput] = useState(false)
 
   const {
     uploadedFileIds,
-    uploadedTemplateId,
     extractionResultsData,
     reviewedKeys,
-    setUploadedTemplateId,
-    setUploadedTemplateKeys,
+    detectedProductType,
+    productTypeConfidence,
+    selectedProductType,
     setExtractionResultsData,
     setExtractionResultsBackendFormat,
-    setCurrentExtractionMode,
     setCurrentExtractionState,
     resetExtractionState,
     setReviewedKeys,
+    setSelectedProductType,
   } = useAppStore()
 
-  const handleTabSwitch = (mode: ExtractionMode) => {
-    setCurrentTab(mode)
-    setCurrentExtractionMode(mode)
-  }
-
-  const handleExcelFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) {
-      setExcelFile(null)
-      setPreviewKeys([])
-      return
+  useEffect(() => {
+    if (detectedProductType && !selectedProductType) {
+      setSelectedProductType(detectedProductType)
     }
+  }, [detectedProductType, selectedProductType, setSelectedProductType])
 
-    setExcelFile(file)
-
-    const formData = new FormData()
-    formData.append('file', file)
-
-    try {
-      showNotification('Uploading Excel template...', 'info')
-      const response = await fetch('/upload-excel-template', {
-        method: 'POST',
-        body: formData,
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to upload template')
-      }
-
-      const data = await response.json()
-      setUploadedTemplateId(data.template_id)
-      setUploadedTemplateKeys(data.keys)
-      setPreviewKeys(data.keys)
-
-      showNotification(
-        `Template uploaded successfully with ${data.total_keys} keys`,
-        'success'
-      )
-    } catch (error) {
-      showNotification(
-        `Error uploading template: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'error'
-      )
-      setExcelFile(null)
-      setPreviewKeys([])
-    }
-  }
-
-  const handleExtractFromExcel = async () => {
-    if (!uploadedTemplateId || uploadedFileIds.length === 0) {
-      showNotification('Please upload both Excel template and PDF files', 'error')
-      return
-    }
-
-    setIsExtracting(true)
-    showNotification('Extracting keys from template...', 'info')
-
-    try {
-      const response = await fetch('/extract-keys-from-template', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          template_id: uploadedTemplateId,
-          file_ids: uploadedFileIds,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to extract keys')
-      }
-
-      const backendData: ExtractionResponse = await response.json()
-      const transformedData = transformExtractionResponse(backendData)
-      setExtractionResultsData(transformedData)
-      setExtractionResultsBackendFormat(backendData)
-      showNotification('Keys extracted successfully!', 'success')
-
-      // Open carousel modal immediately
-      setTimeout(() => openCarousel(), 100)
-    } catch (error) {
-      showNotification(
-        `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        'error'
-      )
-    } finally {
-      setIsExtracting(false)
-    }
+  const handleProductTypeSelect = (productType: ProductType) => {
+    setSelectedProductType(productType)
   }
 
   const handleExtractManually = async () => {
@@ -257,9 +178,8 @@ export function ExtractionView() {
   const handleStartNewExtraction = () => {
     setShowSummary(false)
     resetExtractionState()
-    setExcelFile(null)
-    setPreviewKeys([])
     setManualKeys('')
+    setShowDevInput(false)
     setCurrentExtractionState('setup')
   }
 
@@ -273,141 +193,182 @@ export function ExtractionView() {
         />
       ) : (
         <div id="extractionSetupView">
-        <h2 className="view-title">Extract Keys from PDFs</h2>
-        <p className="view-subtitle">
-          Use an Excel template or enter keys manually to extract information from your PDFs
-        </p>
+          <h2 className="view-title">Extract Keys from PDFs</h2>
+          <p className="view-subtitle">
+            Select the product type to extract relevant specifications
+          </p>
 
-        <nav className="extraction-tabs">
-          <button
-            id="excelTab"
-            className={`tab-btn ${currentTab === 'excel' ? 'active' : ''}`}
-            onClick={() => handleTabSwitch('excel')}
-          >
-            Excel Template
-          </button>
-          <button
-            id="manualTab"
-            className={`tab-btn ${currentTab === 'manual' ? 'active' : ''}`}
-            onClick={() => handleTabSwitch('manual')}
-          >
-            Manual Input
-          </button>
-        </nav>
-
-        {currentTab === 'excel' && (
-          <div className="tab-content active" id="excelTabContent">
-            <div className="excel-upload-area">
-              <h3>Upload Excel Template</h3>
-              <p className="section-subtitle">
-                Upload an Excel file with keys in the first column
-              </p>
-
-              <div className="file-input-group">
-                <input
-                  type="file"
-                  id="excelFileInput"
-                  ref={fileInputRef}
-                  accept=".xlsx,.xls"
-                  onChange={handleExcelFileSelect}
-                  style={{ display: 'none' }}
-                />
-                <label htmlFor="excelFileInput" className="excel-upload-label">
-                  <span className="upload-icon">📄</span>
-                  <span className="upload-text">Choose Excel File</span>
-                </label>
-              </div>
-
-              {excelFile && (
-                <div className="excel-filename" id="excelFileName">
-                  Selected: {excelFile.name}
-                </div>
-              )}
-
-              {previewKeys.length > 0 && (
-                <div className="keys-preview" id="keysPreview">
-                  <h4>Keys Found ({previewKeys.length}):</h4>
-                  <ul>
-                    {previewKeys.map((key, index) => (
-                      <li key={index}>{key}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
-              <Button
-                id="extractExcelBtn"
-                className="extract-btn"
-                onClick={handleExtractFromExcel}
-                disabled={!uploadedTemplateId || uploadedFileIds.length === 0 || isExtracting}
-                isLoading={isExtracting}
-                title={
-                  uploadedFileIds.length === 0
-                    ? 'Please upload PDFs first'
-                    : !uploadedTemplateId
-                    ? 'Please upload Excel template first'
-                    : ''
-                }
-              >
-                Extract Keys from Template
-              </Button>
-
-              {uploadedFileIds.length === 0 && (
-                <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
-                  Please upload PDF files in the Upload tab first
-                </p>
-              )}
-              {uploadedFileIds.length > 0 && !uploadedTemplateId && (
-                <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
-                  Please upload an Excel template above
-                </p>
-              )}
-
+          {/* Product Type Selection */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem' }}>Product Type</h3>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {PRODUCT_TYPES.map((type) => {
+                const isDetected = detectedProductType === type
+                const isSelected = selectedProductType === type
+                return (
+                  <button
+                    key={type}
+                    onClick={() => handleProductTypeSelect(type)}
+                    style={{
+                      padding: '1rem 1.5rem',
+                      borderRadius: '8px',
+                      border: isSelected ? '2px solid #10B981' : '2px solid #374151',
+                      backgroundColor: isSelected ? '#D1FAE5' : '#1F2937',
+                      color: isSelected ? '#065F46' : '#E5E7EB',
+                      cursor: 'pointer',
+                      fontSize: '1rem',
+                      fontWeight: isSelected ? '600' : '400',
+                      transition: 'all 0.2s',
+                      minWidth: '180px',
+                      position: 'relative',
+                    }}
+                  >
+                    <div>{type}</div>
+                    {isDetected && productTypeConfidence > 0 && (
+                      <div style={{
+                        marginTop: '0.25rem',
+                        fontSize: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.5rem'
+                      }}>
+                        <div style={{
+                          flex: 1,
+                          height: '4px',
+                          backgroundColor: isSelected ? '#10B981' : '#374151',
+                          borderRadius: '2px',
+                          overflow: 'hidden'
+                        }}>
+                          <div style={{
+                            height: '100%',
+                            width: `${productTypeConfidence * 100}%`,
+                            backgroundColor: isSelected ? '#059669' : '#10B981',
+                            transition: 'width 0.3s ease'
+                          }} />
+                        </div>
+                        <span style={{
+                          whiteSpace: 'nowrap',
+                          opacity: 0.9
+                        }}>
+                          {Math.round(productTypeConfidence * 100)}%
+                        </span>
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
             </div>
-          </div>
-        )}
-
-        {currentTab === 'manual' && (
-          <div className="tab-content active" id="manualTabContent">
-            <div className="key-input-area">
-              <h3>Enter Keys to Extract</h3>
-              <p className="section-subtitle">Enter one key per line</p>
-
-              <div className="key-input-group">
-                <textarea
-                  id="keyInput"
-                  ref={keyTextareaRef}
-                  rows={8}
-                  placeholder="Enter key names, one per line..."
-                  value={manualKeys}
-                  onChange={(e) => setManualKeys(e.target.value)}
-                />
+            {detectedProductType && (
+              <div style={{
+                marginTop: '0.75rem',
+                padding: '0.75rem 1rem',
+                backgroundColor: '#1F2937',
+                borderRadius: '6px',
+                border: '1px solid #374151'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                  <span style={{ fontSize: '0.9rem', color: '#10B981', fontWeight: '500' }}>
+                    Auto-detected:
+                  </span>
+                  <span style={{ fontSize: '0.9rem', color: '#E5E7EB' }}>
+                    {detectedProductType}
+                  </span>
+                  {productTypeConfidence > 0 && (
+                    <span style={{
+                      fontSize: '0.85rem',
+                      color: '#9CA3AF',
+                      marginLeft: 'auto'
+                    }}>
+                      Confidence: {Math.round(productTypeConfidence * 100)}%
+                    </span>
+                  )}
+                </div>
+                {productTypeConfidence > 0 && productTypeConfidence < 0.7 && (
+                  <div style={{ fontSize: '0.8rem', color: '#F59E0B', marginTop: '0.25rem' }}>
+                    Low confidence - please verify the selection
+                  </div>
+                )}
               </div>
-
-              <Button
-                id="extractBtn"
-                className="extract-btn"
-                onClick={handleExtractManually}
-                disabled={uploadedFileIds.length === 0 || isExtracting}
-                isLoading={isExtracting}
-                title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : ''}
-              >
-                Extract Keys
-              </Button>
-
-              {uploadedFileIds.length === 0 && (
-                <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
-                  Please upload PDF files in the Upload tab first
-                </p>
-              )}
-
-            </div>
+            )}
           </div>
-        )}
 
-        {isExtracting && (
-          <div className="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting" />
-        )}
+          {/* Dev Mode Button */}
+          {isDevMode && !showDevInput && (
+            <div style={{ marginBottom: '1rem' }}>
+              <button
+                onClick={() => setShowDevInput(true)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  borderRadius: '4px',
+                  border: '1px solid #6B7280',
+                  backgroundColor: '#374151',
+                  color: '#E5E7EB',
+                  cursor: 'pointer',
+                  fontSize: '0.85rem',
+                }}
+              >
+                Dev Mode: Manual Input
+              </button>
+            </div>
+          )}
+
+          {/* Manual Input (Dev Mode Only) */}
+          {showDevInput && (
+            <div className="tab-content active" id="manualTabContent" style={{ marginTop: '2rem' }}>
+              <div className="key-input-area">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3>Enter Keys to Extract (Dev Mode)</h3>
+                  <button
+                    onClick={() => setShowDevInput(false)}
+                    style={{
+                      padding: '0.25rem 0.75rem',
+                      borderRadius: '4px',
+                      border: '1px solid #6B7280',
+                      backgroundColor: '#374151',
+                      color: '#E5E7EB',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                    }}
+                  >
+                    Hide
+                  </button>
+                </div>
+                <p className="section-subtitle">Enter one key per line</p>
+
+                <div className="key-input-group">
+                  <textarea
+                    id="keyInput"
+                    ref={keyTextareaRef}
+                    rows={8}
+                    placeholder="Enter key names, one per line..."
+                    value={manualKeys}
+                    onChange={(e) => setManualKeys(e.target.value)}
+                  />
+                </div>
+
+                <Button
+                  id="extractBtn"
+                  className="extract-btn"
+                  onClick={handleExtractManually}
+                  disabled={uploadedFileIds.length === 0 || isExtracting}
+                  isLoading={isExtracting}
+                  title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : ''}
+                >
+                  Extract Keys
+                </Button>
+
+                {uploadedFileIds.length === 0 && (
+                  <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
+                    Please upload PDF files in the Upload tab first
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {isExtracting && (
+            <div className="spinner" id="extractSpinner" aria-live="polite" aria-label="Extracting" />
+          )}
         </div>
       )}
 

@@ -31,6 +31,11 @@ interface AppState {
   // Extraction workflow state
   currentExtractionState: ExtractionState
 
+  // Product type detection state
+  detectedProductType: string | null
+  productTypeConfidence: number
+  selectedProductType: string | null
+
   // PDF Viewer state
   currentPdfDoc: any | null
   currentPdfPage: number | null
@@ -59,6 +64,9 @@ interface AppState {
   setReviewedKeys: (keys: Record<string, ReviewedKey>) => void
   setIsEditMode: (mode: boolean) => void
   setCurrentExtractionState: (state: ExtractionState) => void
+  setDetectedProductType: (type: string | null) => void
+  setProductTypeConfidence: (confidence: number) => void
+  setSelectedProductType: (type: string | null) => void
   setCurrentPdfDoc: (doc: any | null) => void
   setCurrentPdfPage: (page: number | null) => void
   setCurrentPdfScale: (scale: number) => void
@@ -92,6 +100,10 @@ export const useAppStore = create<AppState>((set) => ({
 
   currentExtractionState: 'setup',
 
+  detectedProductType: null,
+  productTypeConfidence: 0,
+  selectedProductType: null,
+
   currentPdfDoc: null,
   currentPdfPage: null,
   currentPdfScale: 1.0,
@@ -117,6 +129,9 @@ export const useAppStore = create<AppState>((set) => ({
   setReviewedKeys: (keys) => set({ reviewedKeys: keys }),
   setIsEditMode: (mode) => set({ isEditMode: mode }),
   setCurrentExtractionState: (state) => set({ currentExtractionState: state }),
+  setDetectedProductType: (type) => set({ detectedProductType: type }),
+  setProductTypeConfidence: (confidence) => set({ productTypeConfidence: confidence }),
+  setSelectedProductType: (type) => set({ selectedProductType: type }),
   setCurrentPdfDoc: (doc) => set({ currentPdfDoc: doc }),
   setCurrentPdfPage: (page) => set({ currentPdfPage: page }),
   setCurrentPdfScale: (scale) => set({ currentPdfScale: scale }),
@@ -139,6 +154,9 @@ export const useAppStore = create<AppState>((set) => ({
       reviewedKeys: {},
       isEditMode: false,
       currentExtractionState: 'setup',
+      detectedProductType: null,
+      productTypeConfidence: 0,
+      selectedProductType: null,
     }),
 
   addChatMessage: (message) =>

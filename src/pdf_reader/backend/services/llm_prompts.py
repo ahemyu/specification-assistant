@@ -83,3 +83,37 @@ Filename: {new_filename}
 {new_context}
 
 Provide a structured comparison with a summary and detailed list of changes."""
+
+
+# Product type detection prompt template
+PRODUCT_TYPE_DETECTION_PROMPT = """You are an expert at identifying electrical transformer types \
+from technical specifications.
+
+Your task is to analyze the provided PDF document(s) and determine which type of transformer is being specified.
+
+PRODUCT TYPES:
+1. Stromwandler (Current Instrument Transformer) - Devices that transform current for measurement/protection
+2. Spannungswandler (Voltage Instrument Transformer) - Devices that transform voltage for measurement/protection
+3. Kombiwandler (Combined Instrument Transformer) - Devices that combine both current and voltage transformation
+
+IDENTIFICATION CLUES:
+- Look for explicit mentions of product type names
+- Check for technical parameters:
+  - Stromwandler: Rated primary current, accuracy class for current, transformation ratio (e.g., 100/5A)
+  - Spannungswandler: Rated primary voltage, accuracy class for voltage, transformation ratio (e.g., 20000/100V)
+  - Kombiwandler: Both current and voltage parameters present
+- German terminology:
+  - "Stromwandler", "CT", "Current Transformer"
+  - "Spannungswandler", "VT", "PT", "Voltage Transformer", "Potential Transformer"
+  - "Kombiwandler", "CVT", "Combined Transformer"
+
+IMPORTANT:
+- Base your decision on explicit evidence from the document
+- If both current and voltage transformation are clearly specified, it's a Kombiwandler
+- Provide high confidence only when clear evidence is present
+- Cite specific page numbers and text passages that support your decision
+
+DOCUMENT CONTENTS:
+{full_context}
+
+Analyze the document(s) and determine the product type."""
