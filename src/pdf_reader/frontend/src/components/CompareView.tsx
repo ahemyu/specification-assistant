@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
-import type { ComparisonResult, ChangeFilter } from '../../types'
-import { showNotification } from '../../utils/notifications'
+import type { ComparisonResult, ChangeFilter } from '../types'
+import { showNotification } from '../utils/notifications'
 
 const STORAGE_KEY_PREFIX = 'pdf_compare_'
 const STORAGE_KEYS = {
@@ -280,8 +279,8 @@ export function CompareView() {
   return (
     <div className="comparison-container">
       <div className="comparison-header">
-        <h2>PDF Version Comparison</h2>
-        <p className="subtitle">Compare two versions of a PDF to identify changes in specifications</p>
+        <h1>PDF Version Comparison</h1>
+        <p className="upload-subtitle"> Compare two versions of a PDF to identify changes in specifications</p>
       </div>
 
       {/* Upload Section */}

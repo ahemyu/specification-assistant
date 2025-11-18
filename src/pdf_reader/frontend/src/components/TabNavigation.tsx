@@ -1,9 +1,15 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAppStore } from '../store/useAppStore'
 
 export function TabNavigation() {
   const uploadedFileIds = useAppStore((state) => state.uploadedFileIds)
   const hasUploadedFiles = uploadedFileIds.length > 0
+  const location = useLocation();
+
+  // Only show navigation if files are uploaded
+  if (!hasUploadedFiles) {
+    return null; // Hide the entire navigation
+  }
 
   return (
     <nav className="main-tabs">

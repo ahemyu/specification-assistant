@@ -5,6 +5,7 @@ import { showNotification } from '../../utils/notifications'
 import { Button } from '../ui'
 import { PreviewModal } from '../PreviewModal'
 import type { ProcessedFile } from '../../types'
+import { FaUpload, FaFilePdf, FaEye, FaDownload, FaTrash } from 'react-icons/fa'
 
 interface UploadResponse {
   processed: ProcessedFile[]
@@ -16,6 +17,7 @@ export function UploadView() {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  const [isDragging, setIsDragging] = useState(false)
   const [previewModal, setPreviewModal] = useState<{
     isOpen: boolean
     fileId: string | null
@@ -59,6 +61,32 @@ export function UploadView() {
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
+    setSelectedFiles(files)
+  }
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const files = Array.from(e.dataTransfer.files || [])
     setSelectedFiles(files)
   }
 
@@ -212,20 +240,35 @@ export function UploadView() {
 
   return (
     <div className="tab-view active" id="uploadView">
+      <div className="upload-header">
+        <h1>Spec-Assistant</h1>
+        <p className="upload-subtitle"> Upload your PDF files and use LLMs to extract keys or ask questions</p>
+      </div>
       <section className="upload-section">
-        <div className="file-input-wrapper">
+        <div
+          className={`drop-zone ${isDragging ? 'dragging' : ''}`}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+          onClick={() => fileInputRef.current?.click()}
+        >
           <input
             type="file"
             id="fileInput"
             ref={fileInputRef}
             multiple
             accept=".pdf"
-            aria-label="Choose PDF files"
             onChange={handleFileSelect}
+            style={{ display: 'none' }}
           />
-          <label htmlFor="fileInput" className="file-input-label">
-            Choose PDF Files
-          </label>
+          <div className="drop-zone-icon">
+            <FaUpload size={48} />
+          </div>
+          <div className="drop-zone-text">
+            <h2>Drag & Drop your PDF files here</h2>
+            <p>or click to select files</p>
+          </div>
         </div>
 
         {selectedFiles.length > 0 && (
@@ -267,38 +310,45 @@ export function UploadView() {
             </button>
           </div>
           <div className="results" id="results">
-            {allUploadedFiles.map((file) => (
-              <div key={file.file_id} className="result-item" data-file-id={file.file_id}>
-                <h3>{file.original_filename}</h3>
-                <p>
-                  <strong>Pages:</strong> {(file as any).total_pages || 'N/A'}
-                </p>
-                <p>
-                  <strong>File ID:</strong> {file.file_id}
-                </p>
-                <div className="result-actions">
-                  <button
-                    className="preview-btn"
-                    onClick={() => openPreview(file.file_id, file.original_filename)}
-                  >
-                    Preview Text
-                  </button>
-                  <a
-                    href={`/download/${file.file_id}`}
-                    className="download-btn"
-                    download
-                  >
-                    Download Text File
-                  </a>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDeleteFile(file.file_id)}
-                  >
-                    Delete
-                  </button>
+            <div className="file-grid">
+              {allUploadedFiles.map((file) => (
+                <div key={file.file_id} className="file-card" data-file-id={file.file_id}>
+                  <div className="file-card-icon">
+                    <FaFilePdf size={40} />
+                  </div>
+                  <div className="file-card-info">
+                    <h3 className="file-card-name">{file.original_filename}</h3>
+                    <p className="file-card-details">
+                      Pages: {(file as any).total_pages || 'N/A'}
+                    </p>
+                  </div>
+                  <div className="file-card-actions">
+                    <button
+                      className="action-btn preview"
+                      onClick={() => openPreview(file.file_id, file.original_filename)}
+                      title="Preview Text"
+                    >
+                      <FaEye />
+                    </button>
+                    <a
+                      href={`/download/${file.file_id}`}
+                      className="action-btn download"
+                      download
+                      title="Download Text File"
+                    >
+                      <FaDownload />
+                    </a>
+                    <button
+                      className="action-btn delete"
+                      onClick={() => handleDeleteFile(file.file_id)}
+                      title="Delete File"
+                    >
+                      <FaTrash />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </>
       )}

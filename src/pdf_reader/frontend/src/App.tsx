@@ -3,7 +3,7 @@ import { Notifications } from './components/Notifications'
 import Sidebar from './components/Sidebar'
 import { MainContainer } from './components/MainContainer'
 import { Home } from './components/Home'
-import { CompareView } from './components/views/CompareView'
+import { CompareView } from './components/CompareView'
 import { useAppStore } from './store/useAppStore'
 
 import './styles/styles.css'
