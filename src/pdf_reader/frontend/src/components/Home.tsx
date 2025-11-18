@@ -19,6 +19,16 @@ const cards = [
 
 export const Home = () => {
   const setActiveView = useAppStore((state) => state.setActiveView);
+  const setActiveSubMenuItem = useAppStore((state) => state.setActiveSubMenuItem);
+
+  const handleCardClick = (id: string) => {
+    if (id === 'spec_assistant') {
+      setActiveView('spec_assistant');
+      setActiveSubMenuItem('upload');
+    } else {
+      setActiveView(id as any);
+    }
+  };
 
   return (
     <div className="home-container">
@@ -28,7 +38,7 @@ export const Home = () => {
       </div>
       <div className="cards-wrapper">
         {cards.map((card) => (
-          <div key={card.id} className="card" onClick={() => setActiveView(card.id as any)}>
+          <div key={card.id} className="card" onClick={() => handleCardClick(card.id)}>
             <div className="card-icon">{card.icon}</div>
             <div className="card-content">
               <h2 className="card-title">{card.title}</h2>

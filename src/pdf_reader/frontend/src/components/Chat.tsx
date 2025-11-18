@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, KeyboardEvent, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useAppStore } from '../store/useAppStore'
 import type { ChatMessage } from '../types'
+import { IoClose } from "react-icons/io5"; // Import close icon
 
 interface ChatProps {
   modelOptions?: string[]
@@ -24,6 +25,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
     addChatMessage,
     clearChat,
     setConversationHistory,
+    setIsQAPopupOpen, // Import setIsQAPopupOpen
   } = useAppStore()
 
   // Auto-resize textarea
@@ -43,7 +45,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight
     }
-  }, [])
+  }, [messagesContainerRef])
 
   useEffect(() => {
     scrollToBottom()
@@ -142,7 +144,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               systemMessage = data.content
             } else if (data.type === 'chunk') {
               // First chunk - hide loading indicator and start streaming
-              if (isFirstChunk) {
+                            if (isFirstChunk) {
                 setIsLoading(false)
                 setIsStreaming(true)
                 isFirstChunk = false
@@ -224,11 +226,8 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               ))}
             </select>
           </div>
-          <button className="clear-chat-btn" onClick={handleClearChat} title="Start a new conversation">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 6h18M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
-            </svg>
-            Clear Chat
+          <button className="close-chat-btn" onClick={() => setIsQAPopupOpen(false)} title="Close Chat">
+            <IoClose size={24} />
           </button>
         </div>
 
@@ -300,8 +299,9 @@ interface ChatMessageProps {
 }
 
 function ChatMessageComponent({ message }: ChatMessageProps) {
-  const roleLabel = message.role === 'user' ? 'You' : 'Assistant'
-  const isError = message.role === 'assistant' && message.content.startsWith('Error:')
+  const isUser = message.role === 'user';
+  const roleLabel = isUser ? 'You' : 'Assistant';
+  const isError = message.role === 'assistant' && message.content.startsWith('Error:');
 
   return (
     <div className={`chat-message ${message.role}`}>
@@ -314,5 +314,5 @@ function ChatMessageComponent({ message }: ChatMessageProps) {
         )}
       </div>
     </div>
-  )
+  );
 }

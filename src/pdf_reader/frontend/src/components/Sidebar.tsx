@@ -1,5 +1,5 @@
-import { FaUser, FaCog, FaSignOutAlt, FaFileAlt, FaBalanceScale } from "react-icons/fa";
-import { IoHome } from "react-icons/io5";
+import { FaUser, FaCog, FaSignOutAlt, FaFileAlt, FaBalanceScale, FaUpload, FaKey } from "react-icons/fa";
+import { IoHome, IoChevronForward } from "react-icons/io5"; // Import IoChevronForward
 import { useAppStore } from "../store/useAppStore";
 
 interface SidebarProps {
@@ -9,6 +9,24 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const activeView = useAppStore((state) => state.activeView);
   const setActiveView = useAppStore((state) => state.setActiveView);
+  const uploadedFileIds = useAppStore((state) => state.uploadedFileIds);
+  const activeSubMenuItem = useAppStore((state) => state.activeSubMenuItem);
+  const setActiveSubMenuItem = useAppStore((state) => state.setActiveSubMenuItem);
+
+  const hasUploadedFiles = uploadedFileIds.length > 0;
+  const isSpecAssistantExpanded = activeView === "spec_assistant";
+
+  const handleSpecAssistantClick = () => {
+    setActiveView("spec_assistant");
+    if (!activeSubMenuItem) { // If no sub-menu item is active, default to 'upload'
+      setActiveSubMenuItem("upload");
+    }
+  };
+
+  const handleMainViewClick = (view: "home" | "compare") => {
+    setActiveView(view);
+    setActiveSubMenuItem(null); // Clear sub-menu item when switching to a different main view
+  };
 
   return (
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
@@ -20,24 +38,49 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         {/* Main Section */}
         <li
           className={`menu-item ${activeView === "home" ? "active" : ""}`}
-          onClick={() => setActiveView("home")}
+          onClick={() => handleMainViewClick("home")}
         >
           <span className="icon"><IoHome /></span>
           <span>Home</span>
         </li>
 
         {/* Tools Section */}
-        <div className="sidebar-section-title">Tools</div>
+        <h3 className="sidebar-section-title">Tools</h3>
         <li
-          className={`menu-item ${activeView === "spec_assistant" ? "active" : ""}`}
-          onClick={() => setActiveView("spec_assistant")}
+          className={`menu-item ${isSpecAssistantExpanded ? "active" : ""} ${!isSpecAssistantExpanded ? 'spec-assistant-collapsed' : ''}`}
+          onClick={handleSpecAssistantClick}
         >
           <span className="icon"><FaFileAlt /></span>
           <span>Spec-Assistant</span>
+          <span className={`dropdown-icon ${isSpecAssistantExpanded ? "expanded" : ""}`}>
+            <IoChevronForward />
+          </span>
         </li>
+        {isSpecAssistantExpanded && (
+          <ul className="submenu spec-assistant-expanded">
+            <li
+              className={`menu-item ${activeSubMenuItem === "upload" ? "active" : ""}`}
+              onClick={() => setActiveSubMenuItem("upload")}
+            >
+              <span className="icon"><FaUpload /></span>
+              <span>Upload PDFs</span>
+            </li>
+            {hasUploadedFiles && (
+              <>
+                <li
+                  className={`menu-item ${activeSubMenuItem === "extract" ? "active" : ""}`}
+                  onClick={() => setActiveSubMenuItem("extract")}
+                >
+                  <span className="icon"><FaKey /></span>
+                  <span>Extract Keys</span>
+                </li>
+              </>
+            )}
+          </ul>
+        )}
         <li
           className={`menu-item ${activeView === "compare" ? "active" : ""}`}
-          onClick={() => setActiveView("compare")}
+          onClick={() => handleMainViewClick("compare")}
         >
           <span className="icon"><FaBalanceScale /></span>
           <span>PDF-Vergleich</span>

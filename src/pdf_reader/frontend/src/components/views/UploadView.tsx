@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { useAppStore, PDF_STORAGE_KEY, CHAT_STORAGE_KEY } from '../../store/useAppStore'
 import { showNotification } from '../../utils/notifications'
 import { Button } from '../ui'
@@ -13,7 +12,6 @@ interface UploadResponse {
 }
 
 export function UploadView() {
-  const navigate = useNavigate()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -35,6 +33,8 @@ export function UploadView() {
     setDetectedProductType,
     setProductTypeConfidence,
     setIsDetectingProductType,
+    setActiveSubMenuItem,
+    setActiveView,
   } = useAppStore()
 
   // Load PDF state from localStorage on mount
@@ -210,7 +210,8 @@ export function UploadView() {
       if (newFiles.length === 0) {
         localStorage.removeItem(PDF_STORAGE_KEY)
         showNotification('All files deleted', 'info')
-        navigate('/')
+        setActiveView('spec_assistant'); // Ensure we are in spec_assistant view
+        setActiveSubMenuItem('upload'); // Go to upload sub-menu
       } else {
         showNotification(`File deleted. ${newFiles.length} file(s) remaining`, 'success')
       }
@@ -257,7 +258,8 @@ export function UploadView() {
       localStorage.removeItem(PDF_STORAGE_KEY)
       localStorage.removeItem(CHAT_STORAGE_KEY)
 
-      navigate('/')
+      setActiveView('spec_assistant'); // Ensure we are in spec_assistant view
+      setActiveSubMenuItem('upload'); // Go to upload sub-menu
       showNotification(`Successfully deleted all ${fileCount} file(s)`, 'success')
     } catch (error) {
       showNotification(

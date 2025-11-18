@@ -75,4 +75,7 @@ fly.toml
 /node_modules
 /package-lock.json
 src/pdf_reader/frontend/node_modules/
-.migration_plan
+.migration_planca
+
+# gemini
+GEMINI.md

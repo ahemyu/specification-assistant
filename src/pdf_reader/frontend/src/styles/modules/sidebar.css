@@ -31,7 +31,7 @@
 }
 
 /* --- SECTION LABELS --- */
-.sidebar-section {
+.sidebar-section-title {
   font-size: 12px;
   font-weight: 600;
   color: #999;
@@ -163,39 +163,63 @@
   background-color: rgba(200, 200, 200, 0.15);
 }
 
-/* --- SUBMENU ITEMS --- */
-.menu-subitem {
-  font-size: 16px;
-  font-weight: 500;
+/* Dropdown icon for expandable menu items */
+.menu-item .dropdown-icon {
+  margin-left: auto; /* Push icon to the right */
   display: flex;
   align-items: center;
-  gap: 12px;
-  cursor: pointer;
-  padding: 10px 16px;
-  border-radius: 25px;
-  transition: background 0.25s, transform 0.2s;
+  transition: transform 0.3s ease;
+  color: #6c6c6c;
 }
 
-.menu-subitem:hover {
-  background: rgba(95, 158, 160, 0.08); /* cadetblue hover */
-  transform: translateX(4px);
+.menu-item .dropdown-icon.expanded {
+  transform: rotate(90deg); /* Rotate when expanded */
 }
 
-.menu-subitem.active {
+/* --- SUBMENU ITEMS --- */
+.submenu {
+  padding-left: 20px; /* Indent the submenu */
+  margin-top: -6px;
+  margin-bottom: 6px;
+  list-style: none;
+}
+
+.submenu .menu-item {
+  font-size: 14px; /* Smaller font size */
+  font-weight: 500;
+  padding: 8px 16px; /* Less padding */
+  height: auto; /* Auto height */
+  gap: 12px; /* Smaller gap */
+}
+
+.submenu .menu-item .icon {
+  font-size: 18px; /* Smaller icons */
+}
+
+.submenu .menu-item.active {
   font-weight: 600;
-  color: cadetblue;
-  background-color: rgba(95, 158, 160, 0.15);
+  color: #2c5282; /* A different active color */
+  background-color: rgba(44, 82, 130, 0.1); /* A different active background */
 }
 
-/* --- TYPOGRAPHY IMPROVEMENTS --- */
-.sidebar,
-.sidebar-menu li,
-.sidebar-bottom li {
-  line-height: 1.5;
+.submenu .menu-item.disabled {
+  color: #a0aec0; /* Gray out disabled items */
+  cursor: not-allowed;
+  background: transparent;
+  transform: none;
+  box-shadow: none;
 }
 
-.sidebar-menu li span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.submenu .menu-item.disabled:hover {
+  background: transparent;
+  transform: none;
+}
+
+/* --- SPACERS --- */
+.spec-assistant-collapsed {
+  margin-top: 12px; /* Larger gap when collapsed */
+}
+
+.spec-assistant-expanded {
+  margin-top: 12px; 
 }

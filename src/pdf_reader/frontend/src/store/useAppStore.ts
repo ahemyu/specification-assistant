@@ -12,6 +12,7 @@ import type {
 import type { KeyWithCategory } from '../data/keyTemplates'
 
 export type ActiveView = 'home' | 'spec_assistant' | 'compare';
+export type ActiveSubMenuItem = 'upload' | 'extract' | 'qa' | null;
 
 interface AppState {
   // File management state
@@ -53,6 +54,8 @@ interface AppState {
 
   // View state
   activeView: ActiveView;
+  activeSubMenuItem: ActiveSubMenuItem;
+  isQAPopupOpen: boolean;
 
   // Actions
   setUploadedFileIds: (ids: string[]) => void
@@ -81,6 +84,8 @@ interface AppState {
   setPdfCache: (cache: PDFCache) => void
   setConversationHistory: (history: ChatMessage[]) => void
   setActiveView: (view: ActiveView) => void;
+  setActiveSubMenuItem: (item: ActiveSubMenuItem) => void;
+  setIsQAPopupOpen: (isOpen: boolean) => void;
 
   // Helper actions
   resetExtractionState: () => void
@@ -122,6 +127,8 @@ export const useAppStore = create<AppState>((set) => ({
   conversationHistory: [],
 
   activeView: 'home',
+  activeSubMenuItem: 'upload',
+  isQAPopupOpen: false,
 
   // Setters
   setUploadedFileIds: (ids) => set({ uploadedFileIds: ids }),
@@ -150,6 +157,8 @@ export const useAppStore = create<AppState>((set) => ({
   setPdfCache: (cache) => set({ pdfCache: cache }),
   setConversationHistory: (history) => set({ conversationHistory: history }),
   setActiveView: (view) => set({ activeView: view }),
+  setActiveSubMenuItem: (item) => set({ activeSubMenuItem: item }),
+  setIsQAPopupOpen: (isOpen) => set({ isQAPopupOpen: isOpen }),
 
   // Helper actions
   resetExtractionState: () =>
