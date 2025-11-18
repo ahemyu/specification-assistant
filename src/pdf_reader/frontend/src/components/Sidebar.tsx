@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       </ul>
 
       {/* Bottom Menu */}
-      <ul className="sidebar-menu sidebar-bottom">
+      <ul className="sidebar-bottom">
         <li className="menu-item">
           <span className="icon">
             <FaUser />

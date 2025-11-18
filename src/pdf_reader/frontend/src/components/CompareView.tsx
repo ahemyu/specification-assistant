@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import type { ComparisonResult, ChangeFilter } from '../types'
 import { showNotification } from '../utils/notifications'
+import { FaBalanceScale, FaSearchPlus } from 'react-icons/fa'
+import '../styles/modules/home.css' // For card styles
 
 const STORAGE_KEY_PREFIX = 'pdf_compare_'
 const STORAGE_KEYS = {
@@ -11,7 +13,7 @@ const STORAGE_KEYS = {
   comparisonResult: STORAGE_KEY_PREFIX + 'comparison_result',
 }
 
-export function CompareView() {
+const StandardCompareView = () => {
   // State
   const [baseFile, setBaseFile] = useState<File | null>(null)
   const [newFile, setNewFile] = useState<File | null>(null)
@@ -199,9 +201,10 @@ export function CompareView() {
     }
   }
 
-  const filteredChanges = comparisonResult?.changes.filter((change) =>
-    currentFilter === 'all' ? true : change.change_type === currentFilter
-  ) || []
+  const filteredChanges =
+    comparisonResult?.changes.filter(
+      (change) => currentFilter === 'all' || change.change_type === currentFilter
+    ) || []
 
   const openChangeModal = (index: number) => {
     setSelectedChangeIndex(index)
@@ -271,7 +274,8 @@ export function CompareView() {
   }
 
   const added = comparisonResult?.changes.filter((c) => c.change_type === 'added').length || 0
-  const modified = comparisonResult?.changes.filter((c) => c.change_type === 'modified').length || 0
+  const modified =
+    comparisonResult?.changes.filter((c) => c.change_type === 'modified').length || 0
   const removed = comparisonResult?.changes.filter((c) => c.change_type === 'removed').length || 0
 
   const selectedChange = selectedChangeIndex !== null ? filteredChanges[selectedChangeIndex] : null
@@ -391,7 +395,15 @@ export function CompareView() {
         </div>
 
         {uploadStatus && (
-          <div className={`upload-status-combined ${uploadStatus.includes('✓') ? 'success' : uploadStatus.includes('✗') ? 'error' : 'processing'}`}>
+          <div
+            className={`upload-status-combined ${
+              uploadStatus.includes('✓')
+                ? 'success'
+                : uploadStatus.includes('✗')
+                ? 'error'
+                : 'processing'
+            }`}
+          >
             {uploadStatus}
           </div>
         )}
@@ -678,6 +690,54 @@ export function CompareView() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+const comparisonTools = [
+  {
+    id: 'standard_comparison',
+    title: 'Standard PDF Comparison',
+    description: 'Upload two PDFs and get a summary of changes. Ideal for version control.',
+    icon: <FaBalanceScale size={48} />,
+  },
+  {
+    id: 'semantic_comparison',
+    title: 'Semantic Search Comparison',
+    description: 'Compare documents based on semantic meaning. (Coming soon!)',
+    icon: <FaSearchPlus size={48} />,
+    disabled: true,
+  },
+]
+
+export function CompareView() {
+  const [selectedTool, setSelectedTool] = useState<string | null>(null)
+
+  if (selectedTool === 'standard_comparison') {
+    return <StandardCompareView />
+  }
+
+  return (
+    <div className="home-container">
+      <div className="home-header">
+        <h1>PDF Comparison Tools</h1>
+        <p className="home-subtitle">Choose a tool to compare your PDF documents.</p>
+      </div>
+      <div className="cards-wrapper">
+        {comparisonTools.map((card) => (
+          <div
+            key={card.id}
+            className={`card ${card.disabled ? 'disabled' : ''}`}
+            onClick={() => !card.disabled && setSelectedTool(card.id)}
+          >
+            <div className="card-icon">{card.icon}</div>
+            <div className="card-content">
+              <h2 className="card-title">{card.title}</h2>
+              <p className="card-description">{card.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
