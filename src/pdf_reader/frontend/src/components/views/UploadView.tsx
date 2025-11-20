@@ -32,6 +32,9 @@ export function UploadView() {
     setAllUploadedFiles,
     setConversationHistory,
     resetExtractionState,
+    setDetectedProductType,
+    setProductTypeConfidence,
+    setIsDetectingProductType,
   } = useAppStore()
 
   // Load PDF state from localStorage on mount
@@ -142,6 +145,36 @@ export function UploadView() {
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
+
+      // Navigate immediately to Extract Keys view for faster UX
+      navigate('/extract')
+
+      // Detect product type from uploaded PDFs in background
+      setIsDetectingProductType(true)
+      fetch('/detect-product-type', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_ids: newFileIds,
+        }),
+      })
+        .then(async (detectionResponse) => {
+          if (detectionResponse.ok) {
+            const detectionData = await detectionResponse.json()
+            setDetectedProductType(detectionData.product_type)
+            setProductTypeConfidence(detectionData.confidence)
+            showNotification(
+              `Product type detected: ${detectionData.product_type}`,
+              'success'
+            )
+          }
+        })
+        .catch((error) => {
+          console.error('Error detecting product type:', error)
+        })
+        .finally(() => {
+          setIsDetectingProductType(false)
+        })
     } catch (error) {
       showNotification(
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,

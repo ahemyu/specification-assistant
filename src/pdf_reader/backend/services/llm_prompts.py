@@ -6,6 +6,8 @@ Your task is to find and extract the value for the key: "{key_name}"
 Below are the contents of one or more PDF documents. Each document includes
 page numbers to help you track where information is found.
 
+{key_metadata_section}
+
 COORDINATE SYSTEM:
 The text is annotated with location markers:
 - [line_id: X_Y] for regular text lines (e.g., [line_id: 3_5] = Page 3, Line 5)
@@ -13,15 +15,17 @@ The text is annotated with location markers:
 
 IMPORTANT INSTRUCTIONS:
 1. Extract the exact value/s for the requested key
-2. Record ALL PDF filenames and page numbers where you found relevant information
+2. Use the key metadata above (if provided) to understand both the German and English terms,
+   as well as additional context about what values are expected or typical
+3. Record ALL PDF filenames and page numbers where you found relevant information
    (they COULD be spread to different pdfs/pages)
-3. CRITICAL: When you find the key's value, you MUST identify and return the line_id(s)
+4. CRITICAL: When you find the key's value, you MUST identify and return the line_id(s)
    or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
    Put these IDs in the matched_line_ids field as a list of strings.
-4. Provide a clear description of where and how you found the information
-5. If the key is not found in any document, set key_value to null and explain
+5. Provide a clear description of where and how you found the information
+6. If the key is not found in any document, set key_value to null and explain
    in the description
-6. Be precise about page numbers - always reference the specific pages where
+7. Be precise about page numbers - always reference the specific pages where
    information was found
 
 DOCUMENT CONTENTS:
@@ -83,3 +87,59 @@ Filename: {new_filename}
 {new_context}
 
 Provide a structured comparison with a summary and detailed list of changes."""
+
+
+# Product type detection prompt template
+PRODUCT_TYPE_DETECTION_PROMPT = """You are an expert at identifying electrical transformer types \
+from technical specifications.
+
+Your task is to analyze the provided PDF document(s) and determine which type of transformer is being specified.
+
+PRODUCT TYPES:
+1. Stromwandler (Current Instrument Transformer) - Devices that transform current for measurement/protection
+2. Spannungswandler (Voltage Instrument Transformer) - Devices that transform voltage for measurement/protection
+3. Kombiwandler (Combined Instrument Transformer) - Devices that combine both current and voltage transformation
+
+IDENTIFICATION CLUES:
+- Look for explicit mentions of product type names
+- Check for technical parameters:
+  - Stromwandler: Rated primary current, accuracy class for current, transformation ratio (e.g., 100/5A)
+  - Spannungswandler: Rated primary voltage, accuracy class for voltage, transformation ratio (e.g., 20000/100V)
+  - Kombiwandler: Both current and voltage parameters present
+- German terminology:
+  - "Stromwandler", "CT", "Current Transformer"
+  - "Spannungswandler", "VT", "PT", "Voltage Transformer", "Potential Transformer"
+  - "Kombiwandler", "CVT", "Combined Transformer"
+
+IMPORTANT:
+- Base your decision on explicit evidence from the document
+- If both current and voltage transformation are clearly specified, it's a Kombiwandler
+- Provide high confidence only when clear evidence is present
+- Cite specific page numbers and text passages that support your decision
+
+DOCUMENT CONTENTS:
+{full_context}
+
+Analyze the document(s) and determine the product type."""
+
+
+# Core/Winding count detection prompt template (product-type aware)
+CORE_WINDING_COUNT_PROMPT = """You are an expert at analyzing electrical transformer specifications.
+
+PRODUCT TYPE: {product_type}
+
+Your task is to determine the maximum number of {search_target} specified in the document.
+
+{search_instructions}
+
+IMPORTANT INSTRUCTIONS:
+1. Return the MAXIMUM number found (e.g., if you see Kern 1, 2, and 5, return 5, not 3)
+2. Look in tables, specifications lists, and technical parameters
+3. Be conservative - if uncertain, round up rather than down
+4. Provide evidence showing where you found the highest number
+5. If not explicitly specified, return 0
+
+DOCUMENT CONTENTS:
+{full_context}
+
+Analyze the document and determine the maximum {search_target} number."""

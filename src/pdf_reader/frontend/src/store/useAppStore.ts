@@ -9,6 +9,7 @@ import type {
   PDFCache,
   Reference,
 } from '../types'
+import type { KeyWithCategory } from '../data/keyTemplates'
 
 export type ActiveView = 'home' | 'spec_assistant' | 'compare';
 
@@ -30,6 +31,13 @@ interface AppState {
 
   // Extraction workflow state
   currentExtractionState: ExtractionState
+
+  // Product type detection state
+  detectedProductType: string | null
+  productTypeConfidence: number
+  selectedProductType: string | null
+  templateKeys: KeyWithCategory[]
+  isDetectingProductType: boolean
 
   // PDF Viewer state
   currentPdfDoc: any | null
@@ -59,6 +67,11 @@ interface AppState {
   setReviewedKeys: (keys: Record<string, ReviewedKey>) => void
   setIsEditMode: (mode: boolean) => void
   setCurrentExtractionState: (state: ExtractionState) => void
+  setDetectedProductType: (type: string | null) => void
+  setProductTypeConfidence: (confidence: number) => void
+  setSelectedProductType: (type: string | null) => void
+  setTemplateKeys: (keys: KeyWithCategory[]) => void
+  setIsDetectingProductType: (isDetecting: boolean) => void
   setCurrentPdfDoc: (doc: any | null) => void
   setCurrentPdfPage: (page: number | null) => void
   setCurrentPdfScale: (scale: number) => void
@@ -92,6 +105,12 @@ export const useAppStore = create<AppState>((set) => ({
 
   currentExtractionState: 'setup',
 
+  detectedProductType: null,
+  productTypeConfidence: 0,
+  selectedProductType: null,
+  templateKeys: [],
+  isDetectingProductType: false,
+
   currentPdfDoc: null,
   currentPdfPage: null,
   currentPdfScale: 1.0,
@@ -117,6 +136,11 @@ export const useAppStore = create<AppState>((set) => ({
   setReviewedKeys: (keys) => set({ reviewedKeys: keys }),
   setIsEditMode: (mode) => set({ isEditMode: mode }),
   setCurrentExtractionState: (state) => set({ currentExtractionState: state }),
+  setDetectedProductType: (type) => set({ detectedProductType: type }),
+  setProductTypeConfidence: (confidence) => set({ productTypeConfidence: confidence }),
+  setSelectedProductType: (type) => set({ selectedProductType: type }),
+  setTemplateKeys: (keys) => set({ templateKeys: keys }),
+  setIsDetectingProductType: (isDetecting) => set({ isDetectingProductType: isDetecting }),
   setCurrentPdfDoc: (doc) => set({ currentPdfDoc: doc }),
   setCurrentPdfPage: (page) => set({ currentPdfPage: page }),
   setCurrentPdfScale: (scale) => set({ currentPdfScale: scale }),
@@ -139,6 +163,11 @@ export const useAppStore = create<AppState>((set) => ({
       reviewedKeys: {},
       isEditMode: false,
       currentExtractionState: 'setup',
+      detectedProductType: null,
+      productTypeConfidence: 0,
+      selectedProductType: null,
+      templateKeys: [],
+      isDetectingProductType: false,
     }),
 
   addChatMessage: (message) =>

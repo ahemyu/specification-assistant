@@ -10,10 +10,18 @@ from langchain_openai import ChatOpenAI
 # Add parent directory to path to allow imports from pdf_reader root
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backend.schemas.domain import KeyExtractionResult, PDFComparisonResult
+from backend.schemas.domain import (
+    CoreWindingCountResult,
+    KeyExtractionResult,
+    PDFComparisonResult,
+    ProductTypeDetectionResult,
+)
+from backend.services.key_metadata import format_key_metadata_for_prompt
 from backend.services.llm_prompts import (
+    CORE_WINDING_COUNT_PROMPT,
     KEY_EXTRACTION_PROMPT,
     PDF_COMPARISON_PROMPT,
+    PRODUCT_TYPE_DETECTION_PROMPT,
     QA_SYSTEM_PROMPT,
 )
 
@@ -73,9 +81,18 @@ class LLMKeyExtractor:
         # Use pre-formatted text that was created during PDF processing
         full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
 
+        # Get metadata for this key (if available)
+        metadata_text = format_key_metadata_for_prompt(key_name)
+        key_metadata_section = ""
+        if metadata_text:
+            key_metadata_section = f"""KEY METADATA:
+{metadata_text}
+"""
+
         # Build the prompt using the template
         prompt = KEY_EXTRACTION_PROMPT.format(
             key_name=key_name,
+            key_metadata_section=key_metadata_section,
             full_context=full_context
         )
 
@@ -218,6 +235,120 @@ class LLMKeyExtractor:
             logger.info("Successfully answered question with streaming")
         except Exception as e:
             logger.error(f"Error answering question with streaming: {str(e)}")
+            raise
+
+    async def detect_product_type(
+        self,
+        pdf_data: list[dict]
+    ) -> ProductTypeDetectionResult:
+        """
+        Detect the product type from PDF specifications.
+
+        Args:
+            pdf_data: List of dictionaries containing PDF data from process_single_pdf()
+                      Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
+
+        Returns:
+            ProductTypeDetectionResult with detected type, confidence, and evidence
+        """
+        logger.info(f"Detecting product type from {len(pdf_data)} PDF(s)")
+
+        # Use pre-formatted text that was created during PDF processing
+        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
+
+        # Build the prompt using the template
+        prompt = PRODUCT_TYPE_DETECTION_PROMPT.format(full_context=full_context)
+
+        try:
+            # Create a structured output LLM for product type detection
+            structured_detection_llm = self.llm.with_structured_output(
+                ProductTypeDetectionResult
+            )
+            result = await structured_detection_llm.ainvoke(prompt)
+            logger.info(
+                f"Successfully detected product type: {result.product_type} "
+                f"(confidence: {result.confidence})"
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Error detecting product type: {str(e)}")
+            raise
+
+    async def detect_core_winding_count(
+        self,
+        pdf_data: list[dict],
+        product_type: str
+    ) -> CoreWindingCountResult:
+        """
+        Detect the maximum number of cores and/or windings based on product type.
+
+        Args:
+            pdf_data: List of dictionaries containing PDF data from process_single_pdf()
+            product_type: Product type ('Stromwandler', 'Spannungswandler', 'Kombiwandler')
+
+        Returns:
+            CoreWindingCountResult with max core and winding numbers
+        """
+        logger.info(
+            f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s)"
+        )
+
+        # Use pre-formatted text that was created during PDF processing
+        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
+
+        # Build product-specific search instructions
+        if product_type == "Stromwandler":
+            search_target = "cores (Kern)"
+            search_instructions = """**Looking for Cores (Kern):**
+- Search for "Kern 1", "Kern 2", up to "Kern 7"
+- Check for parameters like "Genauigkeitsklasse Kern X", "Nennstrom primär (A) Kern X"
+- Look in tables for core-specific specifications
+- Set max_core_number to the highest Kern number found
+- Set max_winding_number to 0 (not applicable for Stromwandler)"""
+        elif product_type == "Spannungswandler":
+            search_target = "windings (Wicklung)"
+            search_instructions = """**Looking for Windings (Wicklung):**
+- Search for "Wicklung 1", "Wicklung 2", up to "Wicklung 5"
+- Check for parameters like "Genauigkeitsklasse Wicklung X", \
+"Nennspannung primär (V) Wicklung X"
+- Look in tables for winding-specific specifications
+- Set max_winding_number to the highest Wicklung number found
+- Set max_core_number to 0 (not applicable for Spannungswandler)"""
+        else:  # Kombiwandler
+            search_target = "cores (Kern) and windings (Wicklung)"
+            search_instructions = """**Looking for both Cores AND Windings:**
+
+For Cores (Kern):
+- Search for "Kern 1" through "Kern 7"
+- Check parameters like "Genauigkeitsklasse Kern X", "Nennstrom primär (A) Kern X"
+
+For Windings (Wicklung):
+- Search for "Wicklung 1" through "Wicklung 5"
+- Check parameters like "Genauigkeitsklasse Wicklung X", "Nennspannung primär (V) Wicklung X"
+
+Return both max_core_number and max_winding_number."""
+
+        # Build the prompt using the template
+        prompt = CORE_WINDING_COUNT_PROMPT.format(
+            product_type=product_type,
+            search_target=search_target,
+            search_instructions=search_instructions,
+            full_context=full_context
+        )
+
+        try:
+            # Create a structured output LLM for core/winding detection
+            structured_detection_llm = self.llm.with_structured_output(
+                CoreWindingCountResult
+            )
+            result = await structured_detection_llm.ainvoke(prompt)
+            logger.info(
+                f"Successfully detected for {product_type}: "
+                f"max_core={result.max_core_number}, max_winding={result.max_winding_number}"
+            )
+            return result
+        except Exception as e:
+            logger.error(f"Error detecting core/winding count: {str(e)}")
             raise
 
     async def compare_pdfs(

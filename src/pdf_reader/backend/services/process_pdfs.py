@@ -89,8 +89,6 @@ def process_single_page(page, page_number: int) -> dict:
             # Use table.rows to get row bboxes
             rows = table_obj.rows
 
-            logger.info(f"[HIGHLIGHT DEBUG] Page {page_number}, Table {table_index}: {len(rows)} rows")
-
             if rows:
                 formatted_parts.append(f"Table {table_index + 1} on Page {page_number}:\n\n")
 
@@ -112,10 +110,6 @@ def process_single_page(page, page_number: int) -> dict:
 
                         # Store the ROW bbox for this cell (highlights entire row)
                         line_id_map[cell_id] = list(row_bbox)
-                        logger.info(
-                            f"[HIGHLIGHT DEBUG] Stored line_id_map[{cell_id}] = {list(row_bbox)} "
-                            f"(row bbox)"
-                        )
 
                         # Format cell with ID prefix
                         cell_text_str = str(cell_text) if cell_text is not None else ""
@@ -125,8 +119,6 @@ def process_single_page(page, page_number: int) -> dict:
                     formatted_parts.append("\n")
                 formatted_parts.append("\n")
 
-    logger.info(f"[HIGHLIGHT DEBUG] Page {page_number} complete. Total line_id_map entries: {len(line_id_map)}")
-    logger.info(f"[HIGHLIGHT DEBUG] line_id_map keys: {list(line_id_map.keys())}")
     return {"page_number": page_number, "formatted_text": "".join(formatted_parts), "line_id_map": line_id_map}
 
 
