@@ -1,10 +1,10 @@
-import { BrowserRouter } from 'react-router-dom'
 import { Notifications } from './components/Notifications'
 import Sidebar from './components/Sidebar'
 import { MainContainer } from './components/MainContainer'
 import { Home } from './components/Home'
 import { CompareView } from './components/CompareView'
 import { useAppStore } from './store/useAppStore'
+import { QAPopup } from './components/QAPopup'
 
 import './styles/styles.css'
 import './styles/modules/base.css'
@@ -22,33 +22,33 @@ import './styles/modules/compare.css'
 import './styles/modules/sidebar.css'
 import './styles/modules/app-layout.css'
 import './styles/modules/app-wrapper.css'
+import './styles/modules/qapopup.css'
 
 
 function App() {
   const activeView = useAppStore((state) => state.activeView);
 
   return (
-    <BrowserRouter
-      future={{
-        v7_startTransition: true,
-        v7_relativeSplatPath: true,
-      }}
-    >
+    <>
       <Notifications />
+      <QAPopup />
 
       <div className="app-layout">
         <div className="app-wrapper">
           <Sidebar isOpen={true} />
-          <main className="main-content">
-            {activeView === 'home' && <Home />}
-            {activeView === 'spec_assistant' && <MainContainer />}
-            {activeView === 'compare' && <CompareView />}
-          </main>
+          <div className="main-content">
+            <main className="scroll-area">
+              {activeView === 'home' && <Home />}
+              {activeView === 'spec_assistant' && <MainContainer />}
+              {activeView === 'compare' && <CompareView />}
+            </main>
+          </div>
         </div>
       </div>
-
-    </BrowserRouter>
+    </>
   )
 }
 
+
 export default App
+
