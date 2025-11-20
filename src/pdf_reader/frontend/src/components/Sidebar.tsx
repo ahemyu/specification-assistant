@@ -28,6 +28,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     setActiveSubMenuItem(null); // Clear sub-menu item when switching to a different main view
   };
 
+  const handleSubMenuClick = (item: "upload" | "extract") => {
+    setActiveView("spec_assistant");
+    setActiveSubMenuItem(item);
+  };
+
   return (
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <header className="sidebar-header">
@@ -60,7 +65,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           <ul className="submenu spec-assistant-expanded">
             <li
               className={`menu-item ${activeSubMenuItem === "upload" ? "active" : ""}`}
-              onClick={() => setActiveSubMenuItem("upload")}
+              onClick={() => handleSubMenuClick("upload")}
             >
               <span className="icon"><FaUpload /></span>
               <span>Upload PDFs</span>
@@ -69,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               <>
                 <li
                   className={`menu-item ${activeSubMenuItem === "extract" ? "active" : ""}`}
-                  onClick={() => setActiveSubMenuItem("extract")}
+                  onClick={() => handleSubMenuClick("extract")}
                 >
                   <span className="icon"><FaKey /></span>
                   <span>Extract Keys</span>

@@ -147,7 +147,8 @@ export function UploadView() {
       }
 
       // Navigate immediately to Extract Keys view for faster UX
-      navigate('/extract')
+      setActiveView('spec_assistant');
+      setActiveSubMenuItem('extract');
 
       // Detect product type from uploaded PDFs in background
       setIsDetectingProductType(true)
