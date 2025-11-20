@@ -23,7 +23,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
     uploadedFileIds,
     conversationHistory,
     addChatMessage,
-    clearChat,
+    // clearChat,
     setConversationHistory,
     setIsQAPopupOpen, // Import setIsQAPopupOpen
   } = useAppStore()
@@ -73,12 +73,12 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
     }
   }, [conversationHistory])
 
-  const handleClearChat = useCallback(() => {
-    if (window.confirm('Are you sure you want to clear the conversation history?')) {
-      clearChat()
-      localStorage.removeItem('specification_assistant_chat_history')
-    }
-  }, [clearChat])
+  // const handleClearChat = useCallback(() => {
+  //   if (window.confirm('Are you sure you want to clear the conversation history?')) {
+  //     clearChat()
+  //     localStorage.removeItem('specification_assistant_chat_history')
+  //   }
+  // }, [clearChat])
 
   const submitQuestion = useCallback(async () => {
     const trimmedQuestion = question.trim()
