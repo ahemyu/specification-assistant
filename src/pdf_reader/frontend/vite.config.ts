@@ -17,6 +17,9 @@ export default defineConfig({
       '/extract-keys-from-template': 'http://localhost:8000',
       '/download-filled-excel': 'http://localhost:8000',
       '/download-extraction-excel': 'http://localhost:8000',
+      '/detect-product-type': 'http://localhost:8000',
+      '/compare-pdfs': 'http://localhost:8000',
+      '/detect-core-winding-count': 'http://localhost:8000',
     }
   },
   optimizeDeps: {
