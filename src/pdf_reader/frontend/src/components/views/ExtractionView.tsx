@@ -362,7 +362,7 @@ export function ExtractionView() {
         />
       ) : (
         <div id="extractionSetupView">
-          <h2 className="view-title">Extract Keys from PDFs</h2>
+          <h1 className="view-title">Extract Keys from PDFs</h1>
           <p className="view-subtitle">
             Select the product type to extract relevant specifications
           </p>
@@ -385,8 +385,11 @@ export function ExtractionView() {
                   }`}
                 >
                   <div className="product-card-icon">
-                    {/* Placeholder for icon - replace with actual icons later */}
-                    <span style={{ fontSize: '2em' }}>⚡</span>
+                    <span style={{ fontSize: '3em' }}>
+                      {type === 'Stromwandler' && '🔌'}
+                      {type === 'Spannungswandler' && '⚡'}
+                      {type === 'Kombiwandler' && '🎛️'}
+                    </span>
                   </div>
                   <div className="product-card-content">
                     <h3 className="product-card-title">{type}</h3>

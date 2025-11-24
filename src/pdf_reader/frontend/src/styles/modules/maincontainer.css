@@ -44,6 +44,8 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  height: 100%; /* Ensure it takes full height of its parent */
+  overflow-y: auto; /* Add scroll for its content */
 }
 
 .copilot-button-container {
@@ -79,25 +81,9 @@
   padding: 2rem;
 }
 
-.scroll-area::-webkit-scrollbar {
-  width: 10px;
-}
-
-
-.scroll-area::-webkit-scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.2);
-  border-radius: 10px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-.scroll-area::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.3);
-}
-
 .product-cards-wrapper {
   display: flex;
-  gap: 20px; /* Smaller gap */
+  gap: 40px; /* Smaller gap */
   justify-content: center;
   flex-wrap: wrap;
   margin-bottom: 2rem;
@@ -106,12 +92,12 @@
 .product-card {
   background: white;
   border-radius: 20px;
-  padding: 24px;
-  width: 260px; /* Slightly smaller card */
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 30px;
+  width: 280px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   cursor: pointer;
   transition: all 0.3s ease;
-  border: 2px solid #e2e8f0; /* Default border */
+  border: 1px solid rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -119,9 +105,9 @@
 }
 
 .product-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-  border-color: #59BDB9; /* Highlight color on hover */
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-color: #59BDB9;
 }
 
 .product-card.selected {
@@ -144,8 +130,8 @@
 
 
 .product-card-icon {
-  margin-bottom: 16px;
-  color: #1C2C8C; /* primary color */
+  margin-bottom: 20px;
+  color: #00CC99; /* primary color */
 }
 
 .product-card.selected .product-card-icon {
