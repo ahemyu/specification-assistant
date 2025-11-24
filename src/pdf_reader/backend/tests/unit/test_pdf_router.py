@@ -4,7 +4,7 @@ from unittest.mock import patch
 
 import pytest
 
-from dependencies import pdf_storage
+from backend.dependencies import pdf_storage
 
 
 @pytest.mark.unit

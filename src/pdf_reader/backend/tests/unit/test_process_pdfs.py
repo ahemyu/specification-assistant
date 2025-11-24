@@ -1,11 +1,11 @@
 """Unit tests for PDF processing service."""
 import io
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from services.process_pdfs import process_single_page, process_single_pdf
+from backend.services.process_pdfs import process_single_page, process_single_pdf
 
 
 @pytest.mark.unit
@@ -17,64 +17,76 @@ class TestProcessSinglePage:
         # Setup mock page
         mock_page = MagicMock()
         mock_page.find_tables.return_value = []
-        mock_page.extract_text.return_value = "Sample text from page"
+        mock_page.extract_text_lines.return_value = [
+            {"text": "Sample text from page", "x0": 0, "top": 0, "x1": 100, "bottom": 10}
+        ]
 
         # Execute
         result = process_single_page(mock_page, 1)
 
         # Assert
         assert result["page_number"] == 1
-        assert "Sample text from page" in result["text"]
-        assert "PAGE 1" in result["text"]
+        assert "Sample text from page" in result["formatted_text"]
+        assert "PAGE 1" in result["formatted_text"]
 
     def test_process_page_with_tables(self):
         """Test processing a page with tables."""
         # Setup mock page and table
+        mock_row1 = MagicMock()
+        mock_row1.bbox = (0, 0, 100, 10)
+        mock_row2 = MagicMock()
+        mock_row2.bbox = (0, 10, 100, 20)
+
         mock_table = MagicMock()
         mock_table.extract.return_value = [
             ["Header1", "Header2"],
             ["Value1", "Value2"]
         ]
+        mock_table.rows = [mock_row1, mock_row2]
         mock_table.bbox = (0, 0, 100, 100)
 
         mock_page = MagicMock()
         mock_page.find_tables.return_value = [mock_table]
-        mock_page.filter.return_value.extract_text.return_value = "Text outside tables"
+        mock_page.extract_text_lines.return_value = [
+            {"text": "Text outside tables", "x0": 150, "top": 0, "x1": 250, "bottom": 10}
+        ]
 
         # Execute
         result = process_single_page(mock_page, 2)
 
         # Assert
         assert result["page_number"] == 2
-        assert "TABLES" in result["text"]
-        assert "Table 1 on Page 2" in result["text"]
+        assert "TABLES" in result["formatted_text"]
+        assert "Table 1 on Page 2" in result["formatted_text"]
 
     def test_process_page_empty(self):
         """Test processing an empty page."""
         # Setup mock page
         mock_page = MagicMock()
         mock_page.find_tables.return_value = []
-        mock_page.extract_text.return_value = ""
+        mock_page.extract_text_lines.return_value = []
 
         # Execute
         result = process_single_page(mock_page, 1)
 
         # Assert
         assert result["page_number"] == 1
-        assert "PAGE 1" in result["text"]
+        assert "PAGE 1" in result["formatted_text"]
 
 
 @pytest.mark.unit
 class TestProcessSinglePDF:
     """Tests for process_single_pdf function."""
 
-    @patch('services.process_pdfs.pdfplumber')
+    @patch('backend.services.process_pdfs.pdfplumber')
     def test_process_pdf_from_path(self, mock_pdfplumber):
         """Test successful PDF processing from file path."""
         # Setup mocks
         mock_page = MagicMock()
         mock_page.find_tables.return_value = []
-        mock_page.extract_text.return_value = "Test content"
+        mock_page.extract_text_lines.return_value = [
+            {"text": "Test content", "x0": 0, "top": 0, "x1": 100, "bottom": 10}
+        ]
 
         mock_pdf = MagicMock()
         mock_pdf.pages = [mock_page]
@@ -95,13 +107,15 @@ class TestProcessSinglePDF:
         assert "formatted_text" in result
         assert "Test content" in result["formatted_text"]
 
-    @patch('services.process_pdfs.pdfplumber')
+    @patch('backend.services.process_pdfs.pdfplumber')
     def test_process_pdf_from_bytesio(self, mock_pdfplumber):
         """Test processing PDF from BytesIO object."""
         # Setup mocks
         mock_page = MagicMock()
         mock_page.find_tables.return_value = []
-        mock_page.extract_text.return_value = "BytesIO content"
+        mock_page.extract_text_lines.return_value = [
+            {"text": "BytesIO content", "x0": 0, "top": 0, "x1": 100, "bottom": 10}
+        ]
 
         mock_pdf = MagicMock()
         mock_pdf.pages = [mock_page]
@@ -120,21 +134,27 @@ class TestProcessSinglePDF:
         assert result["total_pages"] == 1
         assert "BytesIO content" in result["formatted_text"]
 
-    @patch('services.process_pdfs.pdfplumber')
+    @patch('backend.services.process_pdfs.pdfplumber')
     def test_process_pdf_multiple_pages(self, mock_pdfplumber):
         """Test processing multi-page PDF."""
         # Setup mocks
         mock_page1 = MagicMock()
         mock_page1.find_tables.return_value = []
-        mock_page1.extract_text.return_value = "Page 1"
+        mock_page1.extract_text_lines.return_value = [
+            {"text": "Page 1", "x0": 0, "top": 0, "x1": 100, "bottom": 10}
+        ]
 
         mock_page2 = MagicMock()
         mock_page2.find_tables.return_value = []
-        mock_page2.extract_text.return_value = "Page 2"
+        mock_page2.extract_text_lines.return_value = [
+            {"text": "Page 2", "x0": 0, "top": 0, "x1": 100, "bottom": 10}
+        ]
 
         mock_page3 = MagicMock()
         mock_page3.find_tables.return_value = []
-        mock_page3.extract_text.return_value = "Page 3"
+        mock_page3.extract_text_lines.return_value = [
+            {"text": "Page 3", "x0": 0, "top": 0, "x1": 100, "bottom": 10}
+        ]
 
         mock_pdf = MagicMock()
         mock_pdf.pages = [mock_page1, mock_page2, mock_page3]

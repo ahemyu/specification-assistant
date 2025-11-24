@@ -1,7 +1,7 @@
 """Unit tests for Excel template handling."""
 import pytest
 
-from dependencies import excel_template_storage
+from backend.dependencies import excel_template_storage
 
 
 @pytest.mark.unit

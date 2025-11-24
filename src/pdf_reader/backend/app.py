@@ -30,8 +30,8 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
 
-# Base directory is the directory containing this file (src/pdf_reader)
-BASE_DIR = Path(__file__).parent
+# Base directory is the parent of the backend directory (src/pdf_reader)
+BASE_DIR = Path(__file__).parent.parent
 
 # ============================================================================
 # DEPRECATED: Vanilla JS Static Files (Archived 2025-11-11)
@@ -51,7 +51,8 @@ app.include_router(llm.router)
 app.include_router(excel.router)
 
 # Mount React production build
-app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="react-frontend")
+frontend_dist = BASE_DIR / "frontend" / "dist"
+app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="react-frontend")
 
 if __name__ == "__main__":
     import uvicorn
