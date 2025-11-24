@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, KeyboardEvent, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useAppStore } from '../store/useAppStore'
 import type { ChatMessage } from '../types'
-import { IoClose } from "react-icons/io5"; // Import close icon
+import { IoClose, IoTrashOutline } from "react-icons/io5"; // Import close and trash icon
 
 interface ChatProps {
   modelOptions?: string[]
@@ -226,6 +226,9 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               ))}
             </select>
           </div>
+          <button className="clear-chat-btn" onClick={handleClearChat} title="Clear Chat">
+            <IoTrashOutline size={24} />
+          </button>
           <button className="close-chat-btn" onClick={() => setIsQAPopupOpen(false)} title="Close Chat">
             <IoClose size={24} />
           </button>

@@ -369,123 +369,44 @@ export function ExtractionView() {
 
           {/* Product Type Selection - Hidden when in manual mode */}
           {!showDevInput && (
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#2d3748' }}>
-              Product Type
-              {isDetectingProductType && (
-                <span style={{
-                  fontSize: '0.8rem',
-                  color: '#F59E0B',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  padding: '0.3rem 0.8rem',
-                  backgroundColor: '#FEF3C7',
-                  borderRadius: '20px',
-                  border: '2px solid #FCD34D',
-                  fontWeight: '600',
-                }}>
-                  <div className="spinner" style={{
-                    width: '12px',
-                    height: '12px',
-                    borderWidth: '2px',
-                    borderTopColor: '#F59E0B',
-                  }} />
-                  Detecting...
-                </span>
-              )}
-            </h3>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {PRODUCT_TYPES.map((type) => {
-                const isDetected = detectedProductType === type
-                const isSelected = selectedProductType === type
-                return (
-                  <button
-                    key={type}
-                    onClick={() => handleProductTypeSelect(type)}
-                    disabled={isDetectingProductType}
-                    style={{
-                      padding: '1rem 1.5rem',
-                      borderRadius: '8px',
-                      border: isSelected ? '2px solid #10B981' : '2px solid #374151',
-                      backgroundColor: isSelected ? '#D1FAE5' : '#1F2937',
-                      color: isSelected ? '#065F46' : '#E5E7EB',
-                      cursor: isDetectingProductType ? 'not-allowed' : 'pointer',
-                      fontSize: '1rem',
-                      fontWeight: isSelected ? '600' : '400',
-                      transition: 'all 0.2s',
-                      minWidth: '180px',
-                      position: 'relative',
-                      opacity: isDetectingProductType ? 0.6 : 1,
-                    }}
-                  >
-                    <div>{type}</div>
+          <div className="product-cards-wrapper" style={{ marginBottom: '2rem' }}>
+            {PRODUCT_TYPES.map((type) => {
+              const isDetected = detectedProductType === type
+              const isSelected = selectedProductType === type
+              const isDisabled = isDetectingProductType
+
+              return (
+                <button
+                  key={type}
+                  onClick={() => handleProductTypeSelect(type)}
+                  disabled={isDisabled}
+                  className={`product-card ${isSelected ? 'selected' : ''} ${
+                    isDisabled ? 'disabled' : ''
+                  }`}
+                >
+                  <div className="product-card-icon">
+                    {/* Placeholder for icon - replace with actual icons later */}
+                    <span style={{ fontSize: '2em' }}>⚡</span>
+                  </div>
+                  <div className="product-card-content">
+                    <h3 className="product-card-title">{type}</h3>
                     {isDetected && productTypeConfidence > 0 && (
-                      <div style={{
-                        marginTop: '0.25rem',
-                        fontSize: '0.75rem',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem'
-                      }}>
-                        <div style={{
-                          flex: 1,
-                          height: '4px',
-                          backgroundColor: isSelected ? '#10B981' : '#374151',
-                          borderRadius: '2px',
-                          overflow: 'hidden'
-                        }}>
-                          <div style={{
-                            height: '100%',
-                            width: `${productTypeConfidence * 100}%`,
-                            backgroundColor: isSelected ? '#059669' : '#10B981',
-                            transition: 'width 0.3s ease'
-                          }} />
+                      <div className="confidence-bar-container">
+                        <div className="confidence-bar-bg">
+                          <div
+                            className="confidence-bar-fg"
+                            style={{ width: `${productTypeConfidence * 100}%` }}
+                          />
                         </div>
-                        <span style={{
-                          whiteSpace: 'nowrap',
-                          opacity: 0.9
-                        }}>
+                        <span className="confidence-bar-text">
                           {Math.round(productTypeConfidence * 100)}%
                         </span>
                       </div>
                     )}
-                  </button>
-                )
-              })}
-            </div>
-            {detectedProductType && (
-              <div style={{
-                marginTop: '0.75rem',
-                padding: '0.75rem 1rem',
-                backgroundColor: '#1F2937',
-                borderRadius: '6px',
-                border: '1px solid #374151'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                  <span style={{ fontSize: '0.9rem', color: '#10B981', fontWeight: '500' }}>
-                    Auto-detected:
-                  </span>
-                  <span style={{ fontSize: '0.9rem', color: '#E5E7EB' }}>
-                    {detectedProductType}
-                  </span>
-                  {productTypeConfidence > 0 && (
-                    <span style={{
-                      fontSize: '0.85rem',
-                      color: '#9CA3AF',
-                      marginLeft: 'auto'
-                    }}>
-                      Confidence: {Math.round(productTypeConfidence * 100)}%
-                    </span>
-                  )}
-                </div>
-                {productTypeConfidence > 0 && productTypeConfidence < 0.7 && (
-                  <div style={{ fontSize: '0.8rem', color: '#F59E0B', marginTop: '0.25rem' }}>
-                    Low confidence - please verify the selection
                   </div>
-                )}
-              </div>
-            )}
+                </button>
+              )
+            })}
           </div>
           )}
 
