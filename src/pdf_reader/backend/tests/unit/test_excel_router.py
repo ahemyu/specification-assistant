@@ -1,45 +1,70 @@
-"""Unit tests for Excel template handling."""
+"""Unit tests for Excel download functionality."""
 import pytest
 
-from backend.dependencies import excel_template_storage
-
 
 @pytest.mark.unit
-class TestExcelTemplateUpload:
-    """Tests for Excel template upload functionality."""
+class TestExcelDownload:
+    """Tests for Excel download endpoints."""
 
-    def test_upload_excel_template_invalid_file(self, client):
-        """Test upload with invalid file type."""
-        # Create mock file with wrong type
-        file_content = b"not an excel file"
-        files = {"file": ("document.txt", file_content, "text/plain")}
+    def test_download_extraction_excel_success(self, client):
+        """Test successful download of extraction results as Excel."""
+        request_data = {
+            "extraction_results": {
+                "Name": {
+                    "key_value": "John Doe",
+                    "description": "Person's name",
+                    "source_locations": [
+                        {
+                            "pdf_filename": "test.pdf",
+                            "page_numbers": [1, 2]
+                        }
+                    ]
+                },
+                "Age": {
+                    "key_value": "30",
+                    "description": "Person's age",
+                    "source_locations": []
+                }
+            }
+        }
 
         # Execute
-        response = client.post("/upload-excel-template", files=files)
+        response = client.post("/download-extraction-excel", json=request_data)
 
         # Assert
-        # Should reject non-Excel files with 400 Bad Request
-        assert response.status_code == 400
-        assert "detail" in response.json()
-        assert "Invalid file type" in response.json()["detail"]
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        assert "attachment" in response.headers["content-disposition"]
 
+    def test_download_extraction_excel_with_none_results(self, client):
+        """Test download when some extractions failed (None results)."""
+        request_data = {
+            "extraction_results": {
+                "Name": {
+                    "key_value": "John Doe",
+                    "description": "Found",
+                    "source_locations": []
+                },
+                "MissingKey": None
+            }
+        }
 
-@pytest.mark.unit
-class TestExcelStorage:
-    """Tests for Excel template storage."""
+        # Execute
+        response = client.post("/download-extraction-excel", json=request_data)
 
-    def test_excel_storage_clear(self, mock_excel_data):
-        """Test that Excel storage is properly cleared between tests."""
-        # Verify storage is empty at start
-        assert len(excel_template_storage) == 0
+        # Assert
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
-        # Add data
-        excel_template_storage["test_id"] = mock_excel_data
+    def test_download_extraction_excel_empty_results(self, client):
+        """Test download with empty extraction results."""
+        request_data = {
+            "extraction_results": {}
+        }
 
-        # Verify it was added
-        assert len(excel_template_storage) == 1
+        # Execute
+        response = client.post("/download-extraction-excel", json=request_data)
 
-    def test_excel_storage_isolation(self):
-        """Test that each test has isolated storage."""
-        # This should be empty due to autouse clear_storage fixture
-        assert len(excel_template_storage) == 0
+        # Assert
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"

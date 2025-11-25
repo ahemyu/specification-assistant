@@ -1,9 +1,6 @@
 """Unit tests for PDF upload and processing endpoints."""
-from pathlib import Path
-from unittest.mock import patch
 
 import pytest
-
 from backend.dependencies import pdf_storage
 
 
@@ -11,8 +8,8 @@ from backend.dependencies import pdf_storage
 class TestPDFUpload:
     """Tests for PDF upload functionality."""
 
-    def test_upload_endpoint_exists(self, client, sample_pdf_path):
-        """Test that upload endpoint exists and responds."""
+    def test_upload_pdf_success(self, client, sample_pdf_path):
+        """Test successful PDF upload and processing."""
         # Use actual PDF fixture file
         with open(sample_pdf_path, "rb") as f:
             file_content = f.read()
@@ -26,6 +23,7 @@ class TestPDFUpload:
         data = response.json()
         assert "processed" in data
         assert "failed" in data
+        assert len(data["processed"]) > 0
 
     def test_upload_multiple_pdfs(self, client, sample_pdf_path):
         """Test uploading multiple PDF files."""
@@ -98,6 +96,36 @@ class TestPDFUpload:
 class TestPDFRetrieval:
     """Tests for PDF data retrieval endpoints."""
 
+    def test_get_pdf_preview_success(self, client, mock_pdf_data):
+        """Test successful PDF preview retrieval."""
+        # Setup: Add PDF to storage and create text file
+        file_id = mock_pdf_data["file_id"]
+        pdf_storage[file_id] = mock_pdf_data
+
+        # Create the expected text file
+        from backend.dependencies import OUTPUT_DIR
+        output_path = OUTPUT_DIR / f"{file_id}.txt"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(mock_pdf_data["formatted_text"])
+
+        try:
+            # Execute
+            response = client.get(f"/preview/{file_id}")
+
+            # Assert
+            assert response.status_code == 200
+            data = response.json()
+            assert "file_id" in data
+            assert "filename" in data
+            assert "content" in data
+            assert "size" in data
+            assert data["file_id"] == file_id
+        finally:
+            # Cleanup
+            if output_path.exists():
+                output_path.unlink()
+
     def test_get_pdf_preview_not_found(self, client):
         """Test retrieving non-existent PDF returns 404."""
         # Execute
@@ -108,39 +136,119 @@ class TestPDFRetrieval:
 
 
 @pytest.mark.unit
+class TestPDFDownload:
+    """Tests for PDF file download endpoints."""
+
+    def test_download_file_success(self, client):
+        """Test successful download of extracted text file."""
+        # Setup: Create a text file
+        from backend.dependencies import OUTPUT_DIR
+        file_id = "test_download_123"
+        output_path = OUTPUT_DIR / f"{file_id}.txt"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        test_content = "Sample extracted text content"
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(test_content)
+
+        try:
+            # Execute
+            response = client.get(f"/download/{file_id}")
+
+            # Assert
+            assert response.status_code == 200
+            assert response.headers["content-type"] == "text/plain; charset=utf-8"
+        finally:
+            # Cleanup
+            if output_path.exists():
+                output_path.unlink()
+
+    def test_download_file_not_found(self, client):
+        """Test download of non-existent file returns 404."""
+        # Execute
+        response = client.get("/download/nonexistent_file")
+
+        # Assert
+        assert response.status_code == 404
+        assert "not found" in response.json()["detail"].lower()
+
+    def test_view_pdf_success(self, client):
+        """Test successful viewing of original PDF file."""
+        # Setup: Create a PDF file
+        from backend.dependencies import UPLOADED_PDFS_DIR
+        file_id = "test_view_456"
+        pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(pdf_path, "wb") as f:
+            f.write(b"%PDF-1.4 fake pdf content")
+
+        try:
+            # Execute
+            response = client.get(f"/view-pdf/{file_id}")
+
+            # Assert
+            assert response.status_code == 200
+            assert response.headers["content-type"] == "application/pdf"
+            assert "inline" in response.headers["content-disposition"]
+        finally:
+            # Cleanup
+            if pdf_path.exists():
+                pdf_path.unlink()
+
+    def test_view_pdf_not_found(self, client):
+        """Test viewing non-existent PDF returns 404."""
+        # Execute
+        response = client.get("/view-pdf/nonexistent_pdf")
+
+        # Assert
+        assert response.status_code == 404
+
+
+@pytest.mark.unit
 class TestPDFDeletion:
     """Tests for PDF deletion functionality."""
 
     def test_delete_pdf_success(self, client, mock_pdf_data):
-        """Test successful PDF deletion."""
+        """Test successful PDF deletion from storage and disk."""
         # Setup: Add PDF to storage
         file_id = mock_pdf_data["file_id"]
         pdf_storage[file_id] = mock_pdf_data
 
-        # Execute
-        response = client.delete(f"/delete-pdf/{file_id}")
+        # Create the files on disk
+        from backend.dependencies import OUTPUT_DIR, UPLOADED_PDFS_DIR
 
-        # Assert
+        text_path = OUTPUT_DIR / f"{file_id}.txt"
+        pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
+
+        text_path.parent.mkdir(parents=True, exist_ok=True)
+        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+
+        with open(text_path, "w") as f:
+            f.write("test content")
+        with open(pdf_path, "wb") as f:
+            f.write(b"fake pdf")
+
+        try:
+            # Execute
+            response = client.delete(f"/delete-pdf/{file_id}")
+
+            # Assert
+            assert response.status_code == 200
+            assert file_id not in pdf_storage
+            assert not text_path.exists()
+            assert not pdf_path.exists()
+        finally:
+            # Cleanup any remaining files
+            if text_path.exists():
+                text_path.unlink()
+            if pdf_path.exists():
+                pdf_path.unlink()
+
+    def test_delete_pdf_not_in_storage(self, client):
+        """Test deleting PDF that doesn't exist in storage still succeeds."""
+        # Execute (file_id not in storage)
+        response = client.delete("/delete-pdf/nonexistent_file")
+
+        # Assert - should still return 200 as per current implementation
         assert response.status_code == 200
-        assert file_id not in pdf_storage
-
-
-@pytest.mark.unit
-class TestPDFStorage:
-    """Tests for PDF storage functionality."""
-
-    def test_pdf_storage_clear(self, mock_pdf_data):
-        """Test that PDF storage is properly cleared between tests."""
-        # Verify storage is empty at start
-        assert len(pdf_storage) == 0
-
-        # Add data
-        pdf_storage["test_id"] = mock_pdf_data
-
-        # Verify it was added
-        assert len(pdf_storage) == 1
-
-    def test_pdf_storage_isolation(self):
-        """Test that each test has isolated storage."""
-        # This should be empty due to autouse clear_storage fixture
-        assert len(pdf_storage) == 0

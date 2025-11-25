@@ -4,7 +4,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from backend.services.process_pdfs import process_single_page, process_single_pdf
 
 
@@ -177,3 +176,133 @@ class TestProcessSinglePDF:
         assert "PAGE 1" in result["formatted_text"]
         assert "PAGE 2" in result["formatted_text"]
         assert "PAGE 3" in result["formatted_text"]
+
+
+@pytest.mark.unit
+class TestProcessPDFErrorHandling:
+    """Tests for error handling in PDF processing."""
+
+    @patch('backend.services.process_pdfs.pdfplumber')
+    def test_process_pdf_with_corrupted_file(self, mock_pdfplumber):
+        """Test handling of corrupted PDF that pdfplumber cannot open."""
+        # Setup: Mock pdfplumber to raise an exception
+        mock_pdfplumber.open.side_effect = Exception("PDF is corrupted or invalid")
+
+        from pathlib import Path
+        test_path = Path("corrupted.pdf")
+
+        # Execute and assert
+        with pytest.raises(Exception) as exc_info:
+            process_single_pdf(test_path)
+
+        assert "corrupted" in str(exc_info.value).lower() or "invalid" in str(exc_info.value).lower()
+
+    @patch('backend.services.process_pdfs.pdfplumber')
+    def test_process_page_when_extract_text_lines_fails(self, mock_pdfplumber):
+        """Test graceful handling when page.extract_text_lines raises exception."""
+        # Setup: Mock page that fails during text extraction
+        mock_page = MagicMock()
+        mock_page.find_tables.return_value = []
+        mock_page.extract_text_lines.side_effect = Exception("Text extraction failed")
+
+        mock_pdf = MagicMock()
+        mock_pdf.pages = [mock_page]
+        mock_pdf.__enter__.return_value = mock_pdf
+        mock_pdf.__exit__.return_value = None
+
+        mock_pdfplumber.open.return_value = mock_pdf
+
+        from pathlib import Path
+        test_path = Path("test.pdf")
+
+        # Execute - should handle error and continue
+        result = process_single_pdf(test_path)
+
+        # Assert - should still return a result, possibly with empty pages
+        assert result is not None
+        assert "filename" in result
+        assert "total_pages" in result
+
+    @patch('backend.services.process_pdfs.pdfplumber')
+    def test_process_pdf_with_empty_document(self, mock_pdfplumber):
+        """Test processing PDF with zero pages."""
+        # Setup: Mock empty PDF
+        mock_pdf = MagicMock()
+        mock_pdf.pages = []
+        mock_pdf.__enter__.return_value = mock_pdf
+        mock_pdf.__exit__.return_value = None
+
+        mock_pdfplumber.open.return_value = mock_pdf
+
+        from pathlib import Path
+        test_path = Path("empty.pdf")
+
+        # Execute
+        result = process_single_pdf(test_path)
+
+        # Assert
+        assert result["filename"] == "empty.pdf"
+        assert result["total_pages"] == 0
+        assert len(result["pages"]) == 0
+
+    def test_is_line_in_any_table_with_none_values(self):
+        """Test is_line_in_any_table handles None values gracefully."""
+        from backend.services.process_pdfs import is_line_in_any_table
+
+        # Test with None coordinates
+        line_with_nones = {
+            "x0": None,
+            "top": None,
+            "x1": None,
+            "bottom": None,
+            "text": "some text"
+        }
+
+        # Execute
+        result = is_line_in_any_table(line_with_nones, [])
+
+        # Assert - should return False without crashing
+        assert result is False
+
+    def test_is_line_in_any_table_with_missing_keys(self):
+        """Test is_line_in_any_table handles missing dictionary keys."""
+        from backend.services.process_pdfs import is_line_in_any_table
+
+        # Test with missing keys
+        incomplete_line = {"text": "some text"}
+
+        # Execute
+        result = is_line_in_any_table(incomplete_line, [])
+
+        # Assert - should return False without crashing
+        assert result is False
+
+    @patch('backend.services.process_pdfs.pdfplumber')
+    def test_process_pdf_handles_table_extraction_failure(self, mock_pdfplumber):
+        """Test handling when table extraction fails mid-processing."""
+        # Setup: Mock page where table.extract() fails
+        mock_table = MagicMock()
+        mock_table.extract.side_effect = Exception("Table extraction failed")
+        mock_table.bbox = (0, 0, 100, 100)
+        mock_table.rows = []
+
+        mock_page = MagicMock()
+        mock_page.find_tables.return_value = [mock_table]
+        mock_page.extract_text_lines.return_value = []
+
+        mock_pdf = MagicMock()
+        mock_pdf.pages = [mock_page]
+        mock_pdf.__enter__.return_value = mock_pdf
+        mock_pdf.__exit__.return_value = None
+
+        mock_pdfplumber.open.return_value = mock_pdf
+
+        from pathlib import Path
+        test_path = Path("table_error.pdf")
+
+        # Execute - should handle the error
+        result = process_single_pdf(test_path)
+
+        # Assert - processing should continue despite table error
+        assert result is not None
+        assert result["total_pages"] == 1
