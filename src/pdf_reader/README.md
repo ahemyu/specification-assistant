@@ -56,7 +56,7 @@ npm run dev
 ### Production:
 Build the frontend once, then just run the backend server:
 ```bash
-cd src/pdf_reader/frontend
+cd src/pdf_re   ader/frontend
 npm run build
 # Then start backend as shown above
 ```

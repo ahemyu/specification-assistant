@@ -3,14 +3,15 @@ import sys
 from pathlib import Path
 
 # Add src directory to path before other imports
-src_dir = Path(__file__).parent.parent / "src" / "pdf_reader"
+# Tests are now in src/pdf_reader/backend/tests/, so go up 3 levels to reach src/pdf_reader/
+src_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(src_dir))
 
 import pytest  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
-from app import app  # noqa: E402
-from dependencies import excel_template_storage, pdf_storage  # noqa: E402
+from backend.app import app  # noqa: E402
+from backend.dependencies import excel_template_storage, pdf_storage  # noqa: E402
 
 
 @pytest.fixture(scope="function")

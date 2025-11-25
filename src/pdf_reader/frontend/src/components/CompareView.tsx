@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react'
 import type { ComparisonResult, ChangeFilter } from '../types'
 import { showNotification } from '../utils/notifications'
 import {
-  FaBalanceScale,
-  FaSearchPlus,
+  // FaBalanceScale,
+  // FaSearchPlus,
   FaFilePdf,
   FaExchangeAlt,
   FaTrash,
@@ -32,10 +32,10 @@ const StandardCompareView = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [isComparing, setIsComparing] = useState(false)
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null)
-  const [currentFilter, setCurrentFilter] = useState<ChangeFilter>('all')
-  const [selectedChangeIndex, setSelectedChangeIndex] = useState<number | null>(null)
-  const [showPreviewModal, setShowPreviewModal] = useState(false)
-  const [showChangeModal, setShowChangeModal] = useState(false)
+  const [currentFilter, /*setCurrentFilter*/] = useState<ChangeFilter>('all')
+  const [/*selectedChangeIndex*/, setSelectedChangeIndex] = useState<number | null>(null)
+  const [/*showPreviewModal*/, setShowPreviewModal] = useState(false)
+  const [/*showChangeModal*/, setShowChangeModal] = useState(false)
 
   // Refs for file inputs
   const baseFileInputRef = useRef<HTMLInputElement>(null)
