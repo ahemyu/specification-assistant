@@ -1,164 +1,116 @@
-# Test Suite for PDF Reader Application
+# Test Suite for PDF Reader Backend
 
-This directory contains unit tests for the PDF Reader application using pytest.
+Unit tests for the PDF processing and extraction application using pytest.
 
 ## Test Structure
 
 ```
 tests/
-├── conftest.py              # Shared fixtures and test configuration
-├── unit/                    # Unit tests
-│   ├── test_process_pdfs.py # Tests for PDF processing service
-│   ├── test_pdf_router.py   # Tests for PDF API endpoints
-│   └── test_excel_router.py # Tests for Excel API endpoints
-├── integration/             # Integration tests (placeholder)
-└── fixtures/                # Test data files (placeholder)
+├── conftest.py                 # Shared fixtures and configuration
+├── unit/
+│   ├── test_process_pdfs.py   # PDF processing service tests
+│   ├── test_pdf_router.py     # PDF API endpoint tests
+│   └── test_excel_router.py   # Excel download endpoint tests
+└── fixtures/
+    ├── sample.pdf              # Sample PDF for testing
+    └── sample_template.xlsx    # Sample Excel template
 ```
 
 ## Running Tests
 
-### Prerequisites
+### Setup
 
-1. Create and activate a virtual environment (if not already active):
+Install test dependencies:
 ```bash
-# Create virtual environment (if needed)
-python -m venv .venv
-
-# Activate it (choose your platform)
-source .venv/bin/activate      # Linux/macOS
-.venv\Scripts\activate         # Windows (CMD)
-.venv\Scripts\Activate.ps1     # Windows (PowerShell)
+cd /path/to/specification-assistant
+uv sync --extra test
 ```
 
-2. Ensure test dependencies are installed:
-```bash
-pip install -e ".[test]"
-```
-
-### Run All Tests
+### Run Tests
 
 ```bash
-pytest
+# Run all tests
+uv run python -m pytest tests/
+
+# Verbose output
+uv run python -m pytest tests/ -v
+
+# Run specific test file
+uv run python -m pytest tests/unit/test_process_pdfs.py
+
+# Run with coverage
+uv run python -m pytest tests/ --cov
+
+# Run only unit tests
+uv run python -m pytest tests/ -m unit
 ```
 
-### Run with Verbose Output
+## Test Statistics
 
-```bash
-pytest -v
-```
+- **Total Tests**: 27
+- **All Passing**: 100%
+- **Test Coverage**:
+  - PDF Processing Service: ~88%
+  - PDF Router: ~60%
+  - Excel Router: ~40%
 
-### Run Specific Test File
+## What's Tested
 
-```bash
-pytest tests/unit/test_process_pdfs.py
-```
+### PDF Processing (`test_process_pdfs.py`)
+- Text extraction from PDF pages
+- Table detection and extraction
+- Multi-page document processing
+- Error handling (corrupted files, extraction failures)
+- Edge cases (empty PDFs, None values)
 
-### Run Specific Test Class
+### PDF API Endpoints (`test_pdf_router.py`)
+- Upload: single/multiple PDFs, invalid files
+- Preview: retrieval and 404 handling
+- Download: text file retrieval
+- View: original PDF viewing
+- Delete: file cleanup
 
-```bash
-pytest tests/unit/test_process_pdfs.py::TestProcessSinglePDF
-```
+### Excel Download (`test_excel_router.py`)
+- Extraction results export to Excel
+- Handling failed extractions
+- Empty results handling
 
-### Run Specific Test
+## What's NOT Tested (Requires LLM/External Services)
 
-```bash
-pytest tests/unit/test_process_pdfs.py::TestProcessSinglePDF::test_process_pdf_from_path
-```
+The following components require live LLM API access and are not unit tested:
 
-### Run Only Unit Tests
+- **LLM Router** (`routers/llm.py`):
+  - `/extract-keys` - Key extraction from PDFs
+  - `/ask-question-stream` - Question answering with streaming
+  - `/compare-pdfs` - PDF version comparison
+  - `/detect-product-type` - Product type detection
+  - `/detect-core-winding-count` - Core/winding count detection
 
-```bash
-pytest -m unit
-```
+- **LLM Key Extractor** (`services/llm_key_extractor.py`):
+  - All LLM-based extraction methods
+  - OpenAI API integration
+  - Structured output parsing
 
-### Run with Coverage Report
-
-```bash
-pytest --cov
-```
-
-Coverage reports are generated in:
-- Terminal output (summary)
-- `htmlcov/` directory (detailed HTML report)
-
-To view the HTML coverage report:
-```bash
-open htmlcov/index.html  # macOS
-xdg-open htmlcov/index.html  # Linux
-start htmlcov/index.html  # Windows
-```
-
-## Test Coverage
-
-Current test coverage: **43%** overall
-
-High coverage modules:
-- `services/process_pdfs.py`: 88%
-- `schemas/`: 100%
-
-Areas for improvement:
-- Excel router functionality
-- LLM key extraction service
-- Error handling paths
+These would require integration tests with mocked LLM responses or actual API keys.
 
 ## Writing New Tests
 
-### Test Naming Convention
-
-- Test files: `test_*.py`
-- Test classes: `Test*`
-- Test functions: `test_*`
+### Test Naming
+- Files: `test_*.py`
+- Classes: `Test*`
+- Functions: `test_*`
 
 ### Using Fixtures
 
-Common fixtures available in `conftest.py`:
-
-- `client`: FastAPI TestClient for API testing
-- `mock_pdf_data`: Sample PDF data structure
-- `mock_excel_data`: Sample Excel template data
-- `clear_storage`: Auto-clears storage between tests
-
-Example:
+Available fixtures in `conftest.py`:
 ```python
-def test_example(client, mock_pdf_data):
+def test_example(client, mock_pdf_data, sample_pdf_path):
+    # client: FastAPI TestClient
+    # mock_pdf_data: Sample PDF structure
+    # sample_pdf_path: Path to test PDF file
     response = client.get("/some-endpoint")
     assert response.status_code == 200
 ```
 
-### Test Markers
-
-Available markers:
-- `@pytest.mark.unit`: Unit tests
-- `@pytest.mark.integration`: Integration tests
-- `@pytest.mark.slow`: Slow-running tests
-
-## CI/CD Integration
-
-To run tests in a CI/CD pipeline:
-
-```bash
-# Install dependencies
-pip install -e ".[test]"
-
-# Run tests with coverage
-pytest --cov --cov-report=xml --cov-report=term
-
-# Exit with error code if coverage is below threshold
-pytest --cov --cov-fail-under=40
-```
-
-## Current Test Statistics
-
-- **Total Tests**: 15
-- **Passing**: 15 (100%)
-- **Test Categories**:
-  - PDF Processing: 6 tests
-  - PDF API Endpoints: 6 tests
-  - Excel API Endpoints: 3 tests
-
-## Notes
-
-- Tests use mocking to isolate units and avoid file I/O
-- Storage is automatically cleared between tests
-- Tests run in the context of the application's source directory
-- FastAPI TestClient is used for API endpoint testing
+### Auto-Cleanup
+Storage is automatically cleared between tests via `clear_storage` fixture.
