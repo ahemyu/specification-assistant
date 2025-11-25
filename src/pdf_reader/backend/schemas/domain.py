@@ -1,4 +1,5 @@
 """Domain models."""
+
 from pydantic import BaseModel, Field
 
 
@@ -15,8 +16,7 @@ class SourceLocation(BaseModel):
     pdf_filename: str = Field(description="Name of the PDF file where the information was found")
     page_numbers: list[int] = Field(description="List of page numbers where the information was found")
     bounding_box: list[float] | None = Field(
-        default=None,
-        description="Bounding box coordinates [x0, top, x1, bottom] for highlighting the text location"
+        default=None, description="Bounding box coordinates [x0, top, x1, bottom] for highlighting the text location"
     )
 
 
@@ -29,12 +29,9 @@ class KeyExtractionResult(BaseModel):
     source_locations: list[SourceLocation] = Field(
         description="List of source locations (PDF files and page numbers) where the key information was found"
     )
-    description: str = Field(
-        description="A brief description of where and how the key was found in the documents"
-    )
+    description: str = Field(description="A brief description of where and how the key was found in the documents")
     matched_line_ids: list[str] | None = Field(
-        default=None,
-        description="Line IDs or cell IDs where the key value was found (e.g., ['3_5', '3_t0_r1_c1'])"
+        default=None, description="Line IDs or cell IDs where the key value was found (e.g., ['3_5', '3_t0_r1_c1'])"
     )
 
 
@@ -44,9 +41,7 @@ class SpecificationChange(BaseModel):
     specification_name: str = Field(description="Name or identifier of the specification that changed")
     old_value: str | None = Field(description="Value in the base/old PDF. Null if not present in old version.")
     new_value: str | None = Field(description="Value in the new/updated PDF. Null if removed in new version.")
-    change_type: str = Field(
-        description="Type of change: 'added', 'removed', 'modified', or 'unchanged'"
-    )
+    change_type: str = Field(description="Type of change: 'added', 'removed', 'modified', or 'unchanged'")
     description: str = Field(description="Description of the change and its significance")
     pages_old: list[int] = Field(description="Page numbers in the old PDF where this was found")
     pages_new: list[int] = Field(description="Page numbers in the new PDF where this was found")
@@ -68,15 +63,11 @@ class ProductTypeDetectionResult(BaseModel):
     product_type: str = Field(
         description="Detected product type: 'Stromwandler', 'Spannungswandler', or 'Kombiwandler'"
     )
-    confidence: float = Field(
-        description="Confidence score between 0.0 and 1.0 indicating certainty of detection"
-    )
+    confidence: float = Field(description="Confidence score between 0.0 and 1.0 indicating certainty of detection")
     evidence: str = Field(
         description="Explanation of the evidence found in the document that supports this classification"
     )
-    page_numbers: list[int] = Field(
-        description="Page numbers where the key evidence was found"
-    )
+    page_numbers: list[int] = Field(description="Page numbers where the key evidence was found")
 
 
 class CoreWindingCountResult(BaseModel):
@@ -85,13 +76,31 @@ class CoreWindingCountResult(BaseModel):
     max_core_number: int = Field(
         description="Maximum core (Kern) number found in the document (0 if not applicable)",
         ge=0,
-        le=7
+        le=7,
     )
     max_winding_number: int = Field(
         description="Maximum winding (Wicklung) number found in the document (0 if not applicable)",
         ge=0,
-        le=5
+        le=5,
     )
-    evidence: str = Field(
-        description="Explanation of where the cores/windings were identified in the document"
+    evidence: str = Field(description="Explanation of where the cores/windings were identified in the document")
+
+
+class MultiKeyExtractionItem(BaseModel):
+    """Single key extraction entry used in batched responses."""
+
+    key_name: str = Field(description="The exact key name that was requested.")
+    result: KeyExtractionResult | None = Field(
+        description=(
+            "Extraction result for this key, or null if extraction failed or the "
+            "key could not be determined from the documents."
+        )
+    )
+
+
+class MultiKeyExtractionResult(BaseModel):
+    """Structured output for extracting multiple keys in a single LLM call."""
+
+    items: list[MultiKeyExtractionItem] = Field(
+        description="List of key extraction entries, one per requested key.",
     )
