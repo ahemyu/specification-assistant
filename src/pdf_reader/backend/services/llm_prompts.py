@@ -1,6 +1,6 @@
 """LLM prompt templates for key extraction, Q&A, and PDF comparison."""
 
-# Key extraction prompt template
+# Key extraction prompt template (single-key)
 KEY_EXTRACTION_PROMPT = """You are an expert at extracting specific information from technical documents.
 Your task is to find and extract the value for the key: "{key_name}"
 Below are the contents of one or more PDF documents. Each document includes
@@ -31,6 +31,60 @@ IMPORTANT INSTRUCTIONS:
 DOCUMENT CONTENTS:
 {full_context}
 Now extract the key "{key_name}" and provide the structured output."""
+
+
+# Multi-key extraction prompt template
+MULTI_KEY_EXTRACTION_PROMPT = """You are an expert at extracting specific information from technical documents.
+
+You must extract values for EACH of the following keys:
+{keys_section}
+
+For each key, you MUST return:
+- key_name: the exact key string as provided in the list above
+- key_value: the extracted value or null if not found
+- source_locations: all PDF filenames and page numbers where the information was found
+- description: explanation of where and how you found it
+- matched_line_ids: list of [line_id] or [cell_id] markers that contain the value
+
+{key_metadata_section}
+
+COORDINATE SYSTEM:
+The text is annotated with location markers:
+- [line_id: X_Y] for regular text lines (e.g., [line_id: 3_5] = Page 3, Line 5)
+- [cell_id: X_tY_rZ_cW] for table cells (e.g., [cell_id: 3_t0_r1_c2] = Page 3, Table 0, Row 1, Column 2)
+
+IMPORTANT INSTRUCTIONS:
+1. Treat each key independently and provide a separate result for each one.
+2. Use the key metadata above (if provided) to understand both the German and English terms,
+   as well as additional context about what values are expected or typical.
+3. Record ALL PDF filenames and page numbers where you found relevant information
+   (they COULD be spread to different pdfs/pages).
+4. CRITICAL: When you find a key's value, you MUST identify and return the line_id(s)
+   or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
+   Put these IDs in the matched_line_ids field as a list of strings.
+5. Provide a clear description of where and how you found the information.
+6. If a key is not found in any document, set key_value to null and explain
+   in the description.
+7. Be precise about page numbers - always reference the specific pages where
+   information was found.
+
+DOCUMENT CONTENTS:
+{full_context}
+
+Now return a JSON object with the following structure:
+
+{{
+  "items": [
+    {{ "key_name": "<key_name_1>", "result": {{ /* KeyExtractionResult for key_name_1 */ }} }},
+    {{ "key_name": "<key_name_2>", "result": {{ /* KeyExtractionResult for key_name_2 */ }} }},
+    ...
+  ]
+}}
+
+For EVERY requested key, include exactly one entry in the "items" array, with the
+"key_name" field set to the exact key string from the list above. If a key cannot be
+found or an answer cannot be determined, set its result.key_value to null and explain
+why in the description."""
 
 
 # Q&A system message prompt template

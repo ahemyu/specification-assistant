@@ -1,7 +1,9 @@
 """LLM-based key extraction service using LangChain and OpenAI."""
+
 import asyncio
 import logging
 import sys
+import time
 from pathlib import Path
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -13,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from backend.schemas.domain import (
     CoreWindingCountResult,
     KeyExtractionResult,
+    MultiKeyExtractionResult,
     PDFComparisonResult,
     ProductTypeDetectionResult,
 )
@@ -20,18 +23,20 @@ from backend.services.key_metadata import format_key_metadata_for_prompt
 from backend.services.llm_prompts import (
     CORE_WINDING_COUNT_PROMPT,
     KEY_EXTRACTION_PROMPT,
+    MULTI_KEY_EXTRACTION_PROMPT,
     PDF_COMPARISON_PROMPT,
     PRODUCT_TYPE_DETECTION_PROMPT,
     QA_SYSTEM_PROMPT,
 )
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
+# Configuration
+DEFAULT_BATCH_SIZE = 20  # number of keys sent per llm request (optimized for ~50K token PDFs)
+MAX_CONCURRENT_BATCHES = 1  # how many batches are sent at once
 
 
 class LLMKeyExtractor:
@@ -52,19 +57,17 @@ class LLMKeyExtractor:
             model=model_name,
             api_key=api_key,
             base_url=base_url,
-            temperature=0  # Use deterministic output for extraction tasks
+            temperature=0,  # Use deterministic output for extraction tasks
         )
         # Store API credentials for creating Q&A LLM instances with different models
         self.api_key = api_key
         self.base_url = base_url
         self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
+        self.multi_structured_llm = self.llm.with_structured_output(MultiKeyExtractionResult)
+
         logger.info(f"Initialized LLM key extractor with model: {model_name}")
 
-    async def _extract_key(
-        self,
-        key_name: str,
-        pdf_data: list[dict]
-    ) -> KeyExtractionResult:
+    async def _extract_key(self, key_name: str, pdf_data: list[dict]) -> KeyExtractionResult:
         """
         Extract a specific key from one or more processed PDFs asynchronously.
 
@@ -85,15 +88,11 @@ class LLMKeyExtractor:
         metadata_text = format_key_metadata_for_prompt(key_name)
         key_metadata_section = ""
         if metadata_text:
-            key_metadata_section = f"""KEY METADATA:
-{metadata_text}
-"""
+            key_metadata_section = f"""KEY METADATA:{metadata_text}"""
 
         # Build the prompt using the template
         prompt = KEY_EXTRACTION_PROMPT.format(
-            key_name=key_name,
-            key_metadata_section=key_metadata_section,
-            full_context=full_context
+            key_name=key_name, key_metadata_section=key_metadata_section, full_context=full_context
         )
 
         try:
@@ -104,50 +103,130 @@ class LLMKeyExtractor:
             logger.error(f"Error extracting key '{key_name}': {str(e)}")
             raise
 
+    async def _extract_keys_batch(
+        self,
+        key_names: list[str],
+        pdf_data: list[dict],
+    ) -> dict[str, KeyExtractionResult | None]:
+        """Extract a batch of keys from the same PDF data in a single LLM call.
+
+        This method is internal and focuses on token/request efficiency. It returns a
+        mapping from each key name in the batch to its extraction result (or None if
+        extraction failed or the key could not be determined).
+        """
+        logger.info("Extracting batch of %s keys from %s PDF(s)", len(key_names), len(pdf_data))
+
+        # Use pre-formatted text that was created during PDF processing
+        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
+
+        # Build keys_section
+        keys_lines = [f"- {name}" for name in key_names]
+        keys_section = "\n".join(keys_lines)
+
+        # Build combined metadata section (optional, only include keys that have metadata)
+        metadata_items: list[str] = []
+        for key_name in key_names:
+            metadata_text = format_key_metadata_for_prompt(key_name)
+            if metadata_text:
+                metadata_items.append(f"- {key_name}: {metadata_text}")
+        key_metadata_section = ""
+        if metadata_items:
+            key_metadata_section = "KEY METADATA:\n" + "\n".join(metadata_items) + "\n"
+
+        prompt = MULTI_KEY_EXTRACTION_PROMPT.format(
+            keys_section=keys_section,
+            key_metadata_section=key_metadata_section,
+            full_context=full_context,
+        )
+
+        # Estimate tokens for logging purposes (rough estimate: ~4 chars per token)
+        estimated_tokens = len(prompt) // 4
+        logger.info(f"Estimated tokens for batch of {len(key_names)} keys: ~{estimated_tokens:,}")
+
+        # Track actual LLM call time
+        llm_call_start = time.time()
+
+        try:
+            multi_result: MultiKeyExtractionResult = await self.multi_structured_llm.ainvoke(prompt)
+            llm_call_time = time.time() - llm_call_start
+            logger.info(f"Successfully extracted batch of {len(key_names)} keys in {llm_call_time:.1f}s")
+
+            # Convert list of items to a mapping keyed by key_name
+            results_by_key: dict[str, KeyExtractionResult | None] = {
+                item.key_name: item.result for item in multi_result.items
+            }
+
+            # Ensure that every requested key is present in the mapping
+            for key_name in key_names:
+                if key_name not in results_by_key:
+                    results_by_key[key_name] = None
+
+            return results_by_key
+        except Exception as e:
+            llm_call_time = time.time() - llm_call_start
+            logger.error(
+                f"Error extracting batch of keys {key_names} after {llm_call_time:.1f}s: {str(e)}"
+            )
+            return {name: None for name in key_names}
+
     async def extract_keys(
         self,
         key_names: list[str],
-        pdf_data: list[dict]
-    ) -> dict:
+        pdf_data: list[dict],
+        batch_size: int = DEFAULT_BATCH_SIZE,
+        max_concurrent_batches: int = MAX_CONCURRENT_BATCHES,
+    ) -> dict[str, KeyExtractionResult | None]:
+        """Extract multiple keys from the same PDF data using batched LLM calls.
+
+        Keys are grouped into batches to reduce the number of requests and repeated
+        context tokens. Batches are executed with bounded concurrency to respect
+        rate limits while keeping latency reasonable.
         """
-        Extract multiple keys from the same PDF data asynchronously in parallel.
+        if not key_names:
+            return {}
 
-        Args:
-            key_names: List of key names to extract
-            pdf_data: List of dictionaries containing PDF data
+        start_time = time.time()
 
-        Returns:
-            Dictionary mapping key names to their extraction results
-        """
-        logger.info(f"Starting parallel extraction of {len(key_names)} keys")
-
-        # Create a task for each key extraction
-        async def extract_with_error_handling(key_name: str):
-            try:
-                return key_name, await self._extract_key(key_name, pdf_data)
-            except Exception as e:
-                logger.error(f"Failed to extract key '{key_name}': {str(e)}")
-                # Return None for failed extractions
-                return key_name, None
-
-        # Execute all extractions in parallel
-        extraction_results = await asyncio.gather(
-            *[extract_with_error_handling(key_name) for key_name in key_names]
+        logger.info(
+            "Starting batched extraction of %s keys (batch_size=%s, max_concurrent_batches=%s)",
+            len(key_names),
+            batch_size,
+            max_concurrent_batches,
         )
 
-        # Convert list of tuples to dictionary
-        results = dict(extraction_results)
-        logger.info(f"Completed parallel extraction of {len(key_names)} keys")
+        # Split keys into batches
+        batches: list[list[str]] = [key_names[i : i + batch_size] for i in range(0, len(key_names), batch_size)]
 
-        return results
+        logger.info(f"Split {len(key_names)} keys into {len(batches)} batches")
 
+        semaphore = asyncio.Semaphore(max_concurrent_batches)
+
+        async def run_batch(batch_index: int, batch: list[str]) -> dict[str, KeyExtractionResult | None]:
+            async with semaphore:
+                return await self._extract_keys_batch(batch, pdf_data)
+
+        # Execute batches (with concurrency limit via semaphore)
+        batch_results_list = await asyncio.gather(*(run_batch(i, batch) for i, batch in enumerate(batches)))
+
+        # Merge all batch results into a single mapping
+        merged_results: dict[str, KeyExtractionResult | None] = {}
+        for batch_results in batch_results_list:
+            merged_results.update(batch_results)
+
+        elapsed_time = time.time() - start_time
+        logger.info(
+            f"Completed batched extraction of {len(key_names)} keys in {elapsed_time:.1f}s "
+            f"({len(batches)} requests, avg {elapsed_time/len(batches):.1f}s per request)"
+        )
+
+        return merged_results
 
     async def answer_question_stream(
         self,
         question: str,
         pdf_data: list[dict],
         conversation_history: list[dict[str, str]] | None = None,
-        model_name: str | None = None
+        model_name: str | None = None,
     ):
         """
         Answer a general question about the PDF documents with streaming response.
@@ -170,19 +249,12 @@ class LLMKeyExtractor:
 
         # Create Q&A LLM instance with the specified model
         selected_model = model_name or "gpt-4.1"
-        qa_llm = ChatOpenAI(
-            model=selected_model,
-            api_key=self.api_key,
-            base_url=self.base_url,
-            temperature=0.3
-        )
+        qa_llm = ChatOpenAI(model=selected_model, api_key=self.api_key, base_url=self.base_url, temperature=0.3)
         logger.info(f"Using model: {selected_model}")
 
         # Check if we have a system message in conversation history
         has_system_message = (
-            conversation_history
-            and len(conversation_history) > 0
-            and conversation_history[0].get("role") == "system"
+            conversation_history and len(conversation_history) > 0 and conversation_history[0].get("role") == "system"
         )
 
         system_message_to_return = None
@@ -224,7 +296,7 @@ class LLMKeyExtractor:
         try:
             first_chunk = True
             async for chunk in qa_llm.astream(messages):
-                content = chunk.content if hasattr(chunk, 'content') else str(chunk)
+                content = chunk.content if hasattr(chunk, "content") else str(chunk)
                 if content:
                     # Yield system message only with the first chunk
                     if first_chunk:
@@ -237,10 +309,7 @@ class LLMKeyExtractor:
             logger.error(f"Error answering question with streaming: {str(e)}")
             raise
 
-    async def detect_product_type(
-        self,
-        pdf_data: list[dict]
-    ) -> ProductTypeDetectionResult:
+    async def detect_product_type(self, pdf_data: list[dict]) -> ProductTypeDetectionResult:
         """
         Detect the product type from PDF specifications.
 
@@ -261,24 +330,15 @@ class LLMKeyExtractor:
 
         try:
             # Create a structured output LLM for product type detection
-            structured_detection_llm = self.llm.with_structured_output(
-                ProductTypeDetectionResult
-            )
+            structured_detection_llm = self.llm.with_structured_output(ProductTypeDetectionResult)
             result = await structured_detection_llm.ainvoke(prompt)
-            logger.info(
-                f"Successfully detected product type: {result.product_type} "
-                f"(confidence: {result.confidence})"
-            )
+            logger.info(f"Successfully detected product type: {result.product_type} (confidence: {result.confidence})")
             return result
         except Exception as e:
             logger.error(f"Error detecting product type: {str(e)}")
             raise
 
-    async def detect_core_winding_count(
-        self,
-        pdf_data: list[dict],
-        product_type: str
-    ) -> CoreWindingCountResult:
+    async def detect_core_winding_count(self, pdf_data: list[dict], product_type: str) -> CoreWindingCountResult:
         """
         Detect the maximum number of cores and/or windings based on product type.
 
@@ -289,9 +349,7 @@ class LLMKeyExtractor:
         Returns:
             CoreWindingCountResult with max core and winding numbers
         """
-        logger.info(
-            f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s)"
-        )
+        logger.info(f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s)")
 
         # Use pre-formatted text that was created during PDF processing
         full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
@@ -333,14 +391,12 @@ Return both max_core_number and max_winding_number."""
             product_type=product_type,
             search_target=search_target,
             search_instructions=search_instructions,
-            full_context=full_context
+            full_context=full_context,
         )
 
         try:
             # Create a structured output LLM for core/winding detection
-            structured_detection_llm = self.llm.with_structured_output(
-                CoreWindingCountResult
-            )
+            structured_detection_llm = self.llm.with_structured_output(CoreWindingCountResult)
             result = await structured_detection_llm.ainvoke(prompt)
             logger.info(
                 f"Successfully detected for {product_type}: "
@@ -352,10 +408,7 @@ Return both max_core_number and max_winding_number."""
             raise
 
     async def compare_pdfs(
-        self,
-        base_pdf_data: dict,
-        new_pdf_data: dict,
-        additional_context: str = ""
+        self, base_pdf_data: dict, new_pdf_data: dict, additional_context: str = ""
     ) -> PDFComparisonResult:
         """
         Compare two PDF versions and identify changes in specifications.
@@ -369,9 +422,7 @@ Return both max_core_number and max_winding_number."""
         Returns:
             PDFComparisonResult with summary and list of changes
         """
-        logger.info(
-            f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}'"
-        )
+        logger.info(f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}'")
 
         # Use pre-formatted text from both PDFs
         base_context = base_pdf_data.get("formatted_text", "")
@@ -379,25 +430,21 @@ Return both max_core_number and max_winding_number."""
 
         # Build the comparison prompt using the template
         additional_context_section = (
-            f"Additional context about what to focus on: {additional_context}"
-            if additional_context
-            else ""
+            f"Additional context about what to focus on: {additional_context}" if additional_context else ""
         )
         prompt = PDF_COMPARISON_PROMPT.format(
             additional_context_section=additional_context_section,
-            base_filename=base_pdf_data['filename'],
+            base_filename=base_pdf_data["filename"],
             base_context=base_context,
-            new_filename=new_pdf_data['filename'],
-            new_context=new_context
+            new_filename=new_pdf_data["filename"],
+            new_context=new_context,
         )
 
         try:
             # Create a structured output LLM for comparison
             structured_comparison_llm = self.llm.with_structured_output(PDFComparisonResult)
             result = await structured_comparison_llm.ainvoke(prompt)
-            logger.info(
-                f"Successfully compared PDFs. Found {result.total_changes} changes."
-            )
+            logger.info(f"Successfully compared PDFs. Found {result.total_changes} changes.")
             return result
         except Exception as e:
             logger.error(f"Error comparing PDFs: {str(e)}")
