@@ -385,11 +385,9 @@ export function ExtractionView() {
                   }`}
                 >
                   <div className="product-card-icon">
-                    <span style={{ fontSize: '3em' }}>
-                      {type === 'Stromwandler' && '🔌'}
-                      {type === 'Spannungswandler' && '⚡'}
-                      {type === 'Kombiwandler' && '🎛️'}
-                    </span>
+                    {type === 'Stromwandler' && <img src="/assets/current-transformer.png" alt="Current Transformer" style={{ height: '10em' }} />}
+                    {type === 'Spannungswandler' && <img src="/assets/voltage-transformer.png" alt="Voltage Transformer" style={{ height: '10em' }} />}
+                    {type === 'Kombiwandler' && <img src="/assets/combi-transformer.png" alt="Combi Transformer" style={{ height: '10em' }} />}
                   </div>
                   <div className="product-card-content">
                     <h3 className="product-card-title">{type}</h3>
