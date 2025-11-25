@@ -1,16 +1,8 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import type { ComparisonResult, ChangeFilter } from '../types'
 import { showNotification } from '../utils/notifications'
-import {
-  // FaBalanceScale,
-  // FaSearchPlus,
-  FaFilePdf,
-  FaExchangeAlt,
-  FaTrash,
-  FaVial,
-} from 'react-icons/fa'
+import { FaBalanceScale, FaSearchPlus } from 'react-icons/fa'
 import '../styles/modules/home.css' // For card styles
-import '../styles/modules/compare.css'
 
 const STORAGE_KEY_PREFIX = 'pdf_compare_'
 const STORAGE_KEYS = {
@@ -32,14 +24,10 @@ const StandardCompareView = () => {
   const [isUploading, setIsUploading] = useState(false)
   const [isComparing, setIsComparing] = useState(false)
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null)
-  const [currentFilter, /*setCurrentFilter*/] = useState<ChangeFilter>('all')
-  const [/*selectedChangeIndex*/, setSelectedChangeIndex] = useState<number | null>(null)
-  const [/*showPreviewModal*/, setShowPreviewModal] = useState(false)
-  const [/*showChangeModal*/, setShowChangeModal] = useState(false)
-
-  // Refs for file inputs
-  const baseFileInputRef = useRef<HTMLInputElement>(null)
-  const newFileInputRef = useRef<HTMLInputElement>(null)
+  const [currentFilter, setCurrentFilter] = useState<ChangeFilter>('all')
+  const [selectedChangeIndex, setSelectedChangeIndex] = useState<number | null>(null)
+  const [showPreviewModal, setShowPreviewModal] = useState(false)
+  const [showChangeModal, setShowChangeModal] = useState(false)
 
   // Load state from localStorage on mount
   useEffect(() => {
@@ -54,10 +42,7 @@ const StandardCompareView = () => {
     return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i]
   }
 
-  const handleFileSelect = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    fileType: 'base' | 'new'
-  ) => {
+  const handleBaseFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
@@ -67,27 +52,42 @@ const StandardCompareView = () => {
       return
     }
 
-    if (fileType === 'base') {
-      setBaseFile(file)
-      setBaseFileId(null)
-    } else {
-      setNewFile(file)
-      setNewFileId(null)
+    setBaseFile(file)
+    setBaseFileId(null)
+    setComparisonResult(null)
+    clearState()
+  }
+
+  const handleNewFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      showNotification('Please select a PDF file', 'error')
+      e.target.value = ''
+      return
     }
 
+    setNewFile(file)
+    setNewFileId(null)
     setComparisonResult(null)
-    clearState() // Clear old results when new files are selected
+    clearState()
   }
 
   const handleSwapFiles = () => {
-    if (!baseFile && !newFile) return
+    if (!baseFile || !newFile) return
+
+    const tempFile = baseFile
+    const tempFileId = baseFileId
 
     setBaseFile(newFile)
-    setNewFile(baseFile)
     setBaseFileId(newFileId)
-    setNewFileId(baseFileId)
+    setNewFile(tempFile)
+    setNewFileId(tempFileId)
 
     setUploadStatus('Files swapped! Please upload again.')
+    setBaseFileId(null)
+    setNewFileId(null)
   }
 
   const handleClearFiles = () => {
@@ -201,7 +201,32 @@ const StandardCompareView = () => {
     }
   }
 
-  // State persistence functions (save, restore, clear)
+  const filteredChanges =
+    comparisonResult?.changes.filter(
+      (change) => currentFilter === 'all' || change.change_type === currentFilter
+    ) || []
+
+  const openChangeModal = (index: number) => {
+    setSelectedChangeIndex(index)
+    setShowChangeModal(true)
+  }
+
+  const closeChangeModal = () => {
+    setShowChangeModal(false)
+    setSelectedChangeIndex(null)
+  }
+
+  const navigateChange = (direction: 'prev' | 'next') => {
+    if (selectedChangeIndex === null) return
+
+    const newIndex =
+      direction === 'prev'
+        ? Math.max(0, selectedChangeIndex - 1)
+        : Math.min(filteredChanges.length - 1, selectedChangeIndex + 1)
+
+    setSelectedChangeIndex(newIndex)
+  }
+
   const saveState = (baseId: string, newId: string, baseName: string, newName: string) => {
     try {
       localStorage.setItem(STORAGE_KEYS.baseFileId, baseId)
@@ -217,16 +242,23 @@ const StandardCompareView = () => {
     try {
       const savedBaseFileId = localStorage.getItem(STORAGE_KEYS.baseFileId)
       const savedNewFileId = localStorage.getItem(STORAGE_KEYS.newFileId)
+      const savedBaseFileName = localStorage.getItem(STORAGE_KEYS.baseFileName)
+      const savedNewFileName = localStorage.getItem(STORAGE_KEYS.newFileName)
       const savedComparisonResult = localStorage.getItem(STORAGE_KEYS.comparisonResult)
 
-      if (savedBaseFileId && savedNewFileId) {
+      if (savedBaseFileId && savedNewFileId && savedBaseFileName && savedNewFileName) {
         setBaseFileId(savedBaseFileId)
         setNewFileId(savedNewFileId)
         setUploadStatus('✓ Files restored from previous session')
       }
 
       if (savedComparisonResult) {
-        setComparisonResult(JSON.parse(savedComparisonResult))
+        try {
+          const result: ComparisonResult = JSON.parse(savedComparisonResult)
+          setComparisonResult(result)
+        } catch (e) {
+          console.error('Failed to restore comparison result:', e)
+        }
       }
     } catch (error) {
       console.error('Failed to restore state:', error)
@@ -241,94 +273,64 @@ const StandardCompareView = () => {
     }
   }
 
-  // Derived state for summary and filtering
   const added = comparisonResult?.changes.filter((c) => c.change_type === 'added').length || 0
   const modified =
     comparisonResult?.changes.filter((c) => c.change_type === 'modified').length || 0
   const removed = comparisonResult?.changes.filter((c) => c.change_type === 'removed').length || 0
-  const filteredChanges =
-    comparisonResult?.changes.filter(
-      (change) => currentFilter === 'all' || change.change_type === currentFilter
-    ) || []
 
-  // Modal logic
-  const openChangeModal = (index: number) => {
-    setSelectedChangeIndex(index)
-    setShowChangeModal(true)
-  }
-  // ... other modal functions remain the same
-
-  // Helper component for the upload boxes
-  const UploadBox = ({
-    fileType,
-    file,
-    fileId,
-    storageKey,
-    inputRef,
-    onFileSelect,
-  }: {
-    fileType: 'base' | 'new'
-    file: File | null
-    fileId: string | null
-    storageKey: string
-    inputRef: React.RefObject<HTMLInputElement>
-    onFileSelect: (e: React.ChangeEvent<HTMLInputElement>, fileType: 'base' | 'new') => void
-  }) => (
-    <div className="pdf-upload-box" onClick={() => inputRef.current?.click()}>
-      <div className="upload-box-header">
-        <h4>{fileType === 'base' ? 'Original Version' : 'New Version'}</h4>
-        <span className={`upload-badge ${fileType}`}>{fileType.toUpperCase()}</span>
-      </div>
-      <p className="upload-hint">
-        {fileType === 'base' ? 'The older or reference version' : 'The updated or modified version'}
-      </p>
-      <input
-        type="file"
-        ref={inputRef}
-        accept=".pdf"
-        onChange={(e) => onFileSelect(e, fileType)}
-        style={{ display: 'none' }}
-      />
-      <div className="upload-placeholder">
-        <FaFilePdf size={40} />
-      </div>
-      {(file || (fileId && localStorage.getItem(storageKey))) && (
-        <div className="selected-file-info">
-          <strong>📄 {file?.name || localStorage.getItem(storageKey)}</strong>
-          <br />
-          {file && (
-            <span style={{ color: '#64748b', fontSize: '0.9em' }}>
-              {formatFileSize(file.size)}
-            </span>
-          )}
-          {fileId && !file && (
-            <span style={{ color: '#059669', fontSize: '0.85em' }}>✓ Previously uploaded</span>
-          )}
-        </div>
-      )}
-    </div>
-  )
+  const selectedChange = selectedChangeIndex !== null ? filteredChanges[selectedChangeIndex] : null
 
   return (
     <div className="comparison-container">
       <div className="comparison-header">
         <h1>PDF Version Comparison</h1>
-        <p className="upload-subtitle">
-          Compare two versions of a PDF to identify changes in specifications
-        </p>
+        <p className="upload-subtitle"> Compare two versions of a PDF to identify changes in specifications</p>
       </div>
 
+      {/* Upload Section */}
       <section className="upload-comparison-section">
-        <div className="pdf-upload-grid">
-          <UploadBox
-            fileType="base"
-            file={baseFile}
-            fileId={baseFileId}
-            storageKey={STORAGE_KEYS.baseFileName}
-            inputRef={baseFileInputRef}
-            onFileSelect={handleFileSelect}
-          />
+        <h3>Upload PDFs to Compare</h3>
 
+        <div className="pdf-upload-grid">
+          {/* Base PDF */}
+          <div className="pdf-upload-box">
+            <div className="upload-box-header">
+              <h4>Original Version</h4>
+              <span className="upload-badge base">BASE</span>
+            </div>
+            <p className="upload-hint">The older or reference version</p>
+            <input
+              type="file"
+              id="baseFileInput"
+              accept=".pdf"
+              onChange={handleBaseFileSelected}
+              style={{ display: 'none' }}
+            />
+            <button
+              className="upload-file-btn"
+              onClick={() => document.getElementById('baseFileInput')?.click()}
+            >
+              Choose File
+            </button>
+            {baseFile && (
+              <div className="selected-file-info">
+                <strong>📄 {baseFile.name}</strong>
+                <br />
+                <span style={{ color: '#64748b', fontSize: '0.9em' }}>
+                  {formatFileSize(baseFile.size)}
+                </span>
+              </div>
+            )}
+            {baseFileId && !baseFile && (
+              <div className="selected-file-info">
+                <strong>📄 {localStorage.getItem(STORAGE_KEYS.baseFileName)}</strong>
+                <br />
+                <span style={{ color: '#059669', fontSize: '0.85em' }}>✓ Previously uploaded</span>
+              </div>
+            )}
+          </div>
+
+          {/* Swap Button */}
           <div className="swap-button-container">
             <button
               className="swap-btn"
@@ -336,26 +338,55 @@ const StandardCompareView = () => {
               disabled={!baseFile || !newFile}
               title="Swap base and new versions"
             >
-              <FaExchangeAlt />
+              ⇄
             </button>
           </div>
 
-          <UploadBox
-            fileType="new"
-            file={newFile}
-            fileId={newFileId}
-            storageKey={STORAGE_KEYS.newFileName}
-            inputRef={newFileInputRef}
-            onFileSelect={handleFileSelect}
-          />
+          {/* New PDF */}
+          <div className="pdf-upload-box">
+            <div className="upload-box-header">
+              <h4>New Version</h4>
+              <span className="upload-badge new">NEW</span>
+            </div>
+            <p className="upload-hint">The updated or modified version</p>
+            <input
+              type="file"
+              id="newFileInput"
+              accept=".pdf"
+              onChange={handleNewFileSelected}
+              style={{ display: 'none' }}
+            />
+            <button
+              className="upload-file-btn"
+              onClick={() => document.getElementById('newFileInput')?.click()}
+            >
+              Choose File
+            </button>
+            {newFile && (
+              <div className="selected-file-info">
+                <strong>📄 {newFile.name}</strong>
+                <br />
+                <span style={{ color: '#64748b', fontSize: '0.9em' }}>
+                  {formatFileSize(newFile.size)}
+                </span>
+              </div>
+            )}
+            {newFileId && !newFile && (
+              <div className="selected-file-info">
+                <strong>📄 {localStorage.getItem(STORAGE_KEYS.newFileName)}</strong>
+                <br />
+                <span style={{ color: '#059669', fontSize: '0.85em' }}>✓ Previously uploaded</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="upload-actions">
-          <button className="action-button change-files-btn" onClick={handleClearFiles}>
-            <FaTrash /> &nbsp; Clear All
+          <button className="change-files-btn" onClick={handleClearFiles}>
+            Clear All
           </button>
           <button
-            className="action-button upload-both-btn"
+            className="upload-both-btn"
             onClick={handleUploadBoth}
             disabled={!baseFile || !newFile || isUploading}
           >
@@ -377,7 +408,18 @@ const StandardCompareView = () => {
           </div>
         )}
 
+        {/* Preview Button */}
+        {baseFileId && newFileId && (
+          <div className="preview-button-container">
+            <button className="preview-both-btn" onClick={() => setShowPreviewModal(true)}>
+              👁 Preview Both PDFs
+            </button>
+          </div>
+        )}
+
+        {/* Additional Context */}
         <div className="context-section">
+          <label htmlFor="contextInput">Additional Context (Optional)</label>
           <textarea
             id="contextInput"
             rows={3}
@@ -387,17 +429,22 @@ const StandardCompareView = () => {
           />
         </div>
 
+        {/* Compare Button */}
         <button
-          className="action-button compare-btn"
+          className="compare-btn"
           onClick={handleCompare}
           disabled={!baseFileId || !newFileId || isComparing}
         >
-          {isComparing ? 'Comparing...' : <><FaVial /> &nbsp; Compare PDFs</>}
+          {isComparing ? 'Comparing...' : 'Compare PDFs'}
         </button>
       </section>
 
+      {/* Comparison Results */}
       {comparisonResult && (
         <section className="comparison-results">
+          <h3>Comparison Results</h3>
+
+          {/* Summary Section */}
           <div className="summary-section">
             <h4>Summary</h4>
             <div className="summary-content">{comparisonResult.summary}</div>
@@ -409,18 +456,49 @@ const StandardCompareView = () => {
             </div>
           </div>
 
+          {/* Changes List */}
           <div className="changes-section">
             <h4>Detailed Changes</h4>
             <div className="changes-filter">
-              {/* Filter buttons */}
+              <button
+                className={`filter-btn ${currentFilter === 'all' ? 'active' : ''}`}
+                onClick={() => setCurrentFilter('all')}
+              >
+                All
+              </button>
+              <button
+                className={`filter-btn ${currentFilter === 'added' ? 'active' : ''}`}
+                onClick={() => setCurrentFilter('added')}
+              >
+                Added
+              </button>
+              <button
+                className={`filter-btn ${currentFilter === 'modified' ? 'active' : ''}`}
+                onClick={() => setCurrentFilter('modified')}
+              >
+                Modified
+              </button>
+              <button
+                className={`filter-btn ${currentFilter === 'removed' ? 'active' : ''}`}
+                onClick={() => setCurrentFilter('removed')}
+              >
+                Removed
+              </button>
             </div>
+
             <div className="changes-list">
-              {filteredChanges.length > 0 ? (
+              {filteredChanges.length === 0 ? (
+                <div className="empty-state">
+                  <div className="empty-state-icon">✓</div>
+                  <div className="empty-state-text">No changes of this type detected</div>
+                </div>
+              ) : (
                 filteredChanges.map((change, index) => (
                   <div
                     key={index}
                     className={`change-item ${change.change_type}`}
                     onClick={() => openChangeModal(index)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <div className="change-header">
                       <div className="change-name">{change.specification_name}</div>
@@ -428,36 +506,238 @@ const StandardCompareView = () => {
                         {change.change_type}
                       </div>
                     </div>
-                    {/* ... rest of the card content */}
+
+                    <div className="change-values">
+                      <div className="value-box old">
+                        <div className="value-label">Old Version</div>
+                        <div className="value-content">
+                          {change.old_value || <span className="null">Not present</span>}
+                        </div>
+                      </div>
+                      <div className="value-box new">
+                        <div className="value-label">New Version</div>
+                        <div className="value-content">
+                          {change.new_value || <span className="null">Removed</span>}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="change-description">{change.description}</div>
+
+                    <div className="change-pages">
+                      <div className="page-ref">
+                        <strong>Old PDF:</strong> Page{change.pages_old.length > 1 ? 's' : ''}{' '}
+                        {change.pages_old.length > 0 ? change.pages_old.join(', ') : 'N/A'}
+                      </div>
+                      <div className="page-ref">
+                        <strong>New PDF:</strong> Page{change.pages_new.length > 1 ? 's' : ''}{' '}
+                        {change.pages_new.length > 0 ? change.pages_new.join(', ') : 'N/A'}
+                      </div>
+                    </div>
                   </div>
                 ))
-              ) : (
-                <div className="empty-state">
-                  {/* ... empty state ... */}
-                </div>
               )}
             </div>
           </div>
         </section>
       )}
-      {/* ... Modals ... */}
+
+      {/* Preview Modal */}
+      {showPreviewModal && baseFileId && newFileId && (
+        <div className="preview-modal" onClick={() => setShowPreviewModal(false)}>
+          <div className="preview-modal-container" onClick={(e) => e.stopPropagation()}>
+            <button className="close-preview-btn" onClick={() => setShowPreviewModal(false)}>
+              Close Preview
+            </button>
+            <div className="preview-grid">
+              <div className="preview-panel">
+                <div className="preview-panel-header">
+                  <h4>Base Version (Original)</h4>
+                </div>
+                <div className="preview-content">
+                  <iframe
+                    src={`/view-pdf/${baseFileId}`}
+                    className="pdf-iframe"
+                    title="Base PDF Preview"
+                  />
+                </div>
+              </div>
+              <div className="preview-panel">
+                <div className="preview-panel-header">
+                  <h4>New Version (Updated)</h4>
+                </div>
+                <div className="preview-content">
+                  <iframe
+                    src={`/view-pdf/${newFileId}`}
+                    className="pdf-iframe"
+                    title="New PDF Preview"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Detail Modal */}
+      {showChangeModal && selectedChange && baseFileId && newFileId && (
+        <div className="change-modal" onClick={closeChangeModal}>
+          <div className="change-modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="change-modal-header">
+              <h3>{selectedChange.specification_name}</h3>
+              <div className="modal-nav-controls">
+                <span className="modal-counter">
+                  {selectedChangeIndex! + 1} of {filteredChanges.length}
+                </span>
+                <button
+                  className="modal-nav-btn"
+                  onClick={() => navigateChange('prev')}
+                  disabled={selectedChangeIndex === 0}
+                  title="Previous change"
+                >
+                  ←
+                </button>
+                <button
+                  className="modal-nav-btn"
+                  onClick={() => navigateChange('next')}
+                  disabled={selectedChangeIndex === filteredChanges.length - 1}
+                  title="Next change"
+                >
+                  →
+                </button>
+                <button className="modal-close-btn" onClick={closeChangeModal} title="Close">
+                  ✕
+                </button>
+              </div>
+            </div>
+            <div className="change-modal-body">
+              <div className="modal-change-type">
+                <span className={`change-type-badge ${selectedChange.change_type}`}>
+                  {selectedChange.change_type}
+                </span>
+              </div>
+
+              <div className="modal-pdf-grid">
+                <div className="modal-pdf-container">
+                  <div className="modal-pdf-header">
+                    <div className="modal-pdf-label">
+                      Original Version - Page{selectedChange.pages_old.length > 1 ? 's' : ''}:{' '}
+                      {selectedChange.pages_old.length > 0
+                        ? selectedChange.pages_old.join(', ')
+                        : 'N/A'}
+                    </div>
+                    <div className="modal-value-section">
+                      <div className="modal-value-title">Old Value:</div>
+                      <div className="modal-value-display">
+                        {selectedChange.old_value || (
+                          <span className="null">
+                            {selectedChange.change_type === 'added'
+                              ? 'Not in original version'
+                              : 'Not present'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {selectedChange.pages_old.length > 0 ? (
+                    <iframe
+                      src={`/view-pdf/${baseFileId}#page=${selectedChange.pages_old[0]}`}
+                      className="modal-pdf-viewer"
+                      title="Old Version PDF"
+                    />
+                  ) : (
+                    <div className="modal-pdf-placeholder">Not present in original version</div>
+                  )}
+                </div>
+                <div className="modal-pdf-container">
+                  <div className="modal-pdf-header">
+                    <div className="modal-pdf-label">
+                      New Version - Page{selectedChange.pages_new.length > 1 ? 's' : ''}:{' '}
+                      {selectedChange.pages_new.length > 0
+                        ? selectedChange.pages_new.join(', ')
+                        : 'N/A'}
+                    </div>
+                    <div className="modal-value-section">
+                      <div className="modal-value-title">New Value:</div>
+                      <div className="modal-value-display">
+                        {selectedChange.new_value || (
+                          <span className="null">
+                            {selectedChange.change_type === 'removed'
+                              ? 'Removed in new version'
+                              : 'Not present'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {selectedChange.pages_new.length > 0 ? (
+                    <iframe
+                      src={`/view-pdf/${newFileId}#page=${selectedChange.pages_new[0]}`}
+                      className="modal-pdf-viewer"
+                      title="New Version PDF"
+                    />
+                  ) : (
+                    <div className="modal-pdf-placeholder">Removed in new version</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="modal-description">
+                <strong>Change Description:</strong>
+                <p>{selectedChange.description}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-// Main CompareView component that shows tool selection
+const comparisonTools = [
+  {
+    id: 'standard_comparison',
+    title: 'Standard PDF Comparison',
+    description: 'Upload two PDFs and get a summary of changes. Ideal for version control.',
+    icon: <FaBalanceScale size={48} />,
+  },
+  {
+    id: 'semantic_comparison',
+    title: 'Semantic Search Comparison',
+    description: 'Compare documents based on semantic meaning. (Coming soon!)',
+    icon: <FaSearchPlus size={48} />,
+    disabled: true,
+  },
+]
+
 export function CompareView() {
   const [selectedTool, setSelectedTool] = useState<string | null>(null)
-
-  // Auto-select standard comparison for now
-  useEffect(() => {
-    setSelectedTool('standard_comparison')
-  }, [])
 
   if (selectedTool === 'standard_comparison') {
     return <StandardCompareView />
   }
 
-  // The tool selection UI can be a future enhancement
-  return null 
+  return (
+    <div className="home-container">
+      <div className="home-header">
+        <h1>PDF Comparison Tools</h1>
+        <p className="home-subtitle">Choose a tool to compare your PDF documents.</p>
+      </div>
+      <div className="cards-wrapper">
+        {comparisonTools.map((card) => (
+          <div
+            key={card.id}
+            className={`card ${card.disabled ? 'disabled' : ''}`}
+            onClick={() => !card.disabled && setSelectedTool(card.id)}
+          >
+            <div className="card-icon">{card.icon}</div>
+            <div className="card-content">
+              <h2 className="card-title">{card.title}</h2>
+              <p className="card-description">{card.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }

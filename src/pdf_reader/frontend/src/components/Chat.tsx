@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, KeyboardEvent, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useAppStore } from '../store/useAppStore'
 import type { ChatMessage } from '../types'
-import { IoClose } from "react-icons/io5"; // Import close icon
+import { IoClose, IoTrashOutline, IoSend } from "react-icons/io5";
 
 interface ChatProps {
   modelOptions?: string[]
@@ -226,6 +226,9 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               ))}
             </select>
           </div>
+          <button className="clear-chat-btn" onClick={handleClearChat} title="Clear Chat">
+            <IoTrashOutline size={24} />
+          </button>
           <button className="close-chat-btn" onClick={() => setIsQAPopupOpen(false)} title="Close Chat">
             <IoClose size={24} />
           </button>
@@ -284,9 +287,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
             disabled={isLoading || !question.trim() || uploadedFileIds.length === 0}
             title="Send message"
           >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
-            </svg>
+            <IoSend />
           </button>
         </div>
       </div>
@@ -306,11 +307,11 @@ function ChatMessageComponent({ message }: ChatMessageProps) {
   return (
     <div className={`chat-message ${message.role}`}>
       <div className="chat-message-role">{roleLabel}</div>
-      <div className="chat-message-content">
+      <div className={`chat-message-content${isError ? ' chat-error' : ''}`}>
         {message.role === 'assistant' && !isError ? (
           <ReactMarkdown>{message.content}</ReactMarkdown>
         ) : (
-          <span style={isError ? { color: '#EF4444' } : undefined}>{message.content}</span>
+          <span>{message.content}</span>
         )}
       </div>
     </div>
