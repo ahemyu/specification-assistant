@@ -1,4 +1,15 @@
-/* Modal Styles */
+/* Modern Modal Styles - Inspired by chat.css */
+
+:root {
+  --modal-bg: #ffffff;
+  --modal-text: #1f2937;
+  --modal-border: #e5e7eb;
+  --modal-header-bg: #fdfdfd;
+  --modal-overlay-bg: rgba(17, 24, 39, 0.7); /* Darker, less transparent */
+  --modal-accent-color: cadetblue;
+  --modal-secondary-text: #6b7280;
+  --modal-code-bg: #f7f8fa;
+}
 
 .modal {
     display: none;
@@ -8,9 +19,10 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(4px);
-    animation: fadeIn 0.3s ease;
+    background: var(--modal-overlay-bg);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease-in-out;
 }
 
 .modal.show {
@@ -20,22 +32,23 @@
 }
 
 .modal-content {
-    background: white;
-    border-radius: 20px;
+    background: var(--modal-bg);
+    border-radius: 16px;
     width: 90%;
     max-width: 900px;
     max-height: 85vh;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
     display: flex;
     flex-direction: column;
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
+    border: 1px solid var(--modal-border);
 }
 
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(40px) scale(0.95);
+        transform: translateY(20px) scale(0.98);
     }
     to {
         opacity: 1;
@@ -44,137 +57,118 @@
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal-header {
-    padding: 28px 32px;
-    border-bottom: 2px solid #e2e8f0;
+    padding: 20px 28px;
+    border-bottom: 1px solid var(--modal-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    background: var(--modal-header-bg);
+    flex-shrink: 0;
 }
 
 .modal-header h2 {
     margin: 0;
-    color: #1a202c;
-    font-size: 1.6em;
-    font-weight: 700;
+    color: var(--modal-text);
+    font-size: 1.125rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    padding-right: 16px;
 }
 
 .modal-close {
     background: transparent;
     border: none;
-    font-size: 2em;
-    color: #718096;
+    color: var(--modal-secondary-text);
     cursor: pointer;
-    transition: all 0.3s ease;
-    padding: 0;
-    width: 40px;
-    height: 40px;
-    border-radius: 20px;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    line-height: 1;
+    flex-shrink: 0;
 }
 
 .modal-close:hover {
-    background: #e2e8f0;
-    color: #1a202c;
-    transform: rotate(90deg);
+    background: #f3f4f6;
+    color: var(--modal-text);
+    transform: scale(1.1);
 }
 
 .modal-body {
     padding: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
     flex: 1;
     min-height: 0;
+    overflow-y: auto;
+    background-color: var(--modal-code-bg);
 }
 
 .preview-info {
-    padding: 20px 32px;
-    background: #f7fafc;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 12px 28px;
+    background: var(--modal-bg);
+    border-bottom: 1px solid var(--modal-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 1;
 }
 
 .preview-filename {
-    font-weight: 600;
-    color: #2d3748;
-    font-size: 1.05em;
+    font-weight: 500;
+    color: var(--modal-text);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .preview-size {
-    color: #718096;
-    font-size: 0.9em;
-    background: white;
-    padding: 6px 14px;
-    border-radius: 6px;
-    border: 1px solid #e2e8f0;
+    color: var(--modal-secondary-text);
+    font-size: 0.8rem;
+    font-weight: 500;
+    background: #f3f4f6;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 1px solid transparent;
 }
 
 .preview-content {
-    padding: 32px;
-    overflow-y: auto;
-    flex: 1;
+    padding: 24px 28px;
     background: white;
-    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-    font-size: 0.9em;
-    line-height: 1.8;
-    color: #2d3748;
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: #374151;
     white-space: pre-wrap;
     word-wrap: break-word;
 }
 
-.preview-loading {
+.preview-loading, .preview-error {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 200px;
-    color: #718096;
-    font-size: 1.1em;
+    color: var(--modal-secondary-text);
+    font-size: 1rem;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    padding: 20px;
 }
 
 .preview-error {
-    color: #e53e3e;
-    background: #fff5f5;
-    padding: 20px;
+    color: #c53030;
+    background: #fff0f0;
+    border: 1px solid #fecaca;
     border-radius: 8px;
-    border: 2px solid #fc8181;
     margin: 20px;
-    text-align: center;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-}
-
-/* Custom scrollbar for preview content */
-.preview-content::-webkit-scrollbar {
-    width: 10px;
-}
-
-.preview-content::-webkit-scrollbar-track {
-    background: #f7fafc;
-    border-radius: 5px;
-}
-
-.preview-content::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 5px;
-}
-
-.preview-content::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
 }

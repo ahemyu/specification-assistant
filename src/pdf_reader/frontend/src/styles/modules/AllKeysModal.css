@@ -1,0 +1,185 @@
+:root {
+  --modal-bg: #f7f8fa; /* Light gray, almost white */
+  --modal-text: #1f2937; /* Dark gray for text */
+  --modal-border: #e5e7eb; /* Light border color */
+  --modal-header-bg: #ffffff; /* White header */
+  --accent-color: cadetblue;
+  --accent-color-light: rgba(95, 158, 160, 0.15); /* Lighter accent for focus rings, etc. */
+}
+
+.all-keys-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  backdrop-filter: blur(5px); /* Add a blur effect to the background */
+}
+
+.all-keys-modal-content {
+  background-color: var(--modal-bg);
+  border-radius: 20px;
+  max-width: 900px; /* Increased max-width */
+  max-height: 90vh; /* Increased max-height */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2); /* Softer, larger shadow */
+  border: 1px solid var(--modal-border);
+  overflow: hidden;
+  /* Add animation */
+  animation: slideDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.all-keys-modal-header {
+  padding: 1.25rem 2rem; /* Adjusted padding */
+  border-bottom: 1px solid var(--modal-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--modal-header-bg);
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.all-keys-modal-title {
+  margin: 0;
+  font-size: 1.3rem; /* Slightly larger title */
+  color: var(--modal-text);
+  font-weight: 700; /* Bolder */
+}
+
+.all-keys-modal-subtitle {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.all-keys-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.all-keys-modal-close-btn:hover {
+  background: #f1f5f9; /* Lighter hover background */
+  color: #1f2937;
+  transform: scale(1.1); /* Match chat close button */
+}
+
+.all-keys-modal-body {
+  padding: 1.5rem 2rem 2rem; /* Adjusted padding */
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Modern Scrollbar for modal body */
+.all-keys-modal-body::-webkit-scrollbar {
+    width: 10px;
+}
+.all-keys-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.all-keys-modal-body::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 10px;
+    border: 2px solid var(--modal-bg);
+}
+.all-keys-modal-body::-webkit-scrollbar-thumb:hover {
+    background: #adb5bd;
+}
+
+
+.category-section {
+  margin-bottom: 2.5rem;
+}
+.category-section:last-of-type {
+  margin-bottom: 1rem; /* Less margin on the last section */
+}
+
+.category-header {
+  padding-bottom: 0.75rem; /* More space */
+  border-bottom: 1px solid var(--modal-border); /* Softer border */
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.category-title {
+  margin: 0;
+  font-size: 1.15rem; /* Larger category title */
+  color: var(--accent-color);
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.keys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.key-item {
+  padding: 0.85rem 1.1rem;
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0; /* Slightly different border color */
+  border-radius: 12px; /* More rounded */
+  font-size: 0.9rem;
+  color: #374151;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex; /* use flex to align content */
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.key-item:hover {
+  transform: translateY(-3px); /* Slightly more lift */
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06); /* Softer, larger hover shadow */
+  border-color: var(--accent-color);
+}
+
+.key-item-content {
+  /* This container is now part of the .key-item flex layout */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1; /* Take up available space */
+}
+
+.key-item-index {
+  color: #9ca3af;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.key-item-name {
+  flex: 1;
+  font-weight: 500;
+  color: #1f2937; /* Darker text for better readability */
+}

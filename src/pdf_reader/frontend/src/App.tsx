@@ -2,7 +2,7 @@ import { Notifications } from './components/Notifications'
 import Sidebar from './components/Sidebar'
 import { MainContainer } from './components/MainContainer'
 import { Home } from './components/Home'
-import { CompareView } from './components/CompareView'
+import { CompareView } from './components/PDF-Vergleich/CompareView'
 import { useAppStore } from './store/useAppStore'
 import { QAPopup } from './components/QAPopup'
 

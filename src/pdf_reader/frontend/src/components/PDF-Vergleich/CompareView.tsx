@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import type { ComparisonResult, ChangeFilter } from '../types'
-import { showNotification } from '../utils/notifications'
+import type { ComparisonResult, ChangeFilter } from '../../types'
+import { showNotification } from '../../utils/notifications'
 import { FaBalanceScale, FaSearchPlus } from 'react-icons/fa'
-import '../styles/modules/home.css' // For card styles
+import "../../styles/modules/home.css";
 
 const STORAGE_KEY_PREFIX = 'pdf_compare_'
 const STORAGE_KEYS = {

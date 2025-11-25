@@ -1,11 +1,13 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { showNotification } from '../../utils/notifications'
 import { Button } from '../ui'
 import { CarouselModal } from '../CarouselModal'
-import { SummaryView } from '../SummaryView'
-import { getKeysForProductType, filterKeysByCount, type KeyWithCategory } from '../../data/keyTemplates'
+import { SummaryView } from './SummaryView'
+import { getKeysForProductType, filterKeysByCount } from '../../data/keyTemplates'
 import type { ExtractionResult } from '../../types'
+import { AllKeysModal } from '../AllKeysModal'
+import { ManualKeyInput } from '../ManualKeyInput'
 
 // Backend extraction response format
 interface BackendExtractionResult {
@@ -47,7 +49,7 @@ const PRODUCT_TYPES = ['Stromwandler', 'Spannungswandler', 'Kombiwandler'] as co
 type ProductType = typeof PRODUCT_TYPES[number]
 
 export function ExtractionView() {
-  const keyTextareaRef = useRef<HTMLTextAreaElement>(null)
+  // const keyTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [isExtracting, setIsExtracting] = useState(false)
   const [manualKeys, setManualKeys] = useState('')
@@ -385,11 +387,9 @@ export function ExtractionView() {
                   }`}
                 >
                   <div className="product-card-icon">
-                    <span style={{ fontSize: '3em' }}>
-                      {type === 'Stromwandler' && '🔌'}
-                      {type === 'Spannungswandler' && '⚡'}
-                      {type === 'Kombiwandler' && '🎛️'}
-                    </span>
+                    {type === 'Stromwandler' && <img src="/assets/current-transformer.png" alt="Current Transformer" style={{ height: '10em' }} />}
+                    {type === 'Spannungswandler' && <img src="/assets/voltage-transformer.png" alt="Voltage Transformer" style={{ height: '10em' }} />}
+                    {type === 'Kombiwandler' && <img src="/assets/combi-transformer.png" alt="Combi Transformer" style={{ height: '10em' }} />}
                   </div>
                   <div className="product-card-content">
                     <h3 className="product-card-title">{type}</h3>
@@ -571,261 +571,32 @@ export function ExtractionView() {
 
           {/* Manual Input */}
           {showDevInput && (
-            <div className="tab-content active" id="manualTabContent" style={{ marginTop: '2rem' }}>
-              <div className="key-input-area">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h3>Enter Keys to Extract Manually</h3>
-                  <button
-                    onClick={() => setShowDevInput(false)}
-                    style={{
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '4px',
-                      border: '1px solid #6B7280',
-                      backgroundColor: '#374151',
-                      color: '#E5E7EB',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                    }}
-                  >
-                    Hide
-                  </button>
-                </div>
-                <p className="section-subtitle">Enter one key per line</p>
-
-                <div className="key-input-group">
-                  <textarea
-                    id="keyInput"
-                    ref={keyTextareaRef}
-                    rows={8}
-                    placeholder="Enter key names, one per line..."
-                    value={manualKeys}
-                    onChange={(e) => setManualKeys(e.target.value)}
-                  />
-                </div>
-
-                <Button
-                  id="extractBtn"
-                  className="extract-btn"
-                  onClick={handleExtractManually}
-                  disabled={uploadedFileIds.length === 0 || isExtracting}
-                  isLoading={isExtracting}
-                  title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : ''}
-                >
-                  {isExtracting ? 'Extracting keys...' : 'Extract Keys'}
-                </Button>
-
-                {uploadedFileIds.length === 0 && (
-                  <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em' }}>
-                    Please upload PDF files in the Upload tab first
-                  </p>
-                )}
-
-                {isExtracting && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '1rem 1.5rem',
-                    backgroundColor: '#e6f9f8',
-                    borderRadius: '20px',
-                    border: '2px solid #59BDB9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                  }}>
-                    <div className="spinner" style={{
-                      width: '24px',
-                      height: '24px',
-                      borderWidth: '3px',
-                      borderColor: '#e2e8f0',
-                      borderTopColor: '#59BDB9',
-                    }} />
-                    <div>
-                      <div style={{ fontSize: '0.95rem', color: '#1C2C8C', fontWeight: '600' }}>
-                        Extracting keys using AI...
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: '#4a5568', marginTop: '0.25rem' }}>
-                        This may take a few moments depending on the number of keys and pages
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {extractionComplete && extractionResultsData && extractionResultsData.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      console.log('Show Results button clicked')
-                      console.log('extractionResultsData:', extractionResultsData)
-                      openCarousel()
-                    }}
-                    className="view-results-btn-inline"
-                    style={{ marginTop: '1rem', width: '100%' }}
-                  >
-                    View Results ({extractionResultsData.length} keys)
-                  </Button>
-                )}
-              </div>
-            </div>
+            <ManualKeyInput
+              onHide={() => setShowDevInput(false)}
+              manualKeys={manualKeys}
+              onManualKeysChange={setManualKeys}
+              onExtract={handleExtractManually}
+              isExtracting={isExtracting}
+              uploadedFileIds={uploadedFileIds}
+              extractionComplete={extractionComplete}
+              extractionResultsData={extractionResultsData}
+              onViewResults={() => {
+                console.log('Show Results button clicked')
+                console.log('extractionResultsData:', extractionResultsData)
+                openCarousel()
+              }}
+            />
           )}
         </div>
       )}
 
       {/* All Keys Modal */}
-      {showAllKeysModal && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.75)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000,
-            padding: '2rem',
-          }}
-          onClick={() => setShowAllKeysModal(false)}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '20px',
-              maxWidth: '800px',
-              maxHeight: '80vh',
-              width: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div
-              style={{
-                padding: '1.5rem 2rem',
-                borderBottom: '2px solid #e2e8f0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-              }}
-            >
-              <div>
-                <h2 style={{ margin: 0, fontSize: '1.5rem', color: '#1C2C8C', fontWeight: '700' }}>
-                  All Keys for {selectedProductType}
-                </h2>
-                <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.95rem', color: '#4a5568' }}>
-                  {templateKeys.length} keys will be extracted
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAllKeysModal(false)}
-                style={{
-                  padding: '0.5rem 1rem',
-                  backgroundColor: '#f7fafc',
-                  color: '#4a5568',
-                  border: '2px solid #e2e8f0',
-                  borderRadius: '12px',
-                  cursor: 'pointer',
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  transition: 'all 0.2s ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#e2e8f0'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f7fafc'
-                }}
-              >
-                Close
-              </button>
-            </div>
-
-            {/* Content */}
-            <div
-              style={{
-                padding: '1.5rem 2rem',
-                overflowY: 'auto',
-                flex: 1,
-              }}
-            >
-              {(() => {
-                // Group keys by category
-                const grouped = templateKeys.reduce((acc, key) => {
-                  if (!acc[key.category]) {
-                    acc[key.category] = []
-                  }
-                  acc[key.category].push(key)
-                  return acc
-                }, {} as Record<string, KeyWithCategory[]>)
-
-                let globalIndex = 0
-                return Object.entries(grouped).map(([category, keys]) => (
-                  <div key={category} style={{ marginBottom: '2rem' }}>
-                    {/* Category Header */}
-                    <div
-                      style={{
-                        padding: '0.75rem 1rem',
-                        backgroundColor: '#f7fafc',
-                        borderBottom: '3px solid #59BDB9',
-                        marginBottom: '1rem',
-                        borderRadius: '8px 8px 0 0',
-                      }}
-                    >
-                      <h3 style={{ margin: 0, fontSize: '1rem', color: '#1C2C8C', fontWeight: '700' }}>
-                        {category} ({keys.length} keys)
-                      </h3>
-                    </div>
-
-                    {/* Keys Grid */}
-                    <div
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                        gap: '0.75rem',
-                        marginBottom: '1rem',
-                      }}
-                    >
-                      {keys.map((key) => {
-                        const index = globalIndex++
-                        return (
-                          <div
-                            key={index}
-                            style={{
-                              padding: '0.75rem 1rem',
-                              backgroundColor: '#f7fafc',
-                              border: '2px solid #e2e8f0',
-                              borderRadius: '12px',
-                              fontSize: '0.9rem',
-                              color: '#2d3748',
-                              transition: 'all 0.2s ease',
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = '#e6f9f8'
-                              e.currentTarget.style.borderColor = '#59BDB9'
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = '#f7fafc'
-                              e.currentTarget.style.borderColor = '#e2e8f0'
-                            }}
-                          >
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                              <span style={{ color: '#9CA3AF', fontSize: '0.85rem', fontWeight: '600' }}>
-                                {index + 1}.
-                              </span>
-                              <span style={{ flex: 1 }}>{key.name}</span>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))
-              })()}
-            </div>
-          </div>
-        </div>
-      )}
+      <AllKeysModal
+        isOpen={showAllKeysModal}
+        onClose={() => setShowAllKeysModal(false)}
+        templateKeys={templateKeys}
+        selectedProductType={selectedProductType}
+      />
 
       {/* Carousel Modal */}
       <CarouselModal

@@ -1,5 +1,6 @@
 import { Dialog, DialogPanel, DialogTitle } from '@headlessui/react'
 import { useState, useEffect } from 'react'
+import { IoClose } from 'react-icons/io5'
 
 interface PreviewModalProps {
   isOpen: boolean
@@ -47,7 +48,6 @@ export function PreviewModal({ isOpen, onClose, fileId, filename }: PreviewModal
     loadPreview()
   }, [isOpen, fileId])
 
-  const sizeKB = previewData ? (previewData.size / 1024).toFixed(2) : '0'
 
   return (
     <Dialog open={isOpen} onClose={onClose} className={`modal ${isOpen ? 'show' : ''}`}>
@@ -62,16 +62,12 @@ export function PreviewModal({ isOpen, onClose, fileId, filename }: PreviewModal
             className="modal-close"
             aria-label="Close"
           >
-            &times;
+            <IoClose size={24} />
           </button>
         </div>
 
         <div className="modal-body">
-          <div className="preview-info">
-            <div className="preview-filename">{filename}</div>
-            <div className="preview-size">{sizeKB} KB</div>
-          </div>
-
+          
           <div className="preview-content">
             {isLoading && (
               <div className="preview-loading">Loading text content...</div>
