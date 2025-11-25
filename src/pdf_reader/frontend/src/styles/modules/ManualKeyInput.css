@@ -1,0 +1,64 @@
+/* src/pdf_reader/frontend/src/styles/modules/ManualKeyInput.css */
+
+.manual-key-input-container {
+  margin-top: 2rem;
+}
+
+.manual-input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.hide-manual-input-btn {
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #6B7280;
+  background-color: #374151;
+  color: #E5E7EB;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.upload-notice {
+  color: #EF4444;
+  margin-top: 8px;
+  font-size: 0.9em;
+  text-align: center;
+}
+
+.extraction-in-progress-notice {
+  margin-top: 1rem;
+  padding: 1rem 1.5rem;
+  background-color: #e6f9f8;
+  border-radius: 20px;
+  border: 2px solid #59BDB9;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.extraction-in-progress-notice .spinner {
+  width: 24px;
+  height: 24px;
+  border-width: 3px;
+  border-color: #e2e8f0;
+  border-top-color: #59BDB9;
+}
+
+.extraction-notice-title {
+  font-size: 0.95rem;
+  color: #1C2C8C;
+  font-weight: 600;
+}
+
+.extraction-notice-subtitle {
+  font-size: 0.85rem;
+  color: #4a5568;
+  margin-top: 0.25rem;
+}
+
+.view-results-btn-inline {
+  margin-top: 1rem;
+  width: 100%;
+}

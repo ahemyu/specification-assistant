@@ -1,4 +1,4 @@
-import { FaUser, FaCog, FaSignOutAlt, FaFileAlt, FaBalanceScale, FaUpload, FaKey } from "react-icons/fa";
+import { FaUser, FaCog, FaSignOutAlt, FaFileAlt, FaBalanceScale, FaUpload, FaKey, FaListAlt } from "react-icons/fa";
 import { IoHome, IoChevronForward } from "react-icons/io5"; // Import IoChevronForward
 import { useAppStore } from "../store/useAppStore";
 
@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     setActiveSubMenuItem(null); // Clear sub-menu item when switching to a different main view
   };
 
-  const handleSubMenuClick = (item: "upload" | "extract") => {
+  const handleSubMenuClick = (item: "upload" | "extract" | "summary") => {
     setActiveView("spec_assistant");
     setActiveSubMenuItem(item);
   };
@@ -78,6 +78,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                 >
                   <span className="icon"><FaKey /></span>
                   <span>Extract Keys</span>
+                </li>
+                <li
+                  className={`menu-item ${activeSubMenuItem === "summary" ? "active" : ""}`}
+                  onClick={() => handleSubMenuClick("summary")}
+                >
+                  <span className="icon"><FaListAlt /></span>
+                  <span>Summary</span>
                 </li>
               </>
             )}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAppStore } from '../store/useAppStore';
-import { QAView } from './views/QAView';
+import { QAView } from './Spec-Assistant/QAView';
 import '../styles/modules/qapopup.css';
 
 export const QAPopup: React.FC = () => {

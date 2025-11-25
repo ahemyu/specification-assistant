@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
-import { useAppStore } from '../store/useAppStore'
-import type { ExtractionResult } from '../types'
+import { useAppStore } from '../../store/useAppStore'
+import type { ExtractionResult } from '../../types'
 
 interface SummaryViewProps {
   onReviewKey: (keyName: string) => void
