@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { showNotification } from '../../utils/notifications'
 import { Button } from '../ui'
@@ -49,7 +49,7 @@ const PRODUCT_TYPES = ['Stromwandler', 'Spannungswandler', 'Kombiwandler'] as co
 type ProductType = typeof PRODUCT_TYPES[number]
 
 export function ExtractionView() {
-  const keyTextareaRef = useRef<HTMLTextAreaElement>(null)
+  // const keyTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const [isExtracting, setIsExtracting] = useState(false)
   const [manualKeys, setManualKeys] = useState('')

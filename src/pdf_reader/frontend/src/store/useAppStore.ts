@@ -12,7 +12,7 @@ import type {
 import type { KeyWithCategory } from '../data/keyTemplates'
 
 export type ActiveView = 'home' | 'spec_assistant' | 'compare';
-export type ActiveSubMenuItem = 'upload' | 'extract' | 'qa' | null;
+export type ActiveSubMenuItem = 'upload' | 'extract' | 'summary' | null;
 
 interface AppState {
   // File management state
