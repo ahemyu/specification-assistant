@@ -63,6 +63,156 @@ npm run build
 
 Access at: http://localhost:8000 (production) or http://localhost:5173 (development)
 
+## Windows Installation and Running
+
+This section provides detailed instructions for setting up and running the application on a fresh Windows machine with no relevant software pre-installed.
+
+### Step 1: Install Prerequisites
+
+Install the following software before proceeding:
+
+1. **Python 3.11 or higher**
+   - Download from: https://www.python.org/downloads/
+   - During installation, check "Add Python to PATH"
+   - Verify installation: Open PowerShell or Command Prompt and run:
+     ```powershell
+     python --version
+     ```
+
+2. **Node.js 18 or higher**
+   - Download from: https://nodejs.org/
+   - Use the LTS (Long Term Support) version
+   - This will also install npm (Node Package Manager)
+   - Verify installation:
+     ```powershell
+     node --version
+     npm --version
+     ```
+
+3. **Git**
+   - Download from: https://git-scm.com/download/win
+   - Use default installation settings
+   - Verify installation:
+     ```powershell
+     git --version
+     ```
+
+4. **UV Package Manager**
+   - Open PowerShell as Administrator and run:
+     ```powershell
+     pip install uv
+     ```
+   - Verify installation:
+     ```powershell
+     uv --version
+     ```
+
+### Step 2: Clone the Repository
+
+First create an SSH key and add it to your GitLab account. Then run:
+
+```powershell
+git clone git@code.trench-group.net:operational-excellence-trench-germany/specification-assistant.git
+cd specification-assistant
+```
+
+### Step 3: Run the Setup Script
+
+From the project root directory, run the automated setup script:
+
+```powershell
+.\setup-windows.ps1
+```
+
+The script will:
+- Verify all prerequisites are installed
+- Prompt you for your Azure OpenAI API key and set it as an environment variable
+- Install Python dependencies
+- Install frontend dependencies
+- Build the frontend for production
+
+**Note:** If you encounter a script execution error, you may need to change the PowerShell execution policy first:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### Step 4: Run the Application
+
+After the setup script completes successfully:
+
+```powershell
+cd src\pdf_reader
+uv run main.py
+```
+
+Then open your browser and go to: http://localhost:8000
+
+---
+
+## Manual Setup (Reference)
+
+If the automated setup script does not work, you can follow these manual steps:
+
+### Install Python Dependencies
+
+From the project root directory:
+```powershell
+uv sync
+```
+
+### Set Up Environment Variables
+
+Set your Azure OpenAI API key:
+```powershell
+[System.Environment]::SetEnvironmentVariable('OPENAI_API_KEY', 'your-api-key-here', 'User')
+```
+Note: This sets the variable for the current user systemwide. Open a new terminal to bring it into effect.
+
+### Install Frontend Dependencies
+
+Navigate to the frontend directory:
+```powershell
+cd src\pdf_reader\frontend
+npm install
+```
+
+### Build the Frontend
+
+While in the frontend directory:
+```powershell
+npm run build
+```
+
+### Start the Backend Server
+
+Go into `src\pdf_reader\` and start the backend:
+```powershell
+cd src\pdf_reader
+uv run main.py
+```
+
+Open your web browser and go to: http://localhost:8000
+
+---
+
+## Troubleshooting Windows-Specific Issues
+
+- **"python is not recognized"**: Make sure Python was added to PATH during installation. Reinstall Python and check "Add Python to PATH".
+
+- **"uv is not recognized"**: Close and reopen PowerShell after installing uv, or reinstall with `pip install uv`.
+
+- **PowerShell script execution errors**: You may need to change the execution policy:
+  ```powershell
+  Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+  ```
+
+- **Port already in use**: If port 8000 or 5173 is already in use, you can change the port:
+  ```powershell
+  uv run uvicorn src.pdf_reader.main:app --reload --host 0.0.0.0 --port 8001
+  ```
+
+- **Module not found errors**: Make sure you ran `uv sync` from the project root directory.
+
 ## Usage
 
 1. Upload PDFs via web interface
