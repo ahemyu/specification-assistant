@@ -63,7 +63,6 @@ export function ExtractionView() {
   const {
     uploadedFileIds,
     extractionResultsData,
-    reviewedKeys,
     detectedProductType,
     productTypeConfidence,
     selectedProductType,
@@ -286,12 +285,16 @@ export function ExtractionView() {
   }
 
   const initializeReviewedKeys = () => {
-    if (!extractionResultsData) return
+    // Get fresh state directly from store to avoid stale closure values
+    const currentData = useAppStore.getState().extractionResultsData
+    const currentReviewedKeys = useAppStore.getState().reviewedKeys
+
+    if (!currentData) return
 
     const initialReviewedKeys: Record<string, import('../../types').ReviewedKey> = {}
-    extractionResultsData.forEach((result) => {
+    currentData.forEach((result) => {
       const keyName = result.key
-      if (!reviewedKeys[keyName]) {
+      if (!currentReviewedKeys[keyName]) {
         const originalValue = result.value || 'Not found'
         initialReviewedKeys[keyName] = {
           status: 'pending',
@@ -299,22 +302,25 @@ export function ExtractionView() {
           originalValue: originalValue,
         }
       } else {
-        initialReviewedKeys[keyName] = reviewedKeys[keyName]
+        initialReviewedKeys[keyName] = currentReviewedKeys[keyName]
       }
     })
     setReviewedKeys(initialReviewedKeys)
   }
 
   const openCarousel = () => {
+    // Get fresh state directly from store to avoid stale closure values
+    const currentData = useAppStore.getState().extractionResultsData
+
     console.log('========== OPEN CAROUSEL CALLED ==========')
-    console.log('extractionResultsData:', extractionResultsData)
-    console.log('extractionResultsData length:', extractionResultsData?.length)
+    console.log('extractionResultsData:', currentData)
+    console.log('extractionResultsData length:', currentData?.length)
     console.log('extractionComplete:', extractionComplete)
     console.log('isCarouselOpen:', isCarouselOpen)
 
-    if (!extractionResultsData || extractionResultsData.length === 0) {
+    if (!currentData || currentData.length === 0) {
       console.error('❌ CANNOT OPEN CAROUSEL: No extraction results available')
-      console.error('extractionResultsData is:', extractionResultsData)
+      console.error('extractionResultsData is:', currentData)
       showNotification('No extraction results available', 'error')
       return
     }
