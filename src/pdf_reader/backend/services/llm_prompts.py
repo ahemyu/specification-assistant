@@ -23,8 +23,11 @@ IMPORTANT INSTRUCTIONS:
    or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
    Put these IDs in the matched_line_ids field as a list of strings.
 5. Provide a clear description of where and how you found the information
-6. If the key is not found in any document, set key_value to null and explain
-   in the description
+6. If the key is not found in any document:
+   - Set key_value to null
+   - Set source_locations to an empty list []
+   - Set description to exactly "Not found"
+   - Set matched_line_ids to null
 7. Be precise about page numbers - always reference the specific pages where
    information was found
 
@@ -48,7 +51,9 @@ CRITICAL REQUIREMENT - matched_line_ids:
 For EVERY key you extract, you MUST include the matched_line_ids field with the exact location markers.
 This is NOT optional. Without line_ids, the extraction is incomplete.
 
-Example of a correct extraction:
+Examples of correct extractions:
+
+When a key IS found:
 {{
   "key_name": "Voltage Rating",
   "result": {{
@@ -56,6 +61,17 @@ Example of a correct extraction:
     "source_locations": [{{ "pdf_filename": "spec.pdf", "page_numbers": [3] }}],
     "description": "Found voltage rating in specifications table on page 3",
     "matched_line_ids": ["3_t0_r2_c1", "3_t0_r2_c2"]
+  }}
+}}
+
+When a key is NOT found:
+{{
+  "key_name": "Serial Number",
+  "result": {{
+    "key_value": null,
+    "source_locations": [],
+    "description": "Not found",
+    "matched_line_ids": null
   }}
 }}
 
@@ -78,8 +94,11 @@ IMPORTANT INSTRUCTIONS:
    or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
    Put these IDs in the matched_line_ids field as a list of strings. DO NOT skip this field.
 5. Provide a clear description of where and how you found the information.
-6. If a key is not found in any document, set key_value to null and explain
-   in the description.
+6. If a key is not found in any document:
+   - Set key_value to null
+   - Set source_locations to an empty list []
+   - Set description to exactly "Not found"
+   - Set matched_line_ids to null
 7. Be precise about page numbers - always reference the specific pages where
    information was found.
 
