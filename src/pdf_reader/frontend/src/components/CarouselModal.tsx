@@ -18,6 +18,7 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editValue, setEditValue] = useState('')
+  const [selectedRefIndex, setSelectedRefIndex] = useState(0)
   const editTextareaRef = useRef<HTMLTextAreaElement>(null)
 
   const {
@@ -74,6 +75,11 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
   useEffect(() => {
     setCurrentCardIndex(currentIndex)
   }, [currentIndex, setCurrentCardIndex])
+
+  // Reset selected reference when card changes
+  useEffect(() => {
+    setSelectedRefIndex(0)
+  }, [currentIndex])
 
   // Convert extraction results to proper format
   const results = extractionResultsData || []
@@ -155,6 +161,11 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
     setIsEditMode(false)
     setEditValue(currentReviewState?.value || '')
   }, [currentReviewState])
+
+  // Handle reference click
+  const handleReferenceClick = useCallback((refIndex: number) => {
+    setSelectedRefIndex(refIndex)
+  }, [])
 
   // Download reviewed results
   const handleDownload = useCallback(async () => {
@@ -345,6 +356,8 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
                   onCancelEdit={cancelEdit}
                   editTextareaRef={editTextareaRef}
                   onTextareaKeyDown={handleTextareaKeyDown}
+                  onReferenceClick={handleReferenceClick}
+                  selectedRefIndex={selectedRefIndex}
                 />
               </div>
             </div>
@@ -402,7 +415,7 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
 
         {/* Right Side: PDF Viewer */}
         <div className="pdf-side">
-          <PDFViewer references={pdfReferences} />
+          <PDFViewer references={pdfReferences} selectedRefIndex={selectedRefIndex} />
         </div>
       </div>
     </div>,
@@ -425,6 +438,8 @@ interface ExtractionResultCardProps {
   onCancelEdit: () => void
   editTextareaRef: React.RefObject<HTMLTextAreaElement>
   onTextareaKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => void
+  onReferenceClick: (refIndex: number) => void
+  selectedRefIndex: number
 }
 
 function ExtractionResultCard({
@@ -442,6 +457,8 @@ function ExtractionResultCard({
   onCancelEdit,
   editTextareaRef,
   onTextareaKeyDown,
+  onReferenceClick,
+  selectedRefIndex,
 }: ExtractionResultCardProps) {
   return (
     <div className="extraction-result-item">
@@ -521,10 +538,8 @@ function ExtractionResultCard({
             {sourceLocations.map((loc, i) => (
               <button
                 key={i}
-                className="reference-btn"
-                onClick={() => {
-                  // TODO: Load PDF reference
-                }}
+                className={`reference-btn ${i === selectedRefIndex ? 'active' : ''}`}
+                onClick={() => onReferenceClick(i)}
               >
                 {loc.pdf_filename} - p.{loc.page_numbers.join(', ')}
               </button>
