@@ -6,7 +6,7 @@
     width: 98vw;
     max-width: 2000px;
     height: 95vh;
-    background: white;
+    background: var(--background-color);
     border-radius: 20px;
     overflow: hidden;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
@@ -18,29 +18,22 @@
     flex: 0 0 33.333%;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #e2e8f0;
-    background: white;
+    border-right: 1px solid var(--border-color);
+    background: var(--background-color);
 }
 
 /* Carousel Modal Header */
 .carousel-modal-header {
     padding: 16px 24px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
     gap: 20px;
     flex-shrink: 0;
     min-height: 72px;
     box-sizing: border-box;
-}
-
-.carousel-modal-header h2 {
-    margin: 0;
-    color: #1a202c;
-    font-size: 1.6em;
-    font-weight: 700;
 }
 
 .carousel-counter {
@@ -48,8 +41,8 @@
     align-items: center;
     gap: 8px;
     padding: 8px 20px;
-    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%);
-    color: white;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
     border-radius: 20px;
     font-weight: 600;
     font-size: 1.1em;
@@ -91,9 +84,9 @@
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #59BDB9 0%, #3d9894 100%);
+    background: var(--button-secondary-bg);
     border: none;
-    color: white;
+    color: var(--text-color-inverted);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -104,7 +97,7 @@
 }
 
 .carousel-nav-btn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #3d9894 0%, #2a7370 100%);
+    background: var(--button-secondary-bg);
     transform: scale(1.1);
     box-shadow: 0 6px 20px rgba(89, 189, 185, 0.4);
 }
@@ -114,7 +107,7 @@
 }
 
 .carousel-nav-btn:disabled {
-    background: #e2e8f0;
+    background: var(--background-color-lighter);
     cursor: not-allowed;
     opacity: 0.4;
     box-shadow: none;
@@ -128,18 +121,18 @@
 .carousel-keyboard-hint {
     text-align: center;
     padding: 12px 24px;
-    color: #718096;
+    color: var(--text-color-lighter);
     font-size: 0.85em;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--border-color);
     flex-shrink: 0;
-    background: #f7fafc;
+    background: var(--background-color-light);
 }
 
 /* Completion Banner */
 .completion-banner {
     padding: 20px 24px;
-    background: linear-gradient(135deg, #e6f9f8 0%, #f0fdf4 100%);
-    border-top: 3px solid #87BD25;
+    background: var(--background-color-light);
+    border-top: 3px solid var(--accent-color);
     flex-shrink: 0;
     display: flex;
     align-items: center;
@@ -168,7 +161,7 @@
 }
 
 .completion-icon {
-    color: #87BD25;
+    color: var(--accent-color);
     flex-shrink: 0;
     animation: checkPulse 0.6s ease;
 }
@@ -182,16 +175,9 @@
     }
 }
 
-.completion-message h3 {
-    margin: 0 0 4px 0;
-    color: #1a202c;
-    font-size: 1.1em;
-    font-weight: 700;
-}
-
 .completion-message p {
     margin: 0;
-    color: #4a5568;
+    color: var(--text-color-light);
     font-size: 0.9em;
 }
 
@@ -203,8 +189,8 @@
 
 .completion-download-btn {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #87BD25 0%, #6a971d 100%);
-    color: white;
+    background: var(--button-accent-bg);
+    color: var(--text-color-inverted);
     border: none;
     border-radius: 12px;
     cursor: pointer;
@@ -221,7 +207,7 @@
 .completion-download-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(135, 189, 37, 0.4);
-    background: linear-gradient(135deg, #6a971d 0%, #5a7e18 100%);
+    background: var(--button-accent-bg);
 }
 
 .completion-download-btn:active {
@@ -230,8 +216,8 @@
 
 .completion-view-summary-btn {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #1C2C8C 0%, #152160 100%);
-    color: white;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
     border: none;
     border-radius: 12px;
     cursor: pointer;
@@ -248,7 +234,7 @@
 .completion-view-summary-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
-    background: linear-gradient(135deg, #152160 0%, #0e1640 100%);
+    background: var(--button-primary-bg);
 }
 
 .completion-view-summary-btn:active {
@@ -257,9 +243,9 @@
 
 .completion-close-btn {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
-    color: #4a5568;
-    border: 2px solid #cbd5e0;
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
+    color: var(--text-color-light);
+    border: 2px solid var(--border-color-light);
     border-radius: 12px;
     cursor: pointer;
     font-size: 0.95em;
@@ -269,7 +255,7 @@
 }
 
 .completion-close-btn:hover {
-    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    background: linear-gradient(135deg, var(--background-color-lighter) 0%, var(--border-color-light) 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
@@ -284,17 +270,17 @@
 }
 
 .carousel-card::-webkit-scrollbar-track {
-    background: #f7fafc;
+    background: var(--background-color-light);
     border-radius: 5px;
 }
 
 .carousel-card::-webkit-scrollbar-thumb {
-    background: linear-gradient(135deg, #59BDB9 0%, #3d9894 100%);
+    background: var(--button-secondary-bg);
     border-radius: 5px;
 }
 
 .carousel-card::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(135deg, #3d9894 0%, #2a7370 100%);
+    background: var(--button-secondary-bg);
 }
 
 /* Responsive Design */
@@ -308,7 +294,7 @@
     .carousel-side {
         flex: 0 0 40%;
         border-right: none;
-        border-bottom: 2px solid #e2e8f0;
+        border-bottom: 2px solid var(--border-color);
     }
 }
 

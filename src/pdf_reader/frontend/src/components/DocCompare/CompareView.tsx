@@ -283,7 +283,7 @@ const StandardCompareView = () => {
   return (
     <div className="comparison-container">
       <div className="comparison-header">
-        <h1>PDF Version Comparison</h1>
+        <h1>Document Comparison</h1>
         <p className="upload-subtitle"> Compare two versions of a PDF to identify changes in specifications</p>
       </div>
 
@@ -697,7 +697,7 @@ const StandardCompareView = () => {
 const comparisonTools = [
   {
     id: 'standard_comparison',
-    title: 'Standard PDF Comparison',
+    title: 'Standard Doc Comparison',
     description: 'Upload two PDFs and get a summary of changes. Ideal for version control.',
     icon: <FaBalanceScale size={48} />,
   },
@@ -720,7 +720,7 @@ export function CompareView() {
   return (
     <div className="home-container">
       <div className="home-header">
-        <h1>PDF Comparison Tools</h1>
+        <h1>Doc Comparison Tools</h1>
         <p className="home-subtitle">Choose a tool to compare your PDF documents.</p>
       </div>
       <div className="cards-wrapper">

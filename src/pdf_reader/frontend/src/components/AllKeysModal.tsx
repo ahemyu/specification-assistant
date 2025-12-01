@@ -37,10 +37,10 @@ export function AllKeysModal({
         {/* Header */}
         <div className="all-keys-modal-header">
           <div>
-            <h1 className="all-keys-modal-title">
+            <h1 className="section-title">
               All Keys for {selectedProductType}
             </h1>
-            <p className="all-keys-modal-subtitle">
+            <p className="subtitle">
               {templateKeys.length} keys will be extracted
             </p>
           </div>
@@ -55,7 +55,7 @@ export function AllKeysModal({
             <div key={category} className="category-section">
               {/* Category Header */}
               <div className="category-header">
-                <h3 className="category-title">
+                <h3 className="subsection-title">
                   {category} ({keys.length} keys)
                 </h3>
               </div>

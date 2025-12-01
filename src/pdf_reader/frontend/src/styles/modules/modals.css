@@ -1,16 +1,5 @@
 /* Modern Modal Styles - Inspired by chat.css */
 
-:root {
-  --modal-bg: #ffffff;
-  --modal-text: #1f2937;
-  --modal-border: #e5e7eb;
-  --modal-header-bg: #fdfdfd;
-  --modal-overlay-bg: rgba(17, 24, 39, 0.7); /* Darker, less transparent */
-  --modal-accent-color: cadetblue;
-  --modal-secondary-text: #6b7280;
-  --modal-code-bg: #f7f8fa;
-}
-
 .modal {
     display: none;
     position: fixed;
@@ -97,7 +86,7 @@
 }
 
 .modal-close:hover {
-    background: #f3f4f6;
+    background: var(--background-color-lighter);
     color: var(--modal-text);
     transform: scale(1.1);
 }
@@ -137,7 +126,7 @@
     color: var(--modal-secondary-text);
     font-size: 0.8rem;
     font-weight: 500;
-    background: #f3f4f6;
+    background: var(--background-color-lighter);
     padding: 4px 10px;
     border-radius: 12px;
     border: 1px solid transparent;
@@ -145,11 +134,11 @@
 
 .preview-content {
     padding: 24px 28px;
-    background: white;
+    background: var(--background-color);
     font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
     font-size: 0.875rem;
     line-height: 1.7;
-    color: #374151;
+    color: var(--text-color);
     white-space: pre-wrap;
     word-wrap: break-word;
 }
@@ -166,9 +155,9 @@
 }
 
 .preview-error {
-    color: #c53030;
-    background: #fff0f0;
-    border: 1px solid #fecaca;
+    color: var(--error-color);
+    background: var(--error-bg);
+    border: 1px solid var(--error-color);
     border-radius: 8px;
     margin: 20px;
 }

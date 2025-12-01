@@ -11,7 +11,7 @@
 }
 
 .notification {
-  background: white;
+  background: var(--background-color);
   padding: 16px 20px;
   border-radius: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -20,23 +20,23 @@
   justify-content: space-between;
   gap: 12px;
   animation: slideIn 0.3s ease;
-  border-left: 4px solid #718096;
+  border-left: 4px solid var(--text-color-lighter);
 }
 
 .notification-success {
-  border-left-color: #87BD25;
+  border-left-color: var(--accent-color);
 }
 
 .notification-error {
-  border-left-color: #e53e3e;
+  border-left-color: var(--error-color);
 }
 
 .notification-info {
-  border-left-color: #59BDB9;
+  border-left-color: var(--secondary-color);
 }
 
 .notification-warning {
-  border-left-color: #ed8936;
+  border-left-color: var(--special-color-4);
 }
 
 .notification-close {
@@ -45,14 +45,14 @@
   font-size: 24px;
   line-height: 1;
   cursor: pointer;
-  color: #718096;
+  color: var(--text-color-lighter);
   padding: 0;
   margin-left: 8px;
   flex-shrink: 0;
 }
 
 .notification-close:hover {
-  color: #1a202c;
+  color: var(--text-color);
 }
 
 @keyframes slideIn {

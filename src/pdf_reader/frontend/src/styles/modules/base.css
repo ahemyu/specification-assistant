@@ -8,7 +8,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 50%, #87BD25 100%);
+    background: var(--button-primary-bg);
     min-height: 100vh;
     padding: 20px;
     display: flex;
@@ -24,7 +24,7 @@ body {
 .container {
     max-width: 1600px;
     width: 100%;
-    background: white;
+    background: var(--background-color);
     border-radius: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
     padding: 32px 40px;
@@ -33,7 +33,7 @@ body {
 }
 
 h1 {
-    color: #1a202c;
+    color: var(--text-color);
     margin-bottom: 6px;
     font-size: 2.2em;
     font-weight: 700;
@@ -42,7 +42,7 @@ h1 {
 }
 
 .subtitle {
-    color: #718096;
+    color: var(--text-color-lighter);
     margin-bottom: 20px;
     font-size: 1em;
     text-align: center;
@@ -51,7 +51,7 @@ h1 {
 
 /* View titles */
 .view-title {
-    color: #1a202c;
+    color: var(--text-color);
     margin-bottom: 8px;
     font-size: 1.9em;
     font-weight: 700;
@@ -59,7 +59,7 @@ h1 {
 }
 
 .view-subtitle {
-    color: #718096;
+    color: var(--text-color-lighter);
     font-size: 1em;
     text-align: center;
     margin-bottom: 32px;
@@ -73,7 +73,7 @@ h1 {
 
 /* Section subtitle */
 .section-subtitle {
-    color: #718096;
+    color: var(--text-color-lighter);
     margin-bottom: 32px;
     font-size: 1em;
     text-align: center;
@@ -85,7 +85,6 @@ h1 {
     display: none;
     animation: fadeIn 0.3s ease;
 }
-
 .tab-view.active {
     display: block;
 }
@@ -118,19 +117,20 @@ h1 {
 }
 
 ::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: var(--background-color-light);
     border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
+    background: var(--background-color-lighter);
     border-radius: 10px;
-    border: 2px solid #f1f1f1;
+    border: 2px solid var(--background-color-light);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    background: var(--border-color-light);
 }
+
 
 ::-webkit-scrollbar-corner {
     background: transparent;

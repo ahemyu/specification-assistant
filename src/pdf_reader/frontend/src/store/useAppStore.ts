@@ -11,7 +11,7 @@ import type {
 } from '../types'
 import type { KeyWithCategory } from '../data/keyTemplates'
 
-export type ActiveView = 'home' | 'spec_assistant' | 'compare';
+export type ActiveView = 'home' | 'spec_ai' | 'compare';
 export type ActiveSubMenuItem = 'upload' | 'extract' | 'summary' | null;
 
 interface AppState {
@@ -127,7 +127,7 @@ export const useAppStore = create<AppState>((set) => ({
   conversationHistory: [],
 
   activeView: 'home',
-  activeSubMenuItem: 'upload',
+  activeSubMenuItem: null,
   isQAPopupOpen: false,
 
   // Setters
@@ -188,5 +188,5 @@ export const useAppStore = create<AppState>((set) => ({
 }))
 
 // Storage keys constants
-export const CHAT_STORAGE_KEY = 'specification_assistant_chat_history'
-export const PDF_STORAGE_KEY = 'specification_assistant_uploaded_pdfs'
+export const CHAT_STORAGE_KEY = 'spec_ai_chat_history'
+export const PDF_STORAGE_KEY = 'spec_ai_uploaded_pdfs'

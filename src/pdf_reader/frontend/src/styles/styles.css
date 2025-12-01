@@ -5,6 +5,10 @@
 /* Base Styles - Reset, layout, typography */
 @import url('./modules/base.css');
 
+/* App Layout */
+@import url('./modules/app-layout.css');
+@import url('./modules/app-wrapper.css');
+
 /* Navigation - Tabs and main navigation */
 @import url('./modules/navigation.css');
 
@@ -31,3 +35,151 @@
 
 /* Utilities - Status messages, spinners, common utilities */
 @import url('./modules/utilities.css');
+
+/* Theme Toggle */
+@import url('./modules/theme-toggle.css');
+
+/* Sidebar */
+@import url('./modules/sidebar.css');
+
+/* QA Popup */
+@import url('./modules/qapopup.css');
+
+/* Compare */
+@import url('./modules/compare.css');
+
+/* Home */
+@import url('./modules/home.css');
+
+/* Main Container */
+@import url('./modules/maincontainer.css');
+
+/* Manual Key Input */
+@import url('./modules/ManualKeyInput.css');
+
+/* All Keys Modal */
+@import url('./modules/AllKeysModal.css');
+
+/* Notifications */
+@import url('./modules/notifications.css');
+
+h1,
+.page-title {
+  font-size: 2,5em;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.5em;
+}
+
+h2,
+.section-title {
+  font-size: 2em;
+  font-weight: 700;
+  color: var(--text-color);
+  margin-bottom: 0.5em;
+}
+
+h3,
+.card-title {
+  font-size: 1,5em;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5em;
+}
+
+h4,
+.subsection-title {
+  font-size: 1.2em;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 0.5em;
+}
+
+.subtitle {
+  font-size: 1.1em;
+  color: var(--text-color-light);
+  margin-bottom: 1em;
+}
+
+:root {
+  --primary-color: #1C2C8C;
+  --secondary-color: #5F9EA0;
+  --accent-color: #87BD25;
+  --error-color: #c53030;
+
+  --text-color: #1a202c;
+  --text-color-light: #4a5568;
+  --text-color-lighter: #718096;
+  --text-color-inverted: #ffffff;
+
+  --background-color: #ffffff;
+  --background-color-light: #f7fafc;
+  --background-color-lighter: #e2e8f0;
+  --background-color-dark: #1C2C8C;
+
+
+  --border-color: #e2e8f0;
+  --border-color-light: #cbd5e0;
+
+  --button-primary-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  --button-secondary-bg: linear-gradient(135deg, var(--secondary-color) 0%, #3d9894 100%);
+  --button-accent-bg: linear-gradient(135deg, var(--accent-color) 0%, #6a971d 100%);
+
+  --modal-bg: #ffffff;
+  --modal-text: #1f2937;
+  --modal-border: #e5e7eb;
+  --modal-header-bg: #fdfdfd;
+  --modal-secondary-text: #6b7280;
+  --modal-code-bg: #f7f8fa;
+
+  --chat-bg: #f7f8fa;
+  --chat-text: #1f2937;
+  --chat-border: #e5e7eb;
+  --chat-header-bg: #ffffff;
+  --assistant-message-bg: #e5e7eb;
+  --error-bg: #fff0f0;
+
+  --special-color-1: #00CC99;
+  --special-color-2: #EB2D8C;
+  --special-color-3: #3498db;
+  --special-color-4: #e74c3c;
+}
+
+[data-theme='dark'] {
+  --primary-color: #59BDB9;
+  --secondary-color: #87BD25;
+  --accent-color: #1C2C8C;
+  --error-color: #e57373;
+
+  --text-color: #e2e8f0;
+  --text-color-light: #cbd5e0;
+  --text-color-lighter: #94a3b8;
+  --text-color-inverted: #1a202c;
+
+  --background-color: #1a202c;
+  --background-color-light: #2d3748;
+  --background-color-lighter: #4a5568;
+  --background-color-dark: #000000;
+
+  --border-color: #4a5568;
+  --border-color-light: #2d3748;
+
+  --modal-bg: #2d3748;
+  --modal-text: #e2e8f0;
+  --modal-border: #4a5568;
+  --modal-header-bg: #1a202c;
+  --modal-secondary-text: #94a3b8;
+  --modal-code-bg: #1a202c;
+
+  --chat-bg: #2d3748;
+  --chat-text: #e2e8f0;
+  --chat-border: #4a5568;
+  --chat-header-bg: #1a202c;
+  --assistant-message-bg: #4a5568;
+  --error-bg: #5c2b2b;
+
+  --special-color-1: #00CC99;
+  --special-color-2: #EB2D8C;
+  --special-color-3: #3498db;
+  --special-color-4: #e74c3c;
+}

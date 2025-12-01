@@ -1,6 +1,8 @@
-import { FaUser, FaCog, FaSignOutAlt, FaFileAlt, FaBalanceScale, FaUpload, FaKey, FaListAlt } from "react-icons/fa";
-import { IoHome, IoChevronForward } from "react-icons/io5"; // Import IoChevronForward
+import { FaUser, FaCog, FaSignOutAlt, FaFileAlt, FaBalanceScale, FaUpload, FaKey, FaListAlt, FaMoon } from "react-icons/fa";
+import { IoHome, IoChevronForward, IoSunny } from "react-icons/io5"; // Import IoChevronForward
 import { useAppStore } from "../store/useAppStore";
+import { useState, useEffect } from "react";
+import './../styles/modules/theme-toggle.css';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -13,12 +15,26 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const activeSubMenuItem = useAppStore((state) => state.activeSubMenuItem);
   const setActiveSubMenuItem = useAppStore((state) => state.setActiveSubMenuItem);
 
-  const hasUploadedFiles = uploadedFileIds.length > 0;
-  const isSpecAssistantExpanded = activeView === "spec_assistant";
+  const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
-  const handleSpecAssistantClick = () => {
-    setActiveView("spec_assistant");
-    if (!activeSubMenuItem) { // If no sub-menu item is active, default to 'upload'
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
+  };
+
+  const hasUploadedFiles = uploadedFileIds.length > 0;
+  const isSpecAIExpanded = activeView === "spec_ai";
+
+  const handleSpecAIClick = () => {
+    if (isSpecAIExpanded) {
+      setActiveView("home");
+      setActiveSubMenuItem(null);
+    } else {
+      setActiveView("spec_ai");
       setActiveSubMenuItem("upload");
     }
   };
@@ -29,14 +45,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   };
 
   const handleSubMenuClick = (item: "upload" | "extract" | "summary") => {
-    setActiveView("spec_assistant");
+    setActiveView("spec_ai");
     setActiveSubMenuItem(item);
   };
 
   return (
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <header className="sidebar-header">
-        <h2 className="sidebar-title">Trench Hub</h2>
+        <img src={theme === 'dark' ? "/assets/trench-logo-dark.png" : "/assets/trench-logo.png"} alt="Trench Hub Logo" className="sidebar-logo" style={{ width: '100px', marginBottom: '20px' }} />
+        <h2 className="page-title">Trench Hub</h2>
       </header>
 
       <ul className="sidebar-menu">
@@ -50,18 +67,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         </li>
 
         {/* Tools Section */}
-        <h3 className="sidebar-section-title">Tools</h3>
+        <h3 className="subsection-title">Tools</h3>
         <li
-          className={`menu-item ${isSpecAssistantExpanded ? "active" : ""} ${!isSpecAssistantExpanded ? 'spec-assistant-collapsed' : ''}`}
-          onClick={handleSpecAssistantClick}
+          className={`menu-item ${isSpecAIExpanded ? "active" : ""} ${!isSpecAIExpanded ? 'spec-assistant-collapsed' : ''}`}
+          onClick={handleSpecAIClick}
         >
           <span className="icon"><FaFileAlt /></span>
-          <span>Spec-Assistant</span>
-          <span className={`dropdown-icon ${isSpecAssistantExpanded ? "expanded" : ""}`}>
+          <span>SpecAI</span>
+          <span className={`dropdown-icon ${isSpecAIExpanded ? "expanded" : ""}`}>
             <IoChevronForward />
           </span>
         </li>
-        {isSpecAssistantExpanded && (
+        {isSpecAIExpanded && (
           <ul className="submenu spec-assistant-expanded">
             <li
               className={`menu-item ${activeSubMenuItem === "upload" ? "active" : ""}`}
@@ -95,7 +112,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           onClick={() => handleMainViewClick("compare")}
         >
           <span className="icon"><FaBalanceScale /></span>
-          <span>PDF-Vergleich</span>
+          <span>Doc Compare</span>
         </li>
       </ul>
 
@@ -108,6 +125,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         <li className="menu-item">
           <span className="icon"><FaCog /></span>
           <span>Einstellungen</span>
+        </li>
+        <li className="menu-item theme-toggle-container" onClick={toggleTheme}>
+          <span className="icon">{theme === 'light' ? <FaMoon /> : <IoSunny />}</span>
+          <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
         </li>
         <li className="menu-item">
           <span className="icon"><FaSignOutAlt /></span>

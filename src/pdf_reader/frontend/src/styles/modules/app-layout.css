@@ -2,6 +2,7 @@
     display: flex;
     justify-content: center; /* center wrapper horizontally */
     padding: 20px;
+    min-height: 100vh;
 }
 
 .app-wrapper {

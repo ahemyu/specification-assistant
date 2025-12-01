@@ -147,7 +147,7 @@ export function UploadView() {
       }
 
       // Navigate immediately to Extract Keys view for faster UX
-      setActiveView('spec_assistant');
+      setActiveView('spec_ai');
       setActiveSubMenuItem('extract');
 
       // Detect product type from uploaded PDFs in background
@@ -211,7 +211,7 @@ export function UploadView() {
       if (newFiles.length === 0) {
         localStorage.removeItem(PDF_STORAGE_KEY)
         showNotification('All files deleted', 'info')
-        setActiveView('spec_assistant'); // Ensure we are in spec_assistant view
+        setActiveView('spec_ai'); // Ensure we are in spec_ai view
         setActiveSubMenuItem('upload'); // Go to upload sub-menu
       } else {
         showNotification(`File deleted. ${newFiles.length} file(s) remaining`, 'success')
@@ -259,7 +259,7 @@ export function UploadView() {
       localStorage.removeItem(PDF_STORAGE_KEY)
       localStorage.removeItem(CHAT_STORAGE_KEY)
 
-      setActiveView('spec_assistant'); // Ensure we are in spec_assistant view
+      setActiveView('spec_ai'); // Ensure we are in spec_ai view
       setActiveSubMenuItem('upload'); // Go to upload sub-menu
       showNotification(`Successfully deleted all ${fileCount} file(s)`, 'success')
     } catch (error) {
@@ -277,8 +277,8 @@ export function UploadView() {
   return (
     <div className="tab-view active" id="uploadView">
       <div className="upload-header">
-        <h1>Spec-Assistant</h1>
-        <p className="upload-subtitle"> Upload your PDF files and use LLMs to extract keys or ask questions</p>
+        <h1 className="page-title">SpecAI</h1>
+        <p className="subtitle"> Upload your PDF files and use LLMs to extract keys or ask questions</p>
       </div>
       <section className="upload-section">
         <div
@@ -302,7 +302,7 @@ export function UploadView() {
             <FaUpload size={48} />
           </div>
           <div className="drop-zone-text">
-            <h2>Drag & Drop your PDF files here</h2>
+            <h2 className="section-title">Drag & Drop your PDF files here</h2>
             <p>or click to select files</p>
           </div>
         </div>
@@ -340,7 +340,7 @@ export function UploadView() {
       {allUploadedFiles.length > 0 && (
         <>
           <div className="results-header" id="resultsHeader">
-            <h3>Uploaded PDFs</h3>
+            <h3 className="subsection-title">Uploaded PDFs</h3>
             <button className="delete-all-btn" onClick={handleDeleteAllFiles}>
               Delete All Files
             </button>
@@ -353,7 +353,7 @@ export function UploadView() {
                     <FaFilePdf size={40} />
                   </div>
                   <div className="file-card-info">
-                    <h3 className="file-card-name">{file.original_filename}</h3>
+                    <h4 className="file-card-name">{file.original_filename}</h4>
                     <p className="file-card-details">
                       Pages: {(file as any).total_pages || 'N/A'}
                     </p>

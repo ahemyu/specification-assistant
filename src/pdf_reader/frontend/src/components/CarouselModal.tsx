@@ -302,7 +302,7 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
         <div className="carousel-side">
           {/* Header */}
           <div className="carousel-modal-header">
-            <h2>Extraction Results</h2>
+            <h2 className="section-title">Extraction Results</h2>
             <div className="carousel-counter">
               <span>{currentIndex + 1}</span> / <span>{keyNames.length}</span>
             </div>
@@ -370,7 +370,7 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
                   <polyline points="22 4 12 14.01 9 11.01"></polyline>
                 </svg>
                 <div className="completion-message">
-                  <h3>All Keys Reviewed</h3>
+                  <h3 className="subsection-title">All Keys Reviewed</h3>
                 </div>
               </div>
               <div className="completion-actions">
