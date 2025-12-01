@@ -65,7 +65,7 @@
 
 h1,
 .page-title {
-  font-size: 2,5em;
+  font-size: 2.5em;
   font-weight: 700;
   color: var(--text-color);
   margin-bottom: 0.5em;
@@ -81,7 +81,7 @@ h2,
 
 h3,
 .card-title {
-  font-size: 1,5em;
+  font-size: 1.5em;
   font-weight: 600;
   color: var(--text-color);
   margin-bottom: 0.5em;
@@ -121,7 +121,7 @@ h4,
   --border-color: #e2e8f0;
   --border-color-light: #cbd5e0;
 
-  --button-primary-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  --button-primary-bg: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%,var(--accent-color) 100%);
   --button-secondary-bg: linear-gradient(135deg, var(--secondary-color) 0%, #3d9894 100%);
   --button-accent-bg: linear-gradient(135deg, var(--accent-color) 0%, #6a971d 100%);
 

@@ -41,6 +41,7 @@
 
 .all-keys-modal-header {
   padding: 1.25rem 2rem; /* Adjusted padding */
+  padding-right: 20px;
   border-bottom: 1px solid var(--modal-border);
   display: flex;
   justify-content: space-between;
@@ -119,7 +120,7 @@
   padding: 0.85rem 1.1rem;
   background-color: var(--background-color);
   border: 1px solid var(--border-color); /* Slightly different border color */
-  border-radius: 12px; /* More rounded */
+  border-radius: 30px; /* More rounded */
   font-size: 0.9rem;
   color: var(--text-color);
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
@@ -129,9 +130,8 @@
 }
 
 .key-item:hover {
-  transform: translateY(-3px); /* Slightly more lift */
   box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06); /* Softer, larger hover shadow */
-  border-color: var(--accent-color);
+  border-color: var(--secondary-color);
 }
 
 .key-item-content {

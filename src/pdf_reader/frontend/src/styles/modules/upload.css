@@ -19,35 +19,49 @@
     justify-content: center;
     width: 100%;
     max-width: 500px;
-    height: 220px;/* höhe wegen der scrollbar die sonst da wäre */
+    min-height: 220px; /* Use min-height for flexibility */
     padding: 40px;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.8);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 25px; /* Slightly more rounded */
+    background: var(--background-color-light); /* Use a variable for better theme integration */
+    border: 2px dashed var(--border-color); /* Dashed border for clear drop indication */
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); /* Softer shadow */
     cursor: pointer;
-    transition: all 0.3s ease;
-    backdrop-filter: blur(10px);
+    transition: all 0.3s ease-in-out; /* Smoother transition */
     text-align: center;
+    color: var(--text-color-light);
 }
 
 .drop-zone:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  border-color: var(--primary-color); /* Highlight border on hover */
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12); /* Enhanced shadow on hover */
+  transform: translateY(-3px); /* Subtle lift effect */
 }
 
 .drop-zone.dragging {
-    background: rgba(255, 255, 255, 1);
-    border-color: var(--secondary-color);
-    transform: scale(1.02);
+    background: var(--primary-color-light); /* Lighter primary color when dragging */
+    border-color: var(--primary-color);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
+    transform: scale(1.01); /* Slightly more subtle scale */
 }
 
 .drop-zone-icon {
     margin-bottom: 20px;
-    color: var(--special-color-1);
+    color: var(--primary-color); /* Use primary color for icon */
+    transition: color 0.3s ease-in-out;
+}
+
+.drop-zone:hover .drop-zone-icon {
+  color: var(--primary-color-dark); /* Darken icon on hover */
+}
+
+.drop-zone-text h2 {
+    font-size: 1.5em;
+    color: var(--text-color);
+    margin-bottom: 8px;
 }
 
 .drop-zone-text p {
-    font-size: 1.1em;
+    font-size: 1em;
     color: var(--text-color-lighter);
 }
 
@@ -121,12 +135,12 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-top: 32px;
+    margin-top: 20px;
     margin-bottom: 16px;
-    padding: 16px 24px;
+    padding: 10px 24px;
     background:  var(--background-color);
-    border-radius: 20px;
-        box-shadow: 0 4px 12px rgba(150, 150, 150, 0.25);
+    border-radius: 40px;
+    box-shadow: 0 4px 12px rgba(150, 150, 150, 0.25);
 
 }
 
@@ -312,20 +326,25 @@
     background: var(--text-color-lighter);
 }
 
-[data-theme='dark'] .drop-zone,
+[data-theme='dark'] .drop-zone {
+  background: rgba(45, 55, 72, 0.9); /* Darker background with transparency */
+  border: 2px dashed rgba(255, 255, 255, 0.3); /* Lighter dashed border for dark theme */
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .drop-zone:hover {
+  border-color: var(--primary-color-dark); /* Darken primary color on hover for dark theme */
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .drop-zone.dragging {
+    background: rgba(74, 85, 104, 0.9);
+    border-color: var(--primary-color-dark);
+    transform: scale(1.01);
+}
+
 [data-theme='dark'] .file-card {
   background: rgba(45, 55, 72, 0.75); /* #2d3748 with transparency */
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-}
-
-[data-theme='dark'] .drop-zone:hover,
-[data-theme='dark'] .file-card:hover {
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
-}
-
-[data-theme='dark'] .drop-zone.dragging {
-    background: rgba(74, 85, 104, 0.9); /* --background-color-lighter with transparency */
-    border-color: var(--secondary-color);
-    transform: scale(1.02);
 }
