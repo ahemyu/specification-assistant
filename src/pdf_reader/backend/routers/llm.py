@@ -3,6 +3,7 @@ import json
 import logging
 
 from backend.dependencies import get_llm_extractor, get_pdf_storage
+from backend.schemas.domain import SourceLocation
 from backend.schemas.requests import (
     CoreWindingCountRequest,
     KeyExtractionRequest,
@@ -55,8 +56,11 @@ async def extract_keys(
         )
 
         # Transform matched_line_ids to bounding_box coordinates
-        for _key, result in results.items():
+        # Split multi-page source_locations into one per page with page-specific bounding boxes
+        for key, result in results.items():
             if result and result.matched_line_ids:
+                new_source_locations = []
+
                 # Process each source location
                 for source_loc in result.source_locations:
                     pdf_filename = source_loc.pdf_filename
@@ -67,22 +71,49 @@ async def extract_keys(
                         None
                     )
 
-                    if matching_pdf and "line_id_map" in matching_pdf:
-                        line_id_map = matching_pdf["line_id_map"]
+                    if not matching_pdf or "line_id_map" not in matching_pdf:
+                        # Cannot calculate bounding box, keep original source_loc as-is
+                        new_source_locations.append(source_loc)
+                        continue
 
-                        # Collect all bounding boxes for the matched line_ids
+                    line_id_map = matching_pdf["line_id_map"]
+
+                    # Split source_loc into one entry per page with page-specific bounding boxes
+                    for page_num in source_loc.page_numbers:
+                        # Collect bounding boxes for line_ids that belong to this specific page
                         bboxes = []
                         for line_id in result.matched_line_ids:
                             if line_id in line_id_map:
-                                bboxes.append(line_id_map[line_id])
+                                # Extract page number from line_id
+                                try:
+                                    line_page_num = int(line_id.split('_')[0])
+                                    # Only include this line_id if it belongs to this specific page
+                                    if line_page_num == page_num:
+                                        bboxes.append(line_id_map[line_id])
+                                except (ValueError, IndexError):
+                                    # Skip malformed line_ids
+                                    continue
 
-                        # Merge all bounding boxes into one (union)
+                        # Create a new source_location for this page
+                        new_loc = SourceLocation(
+                            pdf_filename=pdf_filename,
+                            page_numbers=[page_num],
+                            bounding_box=None
+                        )
+
+                        # Calculate merged bounding box for this page if we found any line_ids
+                        #TODO: improve this
                         if bboxes:
                             min_x0 = min(bbox[0] for bbox in bboxes)
                             min_top = min(bbox[1] for bbox in bboxes)
                             max_x1 = max(bbox[2] for bbox in bboxes)
                             max_bottom = max(bbox[3] for bbox in bboxes)
-                            source_loc.bounding_box = [min_x0, min_top, max_x1, max_bottom]
+                            new_loc.bounding_box = [min_x0, min_top, max_x1, max_bottom]
+
+                        new_source_locations.append(new_loc)
+
+                # Replace source_locations with the split version
+                result.source_locations = new_source_locations
 
                 # Clear matched_line_ids before sending to frontend (internal only)
                 result.matched_line_ids = None

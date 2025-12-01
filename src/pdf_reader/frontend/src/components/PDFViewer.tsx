@@ -14,16 +14,17 @@ interface PDFReference {
 interface PDFViewerProps {
   references: PDFReference[]
   className?: string
+  selectedRefIndex?: number
 }
 
-export function PDFViewer({ references, className = '' }: PDFViewerProps) {
+export function PDFViewer({ references, className = '', selectedRefIndex = 0 }: PDFViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const highlightCanvasRef = useRef<HTMLCanvasElement>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [scale, setScale] = useState(1.25)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [currentRefIndex] = useState(0)
+  const currentRefIndex = selectedRefIndex
   const renderTaskRef = useRef<any>(null)
 
   const {
