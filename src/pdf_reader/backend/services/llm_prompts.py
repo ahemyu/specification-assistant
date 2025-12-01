@@ -22,13 +22,17 @@ IMPORTANT INSTRUCTIONS:
 4. CRITICAL: When you find the key's value, you MUST identify and return the line_id(s)
    or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
    Put these IDs in the matched_line_ids field as a list of strings.
-5. Provide a clear description of where and how you found the information
-6. If the key is not found in any document:
+5. TRANSLATION REQUIREMENT: ALWAYS translate the extracted value to German if it is not already in German.
+   For example, if you find "Voltage Transformer", translate it to "Spannungswandler".
+   If the value is already in German or is a number/code, keep it as is.
+6. LANGUAGE REQUIREMENT: ALWAYS write the description in German, regardless of the document language.
+   Provide a clear description of where and how you found the information, written in German.
+7. If the key is not found in any document:
    - Set key_value to null
    - Set source_locations to an empty list []
-   - Set description to exactly "Not found"
+   - Set description to exactly "Nicht gefunden"
    - Set matched_line_ids to null
-7. Be precise about page numbers - always reference the specific pages where
+8. Be precise about page numbers - always reference the specific pages where
    information was found
 
 DOCUMENT CONTENTS:
@@ -70,7 +74,7 @@ When a key is NOT found:
   "result": {{
     "key_value": null,
     "source_locations": [],
-    "description": "Not found",
+    "description": "Nicht gefunden",
     "matched_line_ids": null
   }}
 }}
@@ -93,13 +97,17 @@ IMPORTANT INSTRUCTIONS:
 4. CRITICAL: When you find a key's value, you MUST identify and return the line_id(s)
    or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
    Put these IDs in the matched_line_ids field as a list of strings. DO NOT skip this field.
-5. Provide a clear description of where and how you found the information.
-6. If a key is not found in any document:
+5. TRANSLATION REQUIREMENT: ALWAYS translate each extracted value to German if it is not already in German.
+   For example, if you find "Voltage Transformer", translate it to "Spannungswandler".
+   If the value is already in German or is a number/code, keep it as is.
+6. LANGUAGE REQUIREMENT: ALWAYS write the description in German, regardless of the document language.
+   Provide a clear description of where and how you found the information, written in German.
+7. If a key is not found in any document:
    - Set key_value to null
    - Set source_locations to an empty list []
-   - Set description to exactly "Not found"
+   - Set description to exactly "Nicht gefunden"
    - Set matched_line_ids to null
-7. Be precise about page numbers - always reference the specific pages where
+8. Be precise about page numbers - always reference the specific pages where
    information was found.
 
 DOCUMENT CONTENTS:
