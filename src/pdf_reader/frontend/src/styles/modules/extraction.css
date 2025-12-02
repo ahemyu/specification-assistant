@@ -582,3 +582,50 @@
 .cancel-edit-btn:active {
     transform: translateY(0);
 }
+
+/* Detected Counts Display */
+.detected-counts-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 0.75rem;
+}
+
+.detected-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    background-color: var(--background-color-light);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.detected-count-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-color-inverted);
+    padding: 0 0.3rem;
+}
+
+.detected-count-number.core {
+    background-color: var(--secondary-color);
+}
+
+.detected-count-number.winding {
+    background-color: var(--primary-color);
+}
+
+.detected-count-label {
+    color: var(--text-color-light);
+    font-weight: 500;
+}

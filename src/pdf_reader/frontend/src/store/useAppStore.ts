@@ -39,6 +39,8 @@ interface AppState {
   selectedProductType: string | null
   templateKeys: KeyWithCategory[]
   isDetectingProductType: boolean
+  detectedCoreCount: number | null
+  detectedWindingCount: number | null
 
   // PDF Viewer state
   currentPdfDoc: any | null
@@ -75,6 +77,8 @@ interface AppState {
   setSelectedProductType: (type: string | null) => void
   setTemplateKeys: (keys: KeyWithCategory[]) => void
   setIsDetectingProductType: (isDetecting: boolean) => void
+  setDetectedCoreCount: (count: number | null) => void
+  setDetectedWindingCount: (count: number | null) => void
   setCurrentPdfDoc: (doc: any | null) => void
   setCurrentPdfPage: (page: number | null) => void
   setCurrentPdfScale: (scale: number) => void
@@ -115,6 +119,8 @@ export const useAppStore = create<AppState>((set) => ({
   selectedProductType: null,
   templateKeys: [],
   isDetectingProductType: false,
+  detectedCoreCount: null,
+  detectedWindingCount: null,
 
   currentPdfDoc: null,
   currentPdfPage: null,
@@ -148,6 +154,8 @@ export const useAppStore = create<AppState>((set) => ({
   setSelectedProductType: (type) => set({ selectedProductType: type }),
   setTemplateKeys: (keys) => set({ templateKeys: keys }),
   setIsDetectingProductType: (isDetecting) => set({ isDetectingProductType: isDetecting }),
+  setDetectedCoreCount: (count) => set({ detectedCoreCount: count }),
+  setDetectedWindingCount: (count) => set({ detectedWindingCount: count }),
   setCurrentPdfDoc: (doc) => set({ currentPdfDoc: doc }),
   setCurrentPdfPage: (page) => set({ currentPdfPage: page }),
   setCurrentPdfScale: (scale) => set({ currentPdfScale: scale }),
@@ -177,6 +185,8 @@ export const useAppStore = create<AppState>((set) => ({
       selectedProductType: null,
       templateKeys: [],
       isDetectingProductType: false,
+      detectedCoreCount: null,
+      detectedWindingCount: null,
     }),
 
   addChatMessage: (message) =>
