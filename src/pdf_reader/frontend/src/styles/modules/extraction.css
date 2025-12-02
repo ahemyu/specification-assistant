@@ -629,3 +629,89 @@
     color: var(--text-color-light);
     font-weight: 500;
 }
+
+/* New styles for ExtractionView.tsx */
+
+/* General utility margin-bottom */
+.mb-8 {
+    margin-bottom: 2rem;
+}
+
+/* Template Key Header Section */
+.template-key-header-section {
+    margin-bottom: 2rem; /* Matches existing inline style */
+}
+
+.template-key-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+/* Template Product Type Heading */
+.template-product-type-heading {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin: 0;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Loading Status Badge */
+.loading-status-badge {
+    font-size: 0.75rem;
+    color: #F59E0B; /* Specific orange */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    background-color: #FEF3C7; /* Light yellow background */
+    border-radius: 20px;
+    border: 2px solid #FCD34D; /* Yellow border */
+    font-weight: 600;
+    margin-left: 0.75rem;
+}
+
+[data-theme='dark'] .loading-status-badge {
+    color: #FBBF24; /* Dark mode yellow/orange */
+    background-color: #4A3C1A; /* Dark mode background */
+    border-color: #D97706; /* Dark mode border */
+}
+
+/* Small Spinner for Loading Badge */
+.loading-spinner-small {
+    width: 10px;
+    height: 10px;
+    border-width: 2px;
+    border-top-color: #F59E0B; /* Match badge color */
+}
+
+[data-theme='dark'] .loading-spinner-small {
+    border-top-color: #FBBF24; /* Dark mode spinner color */
+}
+
+/* Template Key Count Text */
+.template-key-count-text {
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+    margin: 0;
+}
+
+/* View All Keys Button */
+.view-all-keys-button {
+    padding: 0.4rem 0.9rem;
+    background-color: var(--background-color);
+    color: var(--text-color-light);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.view-all-keys-button:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}

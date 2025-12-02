@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, KeyboardEvent, useMemo } from
 import { createPortal } from 'react-dom'
 import { useAppStore } from '../store/useAppStore'
 import { PDFViewer } from './PDFViewer'
+import { IoClose } from "react-icons/io5";
 
 interface CarouselModalProps {
   isOpen: boolean
@@ -308,114 +309,118 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
 
   return createPortal(
     <div className="modal show">
-      <div className="unified-results-container">
-        {/* Left Side: Carousel */}
-        <div className="carousel-side">
-          {/* Header */}
-          <div className="carousel-modal-header">
-            <h2 className="section-title">Extraction Results</h2>
+      <div className="modal-content-wrapper">
+        {/* Full Width Header */}
+        <div className="modal-header-full-width">
+          <div className="header-left">
             <div className="carousel-counter">
               <span>{currentIndex + 1}</span> / <span>{keyNames.length}</span>
             </div>
-            <button
-              className="modal-close"
-              onClick={allReviewed ? onComplete : onClose}
-              aria-label="Close results"
-            >
-              &times;
-            </button>
           </div>
-
-          {/* Carousel Body */}
-          <div className="carousel-body">
-            <button
-              className="carousel-nav-btn carousel-prev"
-              onClick={goToPrevious}
-              disabled={currentIndex === 0}
-              aria-label="Previous result"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-              </svg>
-            </button>
-
-            <div className="carousel-card-container">
-              <div className="carousel-card">
-                <ExtractionResultCard
-                  keyName={currentKey}
-                  value={displayValue}
-                  description={description}
-                  status={currentReviewState?.status || 'pending'}
-                  sourceLocations={sourceLocations}
-                  isEditMode={isEditMode}
-                  editValue={editValue}
-                  onEditValueChange={setEditValue}
-                  onAccept={acceptValue}
-                  onEnterEdit={enterEditMode}
-                  onSaveEdit={saveEdit}
-                  onCancelEdit={cancelEdit}
-                  editTextareaRef={editTextareaRef}
-                  onTextareaKeyDown={handleTextareaKeyDown}
-                  onReferenceClick={handleReferenceClick}
-                  selectedRefIndex={selectedRefIndex}
-                />
-              </div>
-            </div>
-
-            <button
-              className="carousel-nav-btn carousel-next"
-              onClick={goToNext}
-              disabled={currentIndex === keyNames.length - 1}
-              aria-label="Next result"
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-            </button>
-          </div>
-
-          {/* Completion Banner */}
-          {allReviewed && (
-            <div className="completion-banner">
-              <div className="completion-content">
-                <svg className="completion-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                  <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                </svg>
-                <div className="completion-message">
-                  <h3 className="subsection-title">All Keys Reviewed</h3>
-                </div>
-              </div>
-              <div className="completion-actions">
-                <button className="completion-view-summary-btn" onClick={onComplete}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M3 3h18v18H3z"></path>
-                    <line x1="3" y1="9" x2="21" y2="9"></line>
-                    <line x1="9" y1="3" x2="9" y2="21"></line>
-                  </svg>
-                  View Summary
-                </button>
-                <button className="completion-download-btn" onClick={handleDownload}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  Download (D)
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Keyboard Hint */}
-          <div className="carousel-keyboard-hint">
-            Use arrow keys to navigate
-          </div>
+          <h2 className="page-title">Extraction Results</h2>
+          <button
+            className="close-chat-btn"
+            onClick={allReviewed ? onComplete : onClose}
+            aria-label="Close results"
+          >
+            <IoClose size={24} />
+          </button>
         </div>
 
-        {/* Right Side: PDF Viewer */}
-        <div className="pdf-side">
-          <PDFViewer references={pdfReferences} selectedRefIndex={selectedRefIndex} />
+        <div className="unified-results-container">
+          {/* Left Side: Carousel */}
+          <div className="carousel-side">
+            {/* Carousel Body */}
+            <div className="carousel-body">
+              <button
+                className="carousel-nav-btn carousel-prev"
+                onClick={goToPrevious}
+                disabled={currentIndex === 0}
+                aria-label="Previous result"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+              </button>
+
+              <div className="carousel-card-container">
+                <div className="carousel-card">
+                  <ExtractionResultCard
+                    keyName={currentKey}
+                    value={displayValue}
+                    description={description}
+                    status={currentReviewState?.status || 'pending'}
+                    sourceLocations={sourceLocations}
+                    isEditMode={isEditMode}
+                    editValue={editValue}
+                    onEditValueChange={setEditValue}
+                    onAccept={acceptValue}
+                    onEnterEdit={enterEditMode}
+                    onSaveEdit={saveEdit}
+                    onCancelEdit={cancelEdit}
+                    editTextareaRef={editTextareaRef}
+                    onTextareaKeyDown={handleTextareaKeyDown}
+                    onReferenceClick={handleReferenceClick}
+                    selectedRefIndex={selectedRefIndex}
+                  />
+                </div>
+              </div>
+
+              <button
+                className="carousel-nav-btn carousel-next"
+                onClick={goToNext}
+                disabled={currentIndex === keyNames.length - 1}
+                aria-label="Next result"
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+
+            {/* Completion Banner */}
+            {allReviewed && (
+              <div className="completion-banner">
+                <div className="completion-content">
+                  <svg className="completion-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <div className="completion-message">
+                    <h3 className="subsection-title">All Keys Reviewed</h3>
+                  </div>
+                </div>
+                <div className="completion-actions">
+                  <button className="completion-view-summary-btn" onClick={onComplete}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M3 3h18v18H3z"></path>
+                      <line x1="3" y1="9" x2="21" y2="9"></line>
+                      <line x1="9" y1="3" x2="9" y2="21"></line>
+                    </svg>
+                    View Summary
+                  </button>
+                  <button className="completion-download-btn" onClick={handleDownload}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                    Download (D)
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Keyboard Hint */}
+            <div className="carousel-keyboard-hint">
+              Use arrow keys to navigate
+            </div>
+          </div>
+
+          {/* Right Side: PDF Viewer */}
+          <div className="pdf-side">
+            <PDFViewer references={pdfReferences} selectedRefIndex={selectedRefIndex} />
+          </div>
         </div>
       </div>
     </div>,
@@ -496,11 +501,11 @@ function ExtractionResultCard({
 
       {/* Edit Mode */}
       {isEditMode && (
-        <div className="edit-mode-container" style={{ display: 'block' }}>
+        <div className="edit-mode-container">
           <div className="edit-value-input-container">
             <label htmlFor="editValueInput">
               <strong>Edit Value:</strong>{' '}
-              <span style={{ color: '#718096', fontWeight: 'normal', fontSize: '0.9em' }}>
+              <span className="edit-hint">
                 (Shift+Enter for new line)
               </span>
             </label>

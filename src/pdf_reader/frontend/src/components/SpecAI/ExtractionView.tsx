@@ -478,9 +478,9 @@ export function ExtractionView() {
 
           {/* Template Keys Preview and Extract Button - Hidden when in manual mode */}
           {!showDevInput && selectedProductType && templateKeys.length > 0 && (
-            <div style={{ marginBottom: '2rem' }}>
+            <div className="template-key-header-section">
               <div className="key-input-area">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+                <div className="template-key-header">
                   <div>
                     <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                       Template: {selectedProductType}
@@ -501,31 +501,13 @@ export function ExtractionView() {
                         </div>
                       )}
                     </h3>
-                    <p style={{ fontSize: '0.9rem', color: '#4a5568', margin: 0 }}>
+                    <p className="template-key-count-text">
                       {templateKeys.length} keys will be extracted
                     </p>
                   </div>
                   <button
                     onClick={() => setShowAllKeysModal(true)}
-                    style={{
-                      padding: '0.4rem 0.9rem',
-                      backgroundColor: 'white',
-                      color: '#4a5568',
-                      border: '2px solid #e2e8f0',
-                      borderRadius: '12px',
-                      cursor: 'pointer',
-                      fontSize: '0.85rem',
-                      fontWeight: '500',
-                      transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = '#59BDB9'
-                      e.currentTarget.style.color = '#1C2C8C'
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = '#e2e8f0'
-                      e.currentTarget.style.color = '#4a5568'
-                    }}
+                    className="view-all-keys-button"
                   >
                     View All Keys
                   </button>
