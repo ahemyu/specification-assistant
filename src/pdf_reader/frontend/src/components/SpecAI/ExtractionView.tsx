@@ -8,6 +8,7 @@ import { getKeysForProductType, filterKeysByCount } from '../../data/keyTemplate
 import type { ExtractionResult } from '../../types'
 import { AllKeysModal } from '../AllKeysModal'
 import { ManualKeyInput } from '../ManualKeyInput'
+import { Spinner } from '@/components/ui/spinner'
 
 // Backend extraction response format
 interface BackendExtractionResult {
@@ -362,6 +363,26 @@ export function ExtractionView() {
 
   return (
     <div className="tab-view active" id="extractView">
+      {/* Prominent Loading Overlay */}
+      {isExtracting && (
+        <div className="loading-overlay">
+          <div className="loading-overlay-content">
+            <div className="loading-overlay-spinner">
+              <Spinner className="size-16 text-[#59BDB9]" />
+            </div>
+            <h2 className="loading-overlay-title">
+              Extracting the Keys...
+            </h2>
+            <p className="loading-overlay-description">
+              The AI is extracting <strong>{templateKeys.length} keys</strong> from your PDF files
+            </p>
+            <p className="loading-overlay-timing">
+              This could take several minutes to complete depending on document complexity and size
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Show summary view if in summary state */}
       {showSummary ? (
         <SummaryView
@@ -497,35 +518,6 @@ export function ExtractionView() {
                   <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em', textAlign: 'center' }}>
                     Please upload PDF files in the Upload tab first
                   </p>
-                )}
-
-                {isExtracting && (
-                  <div style={{
-                    marginTop: '1rem',
-                    padding: '1rem 1.5rem',
-                    backgroundColor: '#e6f9f8',
-                    borderRadius: '20px',
-                    border: '2px solid #59BDB9',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '1rem',
-                  }}>
-                    <div className="spinner" style={{
-                      width: '24px',
-                      height: '24px',
-                      borderWidth: '3px',
-                      borderColor: '#e2e8f0',
-                      borderTopColor: '#59BDB9',
-                    }} />
-                    <div>
-                      <div style={{ fontSize: '0.95rem', color: '#1C2C8C', fontWeight: '600' }}>
-                        Extracting keys using AI...
-                      </div>
-                      <div style={{ fontSize: '0.85rem', color: '#4a5568', marginTop: '0.25rem' }}>
-                        This may take a few moments depending on the number of keys and pages
-                      </div>
-                    </div>
-                  </div>
                 )}
 
                 {extractionComplete && extractionResultsData && extractionResultsData.length > 0 && (
