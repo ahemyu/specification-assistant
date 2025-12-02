@@ -69,6 +69,8 @@ export function ExtractionView() {
     selectedProductType,
     templateKeys,
     isDetectingProductType,
+    detectedCoreCount,
+    detectedWindingCount,
     setExtractionResultsData,
     setExtractionResultsBackendFormat,
     setCurrentExtractionState,
@@ -76,6 +78,8 @@ export function ExtractionView() {
     setReviewedKeys,
     setSelectedProductType,
     setTemplateKeys,
+    setDetectedCoreCount,
+    setDetectedWindingCount,
   } = useAppStore()
 
   useEffect(() => {
@@ -103,6 +107,10 @@ export function ExtractionView() {
           if (response.ok) {
             const data = await response.json()
 
+            // Save detected counts to store
+            setDetectedCoreCount(data.max_core_number)
+            setDetectedWindingCount(data.max_winding_number)
+
             // Filter keys based on detected counts
             const filteredKeys = filterKeysByCount(
               baseKeys,
@@ -113,12 +121,16 @@ export function ExtractionView() {
           } else {
             // If detection fails, use all keys
             setTemplateKeys(baseKeys)
+            setDetectedCoreCount(null)
+            setDetectedWindingCount(null)
           }
         })
         .catch((error) => {
           console.error('Error detecting counts:', error)
           // If detection fails, use all keys
           setTemplateKeys(baseKeys)
+          setDetectedCoreCount(null)
+          setDetectedWindingCount(null)
         })
         .finally(() => {
           setIsDetectingCounts(false)
@@ -363,7 +375,7 @@ export function ExtractionView() {
 
   return (
     <div className="tab-view active" id="extractView">
-      {/* Prominent Loading Overlay */}
+      {/* Key Extraction Loading Overlay */}
       {isExtracting && (
         <div className="loading-overlay">
           <div className="loading-overlay-content">
@@ -378,6 +390,30 @@ export function ExtractionView() {
             </p>
             <p className="loading-overlay-timing">
               This could take several minutes to complete depending on document complexity and size
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Unified Detection Loading Overlay - Product Type & Core/Winding Counts */}
+      {(isDetectingProductType || isDetectingCounts) && (
+        <div className="loading-overlay">
+          <div className="loading-overlay-content">
+            <div className="loading-overlay-spinner">
+              <Spinner className="size-16 text-[#59BDB9]" />
+            </div>
+            <h2 className="loading-overlay-title" style={{ transition: 'opacity 0.3s ease' }}>
+              {isDetectingProductType ? 'Detecting Product Type...' : 'Optimizing Key List...'}
+            </h2>
+            <p className="loading-overlay-description" style={{ transition: 'opacity 0.3s ease' }}>
+              {isDetectingProductType ? (
+                <>The AI is analyzing your PDF files to determine the product type</>
+              ) : (
+                <>Detecting core and winding counts to customize the template for your <strong>{selectedProductType}</strong></>
+              )}
+            </p>
+            <p className="loading-overlay-timing">
+              This should take just a few moments
             </p>
           </div>
         </div>
@@ -446,30 +482,23 @@ export function ExtractionView() {
               <div className="key-input-area">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
                   <div>
-                    <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600' }}>
+                    <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
                       Template: {selectedProductType}
-                      {isDetectingCounts && (
-                        <span style={{
-                          fontSize: '0.75rem',
-                          color: '#F59E0B',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.4rem',
-                          padding: '0.3rem 0.8rem',
-                          backgroundColor: '#FEF3C7',
-                          borderRadius: '20px',
-                          border: '2px solid #FCD34D',
-                          fontWeight: '600',
-                          marginLeft: '0.75rem',
-                        }}>
-                          <div className="spinner" style={{
-                            width: '10px',
-                            height: '10px',
-                            borderWidth: '2px',
-                            borderTopColor: '#F59E0B',
-                          }} />
-                          Loading...
-                        </span>
+                      {(detectedCoreCount !== null || detectedWindingCount !== null) && (
+                        <div className="detected-counts-container">
+                          {detectedCoreCount !== null && (
+                            <div className="detected-count-badge">
+                              <span className="detected-count-number core">{detectedCoreCount}</span>
+                              <span className="detected-count-label">Kern{detectedCoreCount !== 1 ? 'e' : ''}</span>
+                            </div>
+                          )}
+                          {detectedWindingCount !== null && (
+                            <div className="detected-count-badge">
+                              <span className="detected-count-number winding">{detectedWindingCount}</span>
+                              <span className="detected-count-label">Wicklung{detectedWindingCount !== 0 ? 'en' : ''}</span>
+                            </div>
+                          )}
+                        </div>
                       )}
                     </h3>
                     <p style={{ fontSize: '0.9rem', color: '#4a5568', margin: 0 }}>

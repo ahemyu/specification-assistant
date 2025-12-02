@@ -335,8 +335,6 @@ export function UploadView() {
         </Button>
       </section>
 
-      {isUploading && <div className="spinner" aria-live="polite" aria-label="Processing" />}
-
       {allUploadedFiles.length > 0 && (
         <>
           <div className="results-header" id="resultsHeader">
