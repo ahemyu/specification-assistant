@@ -4,21 +4,13 @@
     padding: 0;
 }
 
-.key-extraction-section h2 {
-    color: #1a202c;
-    margin-bottom: 8px;
-    font-size: 1.9em;
-    font-weight: 700;
-    text-align: center;
-}
-
 /* Excel Upload Area */
 .excel-upload-area {
-    background: white;
+    background: var(--background-color);
     padding: 32px;
     border-radius: 20px;
     margin-bottom: 24px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--border-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -31,8 +23,8 @@
     align-items: center;
     gap: 12px;
     padding: 16px 32px;
-    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%);
-    color: white;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
     border-radius: 20px;
     cursor: pointer;
     font-weight: 600;
@@ -55,25 +47,18 @@
 
 .excel-filename {
     margin-top: 12px;
-    color: #2d3748;
+    color: var(--text-color);
     font-size: 0.95em;
     font-weight: 500;
 }
 
 /* Keys Preview */
 .keys-preview {
-    background: #f7fafc;
+    background: var(--background-color-light);
     padding: 20px;
     border-radius: 20px;
     margin-bottom: 24px;
-    border: 2px solid #e2e8f0;
-}
-
-.keys-preview h4 {
-    color: #2d3748;
-    margin-bottom: 12px;
-    font-size: 1em;
-    font-weight: 600;
+    border: 2px solid var(--border-color);
 }
 
 .keys-preview ul {
@@ -86,21 +71,21 @@
 }
 
 .keys-preview li {
-    background: white;
+    background: var(--background-color);
     padding: 8px 12px;
     border-radius: 20px;
-    color: #4a5568;
+    color: var(--text-color-light);
     font-size: 0.9em;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
 }
 
 /* Manual Input Area */
 .key-input-area {
-    background: white;
+    background: var(--background-color);
     padding: 32px;
     border-radius: 20px;
     margin-bottom: 24px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--border-color);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
@@ -115,7 +100,7 @@
 .key-input-group label {
     display: block;
     margin-bottom: 10px;
-    color: #2d3748;
+    color: var(--text-color);
     font-weight: 600;
     font-size: 0.95em;
 }
@@ -123,7 +108,7 @@
 .key-input-group textarea {
     width: 100%;
     padding: 14px 16px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--border-color);
     border-radius: 20px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     font-size: 0.95em;
@@ -134,20 +119,20 @@
 
 .key-input-group textarea:focus {
     outline: none;
-    border-color: #1C2C8C;
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(28, 44, 140, 0.1);
 }
 
 .key-input-group textarea::placeholder {
-    color: #a0aec0;
+    color: var(--text-color-lighter);
 }
 
 .extract-btn {
     padding: 14px 48px;
-    background: #5F9EA0;
-    color: white;
+    background: var(--secondary-color);
+    color: var(--text-color-inverted);
     border: none;
-    border-radius: 20px;
+    border-radius: 40px;
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
@@ -158,13 +143,13 @@
 }
 
 .extract-btn:hover:not(:disabled) {
-    background: #3d9894;
+    background: var(--button-secondary-bg);
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(89, 189, 185, 0.35);
 }
 
 .extract-btn:disabled {
-    background: #cbd5e0;
+    background: var(--border-color-light);
     cursor: not-allowed;
     box-shadow: none;
     opacity: 0.6;
@@ -176,8 +161,8 @@
 }
 
 .extraction-result-item {
-    background: white;
-    border: 2px solid #e2e8f0;
+    background: var(--background-color);
+    border: 2px solid var(--border-color);
     border-radius: 20px;
     padding: 28px;
     margin-bottom: 24px;
@@ -196,51 +181,42 @@
 }
 
 .extraction-result-item:hover {
-    border-color: #1C2C8C;
+    border-color: var(--primary-color);
     box-shadow: 0 8px 24px rgba(28, 44, 140, 0.15);
     transform: translateY(-2px);
 }
 
-.key-name {
-    color: #1C2C8C;
-    font-size: 1.4em;
-    font-weight: 700;
-    padding-bottom: 16px;
-    border-bottom: 3px solid #edf2f7;
-    flex-shrink: 0;
-}
-
 .key-value {
     padding: 16px;
-    background: #f7fafc;
+    background: var(--background-color-light);
     border-radius: 20px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-color);
     flex-shrink: 0;
 }
 
 .key-value strong {
-    color: #2d3748;
+    color: var(--text-color);
     font-weight: 600;
     display: block;
     margin-bottom: 8px;
 }
 
 .key-value .found {
-    color: #87BD25;
+    color: var(--accent-color);
     font-weight: 600;
     font-size: 1.1em;
 }
 
 .key-value .not-found {
-    color: #e53e3e;
+    color: var(--error-color);
     font-style: italic;
 }
 
 .key-description {
     line-height: 1.7;
-    color: #4a5568;
+    color: var(--text-color-light);
     padding: 16px;
-    background: #f7fafc;
+    background: var(--background-color-light);
     border-radius: 20px;
     flex: 1;
     overflow-y: auto;
@@ -248,22 +224,22 @@
 }
 
 .key-description strong {
-    color: #2d3748;
+    color: var(--text-color);
     font-weight: 600;
     display: block;
     margin-bottom: 8px;
 }
 
 .source-locations {
-    background: #e6f9f8;
-    border-left: 4px solid #1C2C8C;
+    background: var(--background-color-light);
+    border-left: 4px solid var(--primary-color);
     padding: 18px 20px;
     border-radius: 8px;
     flex-shrink: 0;
 }
 
 .source-locations strong {
-    color: #2d3748;
+    color: var(--text-color);
     display: block;
     margin-bottom: 12px;
     font-weight: 600;
@@ -277,12 +253,12 @@
 
 .source-locations li {
     padding: 10px 12px;
-    color: #1C2C8C;
+    color: var(--primary-color);
     font-weight: 500;
-    background: white;
+    background: var(--background-color);
     margin-bottom: 8px;
     border-radius: 6px;
-    border: 1px solid #59BDB9;
+    border: 1px solid var(--secondary-color);
 }
 
 .source-locations li:last-child {
@@ -299,29 +275,29 @@
 
 .reference-btn {
     padding: 10px 18px;
-    background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
-    border: 2px solid #cbd5e0;
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
+    border: 2px solid var(--border-color-light);
     border-radius: 12px;
     cursor: pointer;
     font-size: 0.9em;
     font-weight: 500;
-    color: #4a5568;
+    color: var(--text-color-light);
     transition: all 0.3s ease;
     white-space: nowrap;
 }
 
 .reference-btn:hover {
-    background: linear-gradient(135deg, #59BDB9 0%, #3d9894 100%);
-    border-color: #59BDB9;
-    color: white;
+    background: var(--button-secondary-bg);
+    border-color: var(--secondary-color);
+    color: var(--text-color-inverted);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(89, 189, 185, 0.3);
 }
 
 .reference-btn.active {
-    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%);
+    background: var(--button-primary-bg);
     border-color: transparent;
-    color: white;
+    color: var(--text-color-inverted);
     box-shadow: 0 4px 15px rgba(28, 44, 140, 0.3);
 }
 
@@ -342,10 +318,10 @@
 /* View Results Button - Primary Action */
 .view-results-btn-inline {
     padding: 12px 28px;
-    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%);
-    color: white;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
     border: none;
-    border-radius: 12px;
+    border-radius: 40px;
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
@@ -367,8 +343,8 @@
 /* Download Excel Button - Secondary Action (green but smaller) */
 .download-excel-btn-inline {
     padding: 10px 22px;
-    background: #87BD25;
-    color: white;
+    background: var(--accent-color);
+    color: var(--text-color-inverted);
     border: none;
     border-radius: 10px;
     cursor: pointer;
@@ -380,7 +356,7 @@
 }
 
 .download-excel-btn-inline:hover {
-    background: #6a971d;
+    background: var(--accent-color);
     transform: translateY(-1px);
     box-shadow: 0 4px 10px rgba(135, 189, 37, 0.35);
 }
@@ -399,7 +375,7 @@
     justify-content: space-between;
     gap: 16px;
     padding-bottom: 16px;
-    border-bottom: 3px solid #edf2f7;
+    border-bottom: 3px solid var(--border-color);
     flex-shrink: 0;
 }
 
@@ -422,20 +398,20 @@
 }
 
 .status-pending {
-    background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
-    color: #4a5568;
-    border: 2px solid #cbd5e0;
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
+    color: var(--text-color-light);
+    border: 2px solid var(--border-color-light);
 }
 
 .status-accepted {
-    background: linear-gradient(135deg, #87BD25 0%, #6a971d 100%);
-    color: white;
+    background: var(--button-accent-bg);
+    color: var(--text-color-inverted);
     box-shadow: 0 4px 12px rgba(135, 189, 37, 0.3);
 }
 
 .status-edited {
-    background: linear-gradient(135deg, #59BDB9 0%, #3d9894 100%);
-    color: white;
+    background: var(--button-secondary-bg);
+    color: var(--text-color-inverted);
     box-shadow: 0 4px 12px rgba(89, 189, 185, 0.3);
 }
 
@@ -456,8 +432,8 @@
 
 .accept-btn {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #87BD25 0%, #6a971d 100%);
-    color: white;
+    background: var(--button-accent-bg);
+    color: var(--text-color-inverted);
     border: none;
     border-radius: 12px;
     cursor: pointer;
@@ -471,7 +447,7 @@
 .accept-btn:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(135, 189, 37, 0.4);
-    background: linear-gradient(135deg, #6a971d 0%, #5a7e18 100%);
+    background: var(--button-accent-bg);
 }
 
 .accept-btn:active:not(:disabled) {
@@ -479,7 +455,7 @@
 }
 
 .accept-btn:disabled {
-    background: #cbd5e0;
+    background: var(--border-color-light);
     cursor: not-allowed;
     box-shadow: none;
     opacity: 0.5;
@@ -487,8 +463,8 @@
 
 .edit-value-btn {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #59BDB9 0%, #3d9894 100%);
-    color: white;
+    background: var(--button-secondary-bg);
+    color: var(--text-color-inverted);
     border: none;
     border-radius: 12px;
     cursor: pointer;
@@ -502,7 +478,7 @@
 .edit-value-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 16px rgba(89, 189, 185, 0.4);
-    background: linear-gradient(135deg, #3d9894 0%, #2a7370 100%);
+    background: var(--button-secondary-bg);
 }
 
 .edit-value-btn:active {
@@ -515,9 +491,9 @@
     flex-direction: column;
     gap: 16px;
     padding: 20px;
-    background: #f7fafc;
+    background: var(--background-color-light);
     border-radius: 20px;
-    border: 2px solid #59BDB9;
+    border: 2px solid var(--secondary-color);
     box-shadow: 0 4px 16px rgba(89, 189, 185, 0.15);
 }
 
@@ -528,7 +504,7 @@
 }
 
 .edit-value-input-container label {
-    color: #2d3748;
+    color: var(--text-color);
     font-weight: 600;
     font-size: 0.95em;
 }
@@ -536,20 +512,20 @@
 .edit-value-input {
     width: 100%;
     padding: 14px 16px;
-    border: 2px solid #e2e8f0;
+    border: 2px solid var(--border-color);
     border-radius: 12px;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     font-size: 0.95em;
     resize: vertical;
     transition: all 0.3s ease;
     line-height: 1.6;
-    background: white;
+    background: var(--background-color);
     min-height: 80px;
 }
 
 .edit-value-input:focus {
     outline: none;
-    border-color: #59BDB9;
+    border-color: var(--secondary-color);
     box-shadow: 0 0 0 3px rgba(89, 189, 185, 0.1);
 }
 
@@ -563,8 +539,8 @@
 
 .save-edit-btn {
     padding: 12px 28px;
-    background: linear-gradient(135deg, #1C2C8C 0%, #59BDB9 100%);
-    color: white;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
     border: none;
     border-radius: 12px;
     cursor: pointer;
@@ -586,9 +562,9 @@
 
 .cancel-edit-btn {
     padding: 12px 28px;
-    background: linear-gradient(135deg, #f7fafc 0%, #e2e8f0 100%);
-    color: #4a5568;
-    border: 2px solid #cbd5e0;
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
+    color: var(--text-color-light);
+    border: 2px solid var(--border-color-light);
     border-radius: 12px;
     cursor: pointer;
     font-size: 0.95em;
@@ -598,7 +574,7 @@
 }
 
 .cancel-edit-btn:hover {
-    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%);
+    background: linear-gradient(135deg, var(--background-color-lighter) 0%, var(--border-color-light) 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }

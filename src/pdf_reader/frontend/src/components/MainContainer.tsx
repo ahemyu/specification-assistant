@@ -1,6 +1,6 @@
 import { useAppStore } from '../store/useAppStore';
-import { UploadView } from './Spec-Assistant/UploadView';
-import { ExtractionView } from './Spec-Assistant/ExtractionView';
+import { UploadView } from './SpecAI/UploadView';
+import { ExtractionView } from './SpecAI/ExtractionView';
 import "../styles/modules/maincontainer.css";
 import { FaQuestionCircle } from "react-icons/fa";
 import { Button } from './ui/Button';

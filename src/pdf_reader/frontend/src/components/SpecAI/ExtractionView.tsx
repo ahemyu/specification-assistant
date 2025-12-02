@@ -370,8 +370,8 @@ export function ExtractionView() {
         />
       ) : (
         <div id="extractionSetupView">
-          <h1 className="view-title">Extract Keys from PDFs</h1>
-          <p className="view-subtitle">
+          <h1 className="page-title">Extract Keys from PDFs</h1>
+          <p className="subtitle">
             Select the product type to extract relevant specifications
           </p>
 
