@@ -36,6 +36,9 @@
 /* Utilities - Status messages, spinners, common utilities */
 @import url('./modules/utilities.css');
 
+/* Loading Overlay - Full-screen loading state */
+@import url('./modules/loading-overlay.css');
+
 /* Theme Toggle */
 @import url('./modules/theme-toggle.css');
 
