@@ -495,7 +495,7 @@ export function ExtractionView() {
                           {detectedWindingCount !== null && (
                             <div className="detected-count-badge">
                               <span className="detected-count-number winding">{detectedWindingCount}</span>
-                              <span className="detected-count-label">Wicklung{detectedWindingCount !== 0 ? 'en' : ''}</span>
+                              <span className="detected-count-label">Wicklung{detectedWindingCount !== 1 ? 'en' : ''}</span>
                             </div>
                           )}
                         </div>
