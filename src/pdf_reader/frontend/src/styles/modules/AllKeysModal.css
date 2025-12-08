@@ -14,7 +14,7 @@
 }
 
 .all-keys-modal-content {
-  background-color: var(--modal-bg);
+  background-color: var(--background-color);
   border-radius: 20px;
   max-width: 900px; /* Increased max-width */
   max-height: 90vh; /* Increased max-height */
@@ -22,7 +22,7 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2); /* Softer, larger shadow */
-  border: 1px solid var(--modal-border);
+  border: 1px solid var(--border-color);
   overflow: hidden;
   /* Add animation */
   animation: slideDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -42,11 +42,11 @@
 .all-keys-modal-header {
   padding: 1.25rem 2rem; /* Adjusted padding */
   padding-right: 20px;
-  border-bottom: 1px solid var(--modal-border);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: var(--modal-header-bg);
+  background-color: var(--background-color-light);
   flex-shrink: 0; /* Prevent header from shrinking */
 }
 
@@ -87,7 +87,7 @@
 .all-keys-modal-body::-webkit-scrollbar-thumb {
     background: var(--border-color-light);
     border-radius: 10px;
-    border: 2px solid var(--modal-bg);
+    border: 2px solid var(--background-color);
 }
 .all-keys-modal-body::-webkit-scrollbar-thumb:hover {
     background: var(--text-color-lighter);
@@ -103,7 +103,7 @@
 
 .category-header {
   padding-bottom: 0.75rem; /* More space */
-  border-bottom: 1px solid var(--modal-border); /* Softer border */
+  border-bottom: 1px solid var(--border-color);
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;

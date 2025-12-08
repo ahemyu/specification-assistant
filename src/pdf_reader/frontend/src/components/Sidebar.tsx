@@ -53,7 +53,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <header className="sidebar-header">
         <img src={theme === 'dark' ? "/assets/trench-logo-dark.png" : "/assets/trench-logo.png"} alt="Trench Hub Logo" className="sidebar-logo" style={{ width: '200px', marginBottom: '20px' }} />
-        <h2 className="page-title">Trench Hub</h2>
+        <h2 className="sidebar-title">Trench Hub</h2>
       </header>
 
       <ul className="sidebar-menu">

@@ -8,7 +8,6 @@
     top: 0;
     width: 100%;
     height: 100%;
-    background: var(--modal-overlay-bg);
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
     animation: fadeIn 0.3s ease-in-out;
@@ -21,7 +20,7 @@
 }
 
 .modal-content {
-    background: var(--modal-bg);
+    background: var(--background-color);
     border-radius: 16px;
     width: 90%;
     max-width: 900px;
@@ -31,7 +30,7 @@
     flex-direction: column;
     animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     overflow: hidden;
-    border: 1px solid var(--modal-border);
+    border: 1px solid var(--border-color);
 }
 
 @keyframes slideUp {
@@ -52,17 +51,17 @@
 
 .modal-header {
     padding: 20px;
-    border-bottom: 1px solid var(--modal-border);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--modal-header-bg);
+    background: var(--background-color-light);
     flex-shrink: 0;
 }
 
 .modal-header h2 {
     margin: 0;
-    color: var(--modal-text);
+    color: var(--text-color);
     font-size: 1.125rem;
     font-weight: 600;
     text-overflow: ellipsis;
@@ -74,7 +73,7 @@
 .modal-close {
     background: transparent;
     border: none;
-    color: var(--modal-secondary-text);
+    color: var(--text-color-light);
     cursor: pointer;
     padding: 8px;
     border-radius: 50%;
@@ -87,7 +86,7 @@
 
 .modal-close:hover {
     background: var(--background-color-lighter);
-    color: var(--modal-text);
+    color: var(--text-color);
     transform: scale(1.1);
 }
 
@@ -96,13 +95,13 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    background-color: var(--modal-code-bg);
+    background-color: var(--background-color-light);
 }
 
 .preview-info {
     padding: 12px 28px;
-    background: var(--modal-bg);
-    border-bottom: 1px solid var(--modal-border);
+    background: var(--background-color);
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -115,7 +114,7 @@
 
 .preview-filename {
     font-weight: 500;
-    color: var(--modal-text);
+    color: var(--text-color);
     font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
@@ -123,7 +122,7 @@
 }
 
 .preview-size {
-    color: var(--modal-secondary-text);
+    color: var(--text-color-light);
     font-size: 0.8rem;
     font-weight: 500;
     background: var(--background-color-lighter);
@@ -148,7 +147,7 @@
     align-items: center;
     justify-content: center;
     min-height: 200px;
-    color: var(--modal-secondary-text);
+    color: var(--text-color-light);
     font-size: 1rem;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     padding: 20px;

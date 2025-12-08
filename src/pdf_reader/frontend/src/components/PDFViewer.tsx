@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as pdfjsLib from 'pdfjs-dist'
 import { useAppStore } from '../store/useAppStore'
+import { IoAdd, IoRemove, IoChevronBack, IoChevronForward } from "react-icons/io5";
 
 // Initialize PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
@@ -227,10 +228,6 @@ export function PDFViewer({ references, className = '', selectedRefIndex = 0 }: 
     setScale((prev) => Math.max(prev - 0.25, 0.5))
   }
 
-  const handleZoomReset = () => {
-    setScale(1.0)
-  }
-
   const handlePrevPage = () => {
     if (currentPage > 1) {
       setCurrentPage((prev) => prev - 1)
@@ -255,65 +252,6 @@ export function PDFViewer({ references, className = '', selectedRefIndex = 0 }: 
 
   return (
     <div className={`pdf-viewer-panel ${className}`} id="pdfViewerPanel">
-      <div className="pdf-controls">
-        <div className="zoom-controls">
-          <button
-            id="zoomOut"
-            className="zoom-btn"
-            onClick={handleZoomOut}
-            disabled={scale <= 0.5}
-            title="Zoom Out"
-          >
-            -
-          </button>
-          <span id="zoomLevel" className="zoom-level">
-            {Math.round(scale * 100)}%
-          </span>
-          <button
-            id="zoomIn"
-            className="zoom-btn"
-            onClick={handleZoomIn}
-            disabled={scale >= 3.0}
-            title="Zoom In"
-          >
-            +
-          </button>
-          <button
-            id="zoomReset"
-            className="zoom-btn"
-            onClick={handleZoomReset}
-            title="Reset Zoom"
-          >
-            Reset
-          </button>
-        </div>
-
-        <div className="page-controls">
-          <button
-            id="prevPage"
-            className="page-btn"
-            onClick={handlePrevPage}
-            disabled={currentPage <= 1}
-            title="Previous Page"
-          >
-            ←
-          </button>
-          <span className="page-info">
-            <span id="currentPdfPage">{currentPage}</span> /{' '}
-            <span id="totalPdfPages">{currentPdfDoc?.numPages || 0}</span>
-          </span>
-          <button
-            id="nextPage"
-            className="page-btn"
-            onClick={handleNextPage}
-            disabled={!currentPdfDoc || currentPage >= currentPdfDoc.numPages}
-            title="Next Page"
-          >
-            →
-          </button>
-        </div>
-      </div>
-
       {isLoading && (
         <div className="pdf-loading">
           <div className="spinner" />
@@ -339,6 +277,59 @@ export function PDFViewer({ references, className = '', selectedRefIndex = 0 }: 
             pointerEvents: 'none'
           }}
         />
+      </div>
+
+      {/* Floating Controls */}
+      <div className="pdf-floating-controls">
+        <div className="control-group">
+          <button
+            id="prevPage"
+            className="control-btn"
+            onClick={handlePrevPage}
+            disabled={currentPage <= 1}
+            title="Previous Page"
+          >
+            <IoChevronBack />
+          </button>
+          <span className="page-info">
+            {currentPage} / {currentPdfDoc?.numPages || 0}
+          </span>
+          <button
+            id="nextPage"
+            className="control-btn"
+            onClick={handleNextPage}
+            disabled={!currentPdfDoc || currentPage >= currentPdfDoc.numPages}
+            title="Next Page"
+          >
+            <IoChevronForward />
+          </button>
+        </div>
+
+        <div className="control-divider" />
+
+        <div className="control-group">
+          <button
+            id="zoomOut"
+            className="control-btn"
+            onClick={handleZoomOut}
+            disabled={scale <= 0.5}
+            title="Zoom Out"
+          >
+            <IoRemove />
+          </button>
+          <span className="zoom-level">
+            {Math.round(scale * 100)}%
+          </span>
+          <button
+            id="zoomIn"
+            className="control-btn"
+            onClick={handleZoomIn}
+            disabled={scale >= 3.0}
+            title="Zoom In"
+          >
+            <IoAdd />
+          </button>
+        </div>
       </div>
     </div>
   )
