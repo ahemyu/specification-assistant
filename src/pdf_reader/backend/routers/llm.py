@@ -1,8 +1,9 @@
 """Router for LLM-based endpoints (key extraction and question answering)."""
+
 import json
 import logging
 
-from backend.dependencies import get_llm_extractor, get_pdf_storage
+from backend.dependencies import get_llm_extractor, get_pdf_data_for_file_ids
 from backend.schemas.domain import SourceLocation
 from backend.schemas.requests import (
     CoreWindingCountRequest,
@@ -22,8 +23,7 @@ router = APIRouter(prefix="", tags=["llm"])
 
 @router.post("/extract-keys")
 async def extract_keys(
-    request: KeyExtractionRequest,
-    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: KeyExtractionRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
 ) -> dict:
     """
     Extract keys from one or more previously uploaded PDFs using LLM.
@@ -35,25 +35,11 @@ async def extract_keys(
     Returns:
     - Dictionary mapping each key name to its KeyExtractionResult
     """
-    pdf_storage = get_pdf_storage()
-
-    # Load the processed PDF data for each file_id from memory
-    pdf_data_list = []
-    for file_id in request.file_ids:
-        if file_id not in pdf_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"File with ID {file_id} not found. Please upload the file first."
-            )
-
-        pdf_data_list.append(pdf_storage[file_id])
+    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
 
     # Extract all keys using LLM (now parallelized)
     try:
-        results = await llm_extractor.extract_keys(
-            key_names=request.key_names,
-            pdf_data=pdf_data_list
-        )
+        results = await llm_extractor.extract_keys(key_names=request.key_names, pdf_data=pdf_data_list)
 
         # Transform matched_line_ids to bounding_box coordinates
         # Split multi-page source_locations into one per page with page-specific bounding boxes
@@ -66,10 +52,7 @@ async def extract_keys(
                     pdf_filename = source_loc.pdf_filename
 
                     # Find the corresponding pdf_data for this filename
-                    matching_pdf = next(
-                        (pdf for pdf in pdf_data_list if pdf.get("filename") == pdf_filename),
-                        None
-                    )
+                    matching_pdf = next((pdf for pdf in pdf_data_list if pdf.get("filename") == pdf_filename), None)
 
                     if not matching_pdf or "line_id_map" not in matching_pdf:
                         # Cannot calculate bounding box, keep original source_loc as-is
@@ -86,7 +69,7 @@ async def extract_keys(
                             if line_id in line_id_map:
                                 # Extract page number from line_id
                                 try:
-                                    line_page_num = int(line_id.split('_')[0])
+                                    line_page_num = int(line_id.split("_")[0])
                                     # Only include this line_id if it belongs to this specific page
                                     if line_page_num == page_num:
                                         bboxes.append(line_id_map[line_id])
@@ -95,14 +78,11 @@ async def extract_keys(
                                     continue
 
                         # Create a new source_location for this page
-                        new_loc = SourceLocation(
-                            pdf_filename=pdf_filename,
-                            page_numbers=[page_num],
-                            bounding_box=None
-                        )
+                        new_loc = SourceLocation(pdf_filename=pdf_filename, page_numbers=[page_num], bounding_box=None)
 
                         # Calculate merged bounding box for this page if we found any line_ids
-                        #TODO: improve this
+                        # Note: This merges all bboxes into one encompassing box. For scattered
+                        # references, consider returning multiple separate bounding boxes instead.
                         if bboxes:
                             min_x0 = min(bbox[0] for bbox in bboxes)
                             min_top = min(bbox[1] for bbox in bboxes)
@@ -119,23 +99,14 @@ async def extract_keys(
                 result.matched_line_ids = None
 
         # Convert results to dict with serializable values
-        return {
-            key: result.model_dump() if result else None
-            for key, result in results.items()
-        }
+        return {key: result.model_dump() if result else None for key, result in results.items()}
     except Exception as e:
         logger.error(f"Error during LLM multiple key extraction: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error during key extraction: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error during key extraction: {str(e)}")
 
 
 @router.post("/ask-question-stream")
-async def ask_question_stream(
-    request: QuestionRequest,
-    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
-):
+async def ask_question_stream(request: QuestionRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)):
     """
     Ask a general question about one or more previously uploaded PDFs using LLM with streaming.
 
@@ -146,26 +117,12 @@ async def ask_question_stream(
     Returns:
     - Streaming response with Server-Sent Events (SSE) format
     """
-    pdf_storage = get_pdf_storage()
-
-    # Load the processed PDF data for each file_id from memory
-    pdf_data_list = []
-    for file_id in request.file_ids:
-        if file_id not in pdf_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"File with ID {file_id} not found. Please upload the file first."
-            )
-
-        pdf_data_list.append(pdf_storage[file_id])
+    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
 
     # Convert conversation history to dict format for LLM
     conversation_history = None
     if request.conversation_history:
-        conversation_history = [
-            {"role": msg.role, "content": msg.content}
-            for msg in request.conversation_history
-        ]
+        conversation_history = [{"role": msg.role, "content": msg.content} for msg in request.conversation_history]
 
     async def event_generator():
         """Generate SSE events for streaming response."""
@@ -174,52 +131,36 @@ async def ask_question_stream(
                 question=request.question,
                 pdf_data=pdf_data_list,
                 conversation_history=conversation_history,
-                model_name=request.model_name
+                model_name=request.model_name,
             ):
                 # Send system message if this is the first message
                 if system_message:
-                    system_event = {
-                        "type": "system_message",
-                        "content": system_message
-                    }
+                    system_event = {"type": "system_message", "content": system_message}
                     yield f"data: {json.dumps(system_event)}\n\n"
 
                 # Send the chunk
-                chunk_event = {
-                    "type": "chunk",
-                    "content": chunk
-                }
+                chunk_event = {"type": "chunk", "content": chunk}
                 yield f"data: {json.dumps(chunk_event)}\n\n"
 
             # Send completion event
-            done_event = {
-                "type": "done"
-            }
+            done_event = {"type": "done"}
             yield f"data: {json.dumps(done_event)}\n\n"
 
         except Exception as e:
             logger.error(f"Error during streaming: {str(e)}")
-            error_event = {
-                "type": "error",
-                "content": str(e)
-            }
+            error_event = {"type": "error", "content": str(e)}
             yield f"data: {json.dumps(error_event)}\n\n"
 
     return StreamingResponse(
         event_generator(),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no"
-        }
+        headers={"Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no"},
     )
 
 
 @router.post("/compare-pdfs")
 async def compare_pdfs(
-    request: PDFComparisonRequest,
-    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: PDFComparisonRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
 ) -> dict:
     """
     Compare two versions of a PDF to identify changes in specifications.
@@ -232,44 +173,24 @@ async def compare_pdfs(
     Returns:
     - PDFComparisonResult with summary and list of changes
     """
-    pdf_storage = get_pdf_storage()
-
-    # Validate that both PDFs exist
-    if request.base_file_id not in pdf_storage:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Base file with ID {request.base_file_id} not found. Please upload the file first."
-        )
-
-    if request.new_file_id not in pdf_storage:
-        raise HTTPException(
-            status_code=404,
-            detail=f"New file with ID {request.new_file_id} not found. Please upload the file first."
-        )
-
-    base_pdf_data = pdf_storage[request.base_file_id]
-    new_pdf_data = pdf_storage[request.new_file_id]
+    # Get both PDFs - helper will raise HTTPException if not found
+    pdf_data_list = get_pdf_data_for_file_ids([request.base_file_id, request.new_file_id])
+    base_pdf_data, new_pdf_data = pdf_data_list[0], pdf_data_list[1]
 
     # Compare the PDFs using LLM
     try:
         result = await llm_extractor.compare_pdfs(
-            base_pdf_data=base_pdf_data,
-            new_pdf_data=new_pdf_data,
-            additional_context=request.additional_context or ""
+            base_pdf_data=base_pdf_data, new_pdf_data=new_pdf_data, additional_context=request.additional_context or ""
         )
         return result.model_dump()
     except Exception as e:
         logger.error(f"Error during PDF comparison: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error during PDF comparison: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error during PDF comparison: {str(e)}")
 
 
 @router.post("/detect-product-type")
 async def detect_product_type(
-    request: ProductTypeDetectionRequest,
-    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: ProductTypeDetectionRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
 ) -> dict:
     """
     Detect product type from uploaded PDF specifications.
@@ -285,18 +206,7 @@ async def detect_product_type(
     Returns:
     - ProductTypeDetectionResult with detected type, confidence, and evidence
     """
-    pdf_storage = get_pdf_storage()
-
-    # Load the processed PDF data for each file_id from memory
-    pdf_data_list = []
-    for file_id in request.file_ids:
-        if file_id not in pdf_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"File with ID {file_id} not found. Please upload the file first."
-            )
-
-        pdf_data_list.append(pdf_storage[file_id])
+    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
 
     # Detect product type using LLM
     try:
@@ -304,16 +214,12 @@ async def detect_product_type(
         return result.model_dump()
     except Exception as e:
         logger.error(f"Error during product type detection: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error during product type detection: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error during product type detection: {str(e)}")
 
 
 @router.post("/detect-core-winding-count")
 async def detect_core_winding_count(
-    request: CoreWindingCountRequest,
-    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: CoreWindingCountRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
 ) -> dict:
     """
     Detect the maximum number of cores/windings based on product type.
@@ -328,29 +234,14 @@ async def detect_core_winding_count(
     Returns:
     - CoreWindingCountResult with max_core_number and max_winding_number
     """
-    pdf_storage = get_pdf_storage()
-
-    # Load the processed PDF data for each file_id from memory
-    pdf_data_list = []
-    for file_id in request.file_ids:
-        if file_id not in pdf_storage:
-            raise HTTPException(
-                status_code=404,
-                detail=f"File with ID {file_id} not found. Please upload the file first."
-            )
-
-        pdf_data_list.append(pdf_storage[file_id])
+    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
 
     # Detect core/winding count using LLM
     try:
         result = await llm_extractor.detect_core_winding_count(
-            pdf_data=pdf_data_list,
-            product_type=request.product_type
+            pdf_data=pdf_data_list, product_type=request.product_type
         )
         return result.model_dump()
     except Exception as e:
         logger.error(f"Error during core/winding count detection: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error during core/winding count detection: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error during core/winding count detection: {str(e)}")

@@ -1,17 +1,16 @@
 """FastAPI service for PDF text extraction, question answering and key extraction."""
+
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 
+from backend.config import PDF_READER_DIR
 from backend.dependencies import load_existing_pdfs
 from backend.routers import excel, llm, pdf
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
 )
 logger = logging.getLogger(__name__)
 
@@ -30,30 +29,16 @@ async def lifespan(_app: FastAPI):
 
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
 
-# Base directory is the parent of the backend directory (src/pdf_reader)
-BASE_DIR = Path(__file__).parent.parent
-
-# ============================================================================
-# DEPRECATED: Vanilla JS Static Files (Archived 2025-11-11)
-# The React build is now served from frontend/dist/ directory.
-# The old vanilla JS code is archived in frontend/archived_vanilla_js/
-# app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
-# templates = Jinja2Templates(directory="frontend/templates")
-# @app.get("/")
-# async def root(request: Request):
-#     """Serve the main HTML page."""
-#     return templates.TemplateResponse("index.html", {"request": request})
-# ============================================================================
-
 # Include routers (must be before catch-all static mount)
 app.include_router(pdf.router)
 app.include_router(llm.router)
 app.include_router(excel.router)
 
 # Mount React production build
-frontend_dist = BASE_DIR / "frontend" / "dist"
+frontend_dist = PDF_READER_DIR / "frontend" / "dist"
 app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="react-frontend")
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8000)

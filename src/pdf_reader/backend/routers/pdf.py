@@ -1,4 +1,5 @@
 """Router for PDF upload, download, and preview endpoints."""
+
 import asyncio
 import logging
 import os
@@ -6,7 +7,8 @@ from concurrent.futures import ProcessPoolExecutor
 from io import BytesIO
 from pathlib import Path
 
-from backend.dependencies import OUTPUT_DIR, UPLOADED_PDFS_DIR, get_pdf_storage
+from backend.config import OUTPUT_DIR, UPLOADED_PDFS_DIR
+from backend.dependencies import get_pdf_storage
 from backend.services.process_pdfs import process_single_pdf
 from fastapi import APIRouter, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
@@ -40,7 +42,7 @@ def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) 
         text_content = pdf_data["formatted_text"]
 
         # Save extracted text to output directory
-        safe_filename = filename.replace('.pdf', '.txt')
+        safe_filename = filename.replace(".pdf", ".txt")
         output_path = output_dir / safe_filename
 
         with open(output_path, "w", encoding="utf-8") as f:
@@ -50,20 +52,11 @@ def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) 
 
         logger.info(f"Successfully processed {filename}")
 
-        return {
-            "success": True,
-            "filename": filename,
-            "file_id": file_id,
-            "pdf_data": pdf_data
-        }
+        return {"success": True, "filename": filename, "file_id": file_id, "pdf_data": pdf_data}
 
     except Exception as e:
         logger.error(f"Error processing {filename}: {str(e)}")
-        return {
-            "success": False,
-            "filename": filename,
-            "error": str(e)
-        }
+        return {"success": False, "filename": filename, "error": str(e)}
 
 
 @router.post("/upload")
@@ -81,7 +74,7 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
     # Filter out non-PDF files and read all file contents
     valid_files = []
     for file in files:
-        if not file.filename or not file.filename.endswith('.pdf'):
+        if not file.filename or not file.filename.endswith(".pdf"):
             failed.append(f"{file.filename or 'Unknown'} (not a PDF)")
             continue
 
@@ -90,10 +83,10 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
         # Save the original PDF file to disk for persistence
         try:
             # Create a safe filename based on the original name
-            safe_filename = file.filename.replace('.pdf', '') + '.pdf'
+            safe_filename = file.filename.replace(".pdf", "") + ".pdf"
             pdf_file_path = UPLOADED_PDFS_DIR / safe_filename
 
-            with open(pdf_file_path, 'wb') as f:
+            with open(pdf_file_path, "wb") as f:
                 f.write(contents)
 
             logger.info(f"Saved PDF file to {pdf_file_path}")
@@ -113,13 +106,7 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         # Submit all processing tasks
         tasks = [
-            loop.run_in_executor(
-                executor,
-                _process_single_file,
-                file_contents,
-                filename,
-                OUTPUT_DIR
-            )
+            loop.run_in_executor(executor, _process_single_file, file_contents, filename, OUTPUT_DIR)
             for file_contents, filename in valid_files
         ]
 
@@ -135,20 +122,19 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
             # Store processed PDF data in memory for later extraction
             pdf_storage[file_id] = pdf_data
 
-            processed.append({
-                "filename": result["filename"],
-                "original_filename": result["filename"],
-                "file_id": file_id,
-                "total_pages": pdf_data["total_pages"],
-                "data": pdf_data
-            })
+            processed.append(
+                {
+                    "filename": result["filename"],
+                    "original_filename": result["filename"],
+                    "file_id": file_id,
+                    "total_pages": pdf_data["total_pages"],
+                    "data": pdf_data,
+                }
+            )
         else:
             failed.append(f"{result['filename']} ({result['error']})")
 
-    return {
-        "processed": processed,
-        "failed": failed
-    }
+    return {"processed": processed, "failed": failed}
 
 
 @router.get("/download/{file_id}")
@@ -160,11 +146,7 @@ async def download_file(file_id: str):
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
 
-    return FileResponse(
-        path=file_path,
-        media_type="text/plain",
-        filename=f"extracted_{file_id}.txt"
-    )
+    return FileResponse(path=file_path, media_type="text/plain", filename=f"extracted_{file_id}.txt")
 
 
 @router.get("/preview/{file_id}")
@@ -183,18 +165,10 @@ async def preview_file(file_id: str):
         with open(file_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        return {
-            "file_id": file_id,
-            "filename": f"{file_id}.txt",
-            "content": content,
-            "size": len(content)
-        }
+        return {"file_id": file_id, "filename": f"{file_id}.txt", "content": content, "size": len(content)}
     except Exception as e:
         logger.error(f"Error reading file {file_id}: {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error reading file: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
 
 
 @router.get("/view-pdf/{file_id}")
@@ -216,7 +190,7 @@ async def view_pdf(file_id: str):
         path=pdf_path,
         media_type="application/pdf",
         filename=f"{file_id}.pdf",
-        headers={"Content-Disposition": f"inline; filename={file_id}.pdf"}
+        headers={"Content-Disposition": f"inline; filename={file_id}.pdf"},
     )
 
 
@@ -233,7 +207,6 @@ async def delete_pdf(file_id: str):
     """
     pdf_storage = get_pdf_storage()
 
-
     # Remove from in-memory storage
     if file_id in pdf_storage:
         del pdf_storage[file_id]
@@ -245,10 +218,6 @@ async def delete_pdf(file_id: str):
             text_file_path.unlink()
         except Exception as e:
             logger.error(f"Error deleting text file {text_file_path}: {str(e)}")
-            raise HTTPException(
-                status_code=500,
-                detail=f"Error deleting text file: {str(e)}"
-            )
 
     # Remove the original PDF file from disk
     pdf_file_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
@@ -257,6 +226,5 @@ async def delete_pdf(file_id: str):
             pdf_file_path.unlink()
         except Exception as e:
             logger.error(f"Error deleting PDF file {pdf_file_path}: {str(e)}")
-            # Don't raise exception here, just log the error
 
     return {"message": f"File {file_id} deleted successfully"}

@@ -5,13 +5,9 @@ This script will be used to parse pdf files, extract their content as text file 
 import io
 import logging
 from pathlib import Path
-from typing import Union
 
 import pdfplumber
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
 logger = logging.getLogger(__name__)
 
 
@@ -122,7 +118,7 @@ def process_single_page(page, page_number: int) -> dict:
     return {"page_number": page_number, "formatted_text": "".join(formatted_parts), "line_id_map": line_id_map}
 
 
-def process_single_pdf(pdf_source: Union[Path, io.BytesIO], filename: str | None = None) -> dict:
+def process_single_pdf(pdf_source: Path | io.BytesIO, filename: str | None = None) -> dict:
     """
     Process a single PDF file and return structured data as dictionary.
 
