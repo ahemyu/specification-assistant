@@ -1,6 +1,7 @@
 """Unit tests for PDF upload and processing endpoints."""
 
 import pytest
+from backend.config import OUTPUT_DIR, UPLOADED_PDFS_DIR
 from backend.dependencies import pdf_storage
 
 
@@ -33,7 +34,7 @@ class TestPDFUpload:
 
         files = [
             ("files", ("test1.pdf", file_content, "application/pdf")),
-            ("files", ("test2.pdf", file_content, "application/pdf"))
+            ("files", ("test2.pdf", file_content, "application/pdf")),
         ]
 
         # Execute
@@ -75,7 +76,7 @@ class TestPDFUpload:
 
         files = [
             ("files", ("valid.pdf", valid_content, "application/pdf")),
-            ("files", ("invalid.txt", b"not a pdf", "text/plain"))
+            ("files", ("invalid.txt", b"not a pdf", "text/plain")),
         ]
 
         # Execute
@@ -103,7 +104,6 @@ class TestPDFRetrieval:
         pdf_storage[file_id] = mock_pdf_data
 
         # Create the expected text file
-        from backend.dependencies import OUTPUT_DIR
         output_path = OUTPUT_DIR / f"{file_id}.txt"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         with open(output_path, "w", encoding="utf-8") as f:
@@ -142,7 +142,6 @@ class TestPDFDownload:
     def test_download_file_success(self, client):
         """Test successful download of extracted text file."""
         # Setup: Create a text file
-        from backend.dependencies import OUTPUT_DIR
         file_id = "test_download_123"
         output_path = OUTPUT_DIR / f"{file_id}.txt"
         output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -175,7 +174,6 @@ class TestPDFDownload:
     def test_view_pdf_success(self, client):
         """Test successful viewing of original PDF file."""
         # Setup: Create a PDF file
-        from backend.dependencies import UPLOADED_PDFS_DIR
         file_id = "test_view_456"
         pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
@@ -216,8 +214,6 @@ class TestPDFDeletion:
         pdf_storage[file_id] = mock_pdf_data
 
         # Create the files on disk
-        from backend.dependencies import OUTPUT_DIR, UPLOADED_PDFS_DIR
-
         text_path = OUTPUT_DIR / f"{file_id}.txt"
         pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
 

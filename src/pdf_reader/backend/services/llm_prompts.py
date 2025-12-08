@@ -1,45 +1,5 @@
 """LLM prompt templates for key extraction, Q&A, and PDF comparison."""
 
-# Key extraction prompt template (single-key)
-KEY_EXTRACTION_PROMPT = """You are an expert at extracting specific information from technical documents.
-Your task is to find and extract the value for the key: "{key_name}"
-Below are the contents of one or more PDF documents. Each document includes
-page numbers to help you track where information is found.
-
-{key_metadata_section}
-
-COORDINATE SYSTEM:
-The text is annotated with location markers:
-- [line_id: X_Y] for regular text lines (e.g., [line_id: 3_5] = Page 3, Line 5)
-- [cell_id: X_tY_rZ_cW] for table cells (e.g., [cell_id: 3_t0_r1_c2] = Page 3, Table 0, Row 1, Column 2)
-
-IMPORTANT INSTRUCTIONS:
-1. Extract the exact value/s for the requested key
-2. Use the key metadata above (if provided) to understand both the German and English terms,
-   as well as additional context about what values are expected or typical
-3. Record ALL PDF filenames and page numbers where you found relevant information
-   (they COULD be spread to different pdfs/pages)
-4. CRITICAL: When you find the key's value, you MUST identify and return the line_id(s)
-   or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
-   Put these IDs in the matched_line_ids field as a list of strings.
-5. TRANSLATION REQUIREMENT: ALWAYS translate the extracted value to German if it is not already in German.
-   For example, if you find "Voltage Transformer", translate it to "Spannungswandler".
-   If the value is already in German or is a number/code, keep it as is.
-6. LANGUAGE REQUIREMENT: ALWAYS write the description in German, regardless of the document language.
-   Provide a clear description of where and how you found the information, written in German.
-7. If the key is not found in any document:
-   - Set key_value to null
-   - Set source_locations to an empty list []
-   - Set description to exactly "Nicht gefunden"
-   - Set matched_line_ids to null
-8. Be precise about page numbers - always reference the specific pages where
-   information was found
-
-DOCUMENT CONTENTS:
-{full_context}
-Now extract the key "{key_name}" and provide the structured output."""
-
-
 # Multi-key extraction prompt template
 MULTI_KEY_EXTRACTION_PROMPT = """You are an expert at extracting specific information from technical documents.
 

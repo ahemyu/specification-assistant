@@ -2,16 +2,9 @@
 
 import asyncio
 import logging
-import sys
 import time
-from pathlib import Path
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
-
-# Add parent directory to path to allow imports from pdf_reader root
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
+from backend.config import DEFAULT_BATCH_SIZE, MAX_CONCURRENT_BATCHES, OPENAI_BASE_URL
 from backend.schemas.domain import (
     CoreWindingCountResult,
     KeyExtractionResult,
@@ -22,21 +15,29 @@ from backend.schemas.domain import (
 from backend.services.key_metadata import format_key_metadata_for_prompt
 from backend.services.llm_prompts import (
     CORE_WINDING_COUNT_PROMPT,
-    KEY_EXTRACTION_PROMPT,
     MULTI_KEY_EXTRACTION_PROMPT,
     PDF_COMPARISON_PROMPT,
     PRODUCT_TYPE_DETECTION_PROMPT,
     QA_SYSTEM_PROMPT,
 )
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
-)
 logger = logging.getLogger(__name__)
 
-# Configuration
-DEFAULT_BATCH_SIZE = 20  # number of keys sent per llm request (optimized for ~50K token PDFs)
-MAX_CONCURRENT_BATCHES = 1  # how many batches are sent at once
+
+def _build_pdf_context(pdf_data: list[dict]) -> str:
+    """
+    Build a combined text context from multiple PDF data dictionaries.
+
+    Args:
+        pdf_data: List of dictionaries containing PDF data from process_single_pdf()
+                  Each dict should have a "formatted_text" key.
+
+    Returns:
+        Combined formatted text from all PDFs as a single string.
+    """
+    return "".join(pdf.get("formatted_text", "") for pdf in pdf_data)
 
 
 class LLMKeyExtractor:
@@ -50,58 +51,23 @@ class LLMKeyExtractor:
             api_key: Azure OpenAI API key
             model_name: Name of the OpenAI model to use for key extraction (default: gpt-4.1)
         """
-        # Azure OpenAI endpoint from azure_demo.txt
-        base_url = "https://westeurope.api.cognitive.microsoft.com/openai/v1/"
-
         self.llm = ChatOpenAI(
             model=model_name,
             api_key=api_key,
-            base_url=base_url,
+            base_url=OPENAI_BASE_URL,
             temperature=0,  # Use deterministic output for extraction tasks
         )
         # Store API credentials for creating Q&A LLM instances with different models
         self.api_key = api_key
-        self.base_url = base_url
-        self.structured_llm = self.llm.with_structured_output(KeyExtractionResult)
+        self.base_url = OPENAI_BASE_URL
+
+        # Pre-initialize structured output LLMs for different result types
         self.multi_structured_llm = self.llm.with_structured_output(MultiKeyExtractionResult)
+        self.product_type_llm = self.llm.with_structured_output(ProductTypeDetectionResult)
+        self.core_winding_llm = self.llm.with_structured_output(CoreWindingCountResult)
+        self.comparison_llm = self.llm.with_structured_output(PDFComparisonResult)
 
         logger.info(f"Initialized LLM key extractor with model: {model_name}")
-
-    async def _extract_key(self, key_name: str, pdf_data: list[dict]) -> KeyExtractionResult:
-        """
-        Extract a specific key from one or more processed PDFs asynchronously.
-
-        Args:
-            key_name: The name of the key to extract (e.g., "voltage rating", "manufacturer")
-            pdf_data: List of dictionaries containing PDF data from process_single_pdf_to_dict()
-                      Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
-
-        Returns:
-            KeyExtractionResult with the extracted key value and source locations
-        """
-        logger.info(f"Extracting key '{key_name}' from {len(pdf_data)} PDF(s)")
-
-        # Use pre-formatted text that was created during PDF processing
-        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
-
-        # Get metadata for this key (if available)
-        metadata_text = format_key_metadata_for_prompt(key_name)
-        key_metadata_section = ""
-        if metadata_text:
-            key_metadata_section = f"""KEY METADATA:{metadata_text}"""
-
-        # Build the prompt using the template
-        prompt = KEY_EXTRACTION_PROMPT.format(
-            key_name=key_name, key_metadata_section=key_metadata_section, full_context=full_context
-        )
-
-        try:
-            result = await self.structured_llm.ainvoke(prompt)
-            logger.info(f"Successfully extracted key '{key_name}'")
-            return result
-        except Exception as e:
-            logger.error(f"Error extracting key '{key_name}': {str(e)}")
-            raise
 
     async def _extract_keys_batch(
         self,
@@ -116,8 +82,7 @@ class LLMKeyExtractor:
         """
         logger.info("Extracting batch of %s keys from %s PDF(s)", len(key_names), len(pdf_data))
 
-        # Use pre-formatted text that was created during PDF processing
-        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
+        full_context = _build_pdf_context(pdf_data)
 
         # Build keys_section
         keys_lines = [f"- {name}" for name in key_names]
@@ -164,9 +129,7 @@ class LLMKeyExtractor:
             return results_by_key
         except Exception as e:
             llm_call_time = time.time() - llm_call_start
-            logger.error(
-                f"Error extracting batch of keys {key_names} after {llm_call_time:.1f}s: {str(e)}"
-            )
+            logger.error(f"Error extracting batch of keys {key_names} after {llm_call_time:.1f}s: {str(e)}")
             return {name: None for name in key_names}
 
     async def extract_keys(
@@ -216,7 +179,7 @@ class LLMKeyExtractor:
         elapsed_time = time.time() - start_time
         logger.info(
             f"Completed batched extraction of {len(key_names)} keys in {elapsed_time:.1f}s "
-            f"({len(batches)} requests, avg {elapsed_time/len(batches):.1f}s per request)"
+            f"({len(batches)} requests, avg {elapsed_time / len(batches):.1f}s per request)"
         )
 
         return merged_results
@@ -274,8 +237,7 @@ class LLMKeyExtractor:
                     messages.append(AIMessage(content=msg["content"]))
         else:
             # No system message in history - create new one and add conversation history
-            # Use pre-formatted text that was created during PDF processing
-            full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
+            full_context = _build_pdf_context(pdf_data)
 
             # Build system message using the template
             system_content = QA_SYSTEM_PROMPT.format(document_contents=full_context)
@@ -322,16 +284,11 @@ class LLMKeyExtractor:
         """
         logger.info(f"Detecting product type from {len(pdf_data)} PDF(s)")
 
-        # Use pre-formatted text that was created during PDF processing
-        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
-
-        # Build the prompt using the template
+        full_context = _build_pdf_context(pdf_data)
         prompt = PRODUCT_TYPE_DETECTION_PROMPT.format(full_context=full_context)
 
         try:
-            # Create a structured output LLM for product type detection
-            structured_detection_llm = self.llm.with_structured_output(ProductTypeDetectionResult)
-            result = await structured_detection_llm.ainvoke(prompt)
+            result = await self.product_type_llm.ainvoke(prompt)
             logger.info(f"Successfully detected product type: {result.product_type} (confidence: {result.confidence})")
             return result
         except Exception as e:
@@ -351,8 +308,7 @@ class LLMKeyExtractor:
         """
         logger.info(f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s)")
 
-        # Use pre-formatted text that was created during PDF processing
-        full_context = "".join([pdf.get("formatted_text", "") for pdf in pdf_data])
+        full_context = _build_pdf_context(pdf_data)
 
         # Build product-specific search instructions
         if product_type == "Stromwandler":
@@ -395,9 +351,7 @@ Return both max_core_number and max_winding_number."""
         )
 
         try:
-            # Create a structured output LLM for core/winding detection
-            structured_detection_llm = self.llm.with_structured_output(CoreWindingCountResult)
-            result = await structured_detection_llm.ainvoke(prompt)
+            result = await self.core_winding_llm.ainvoke(prompt)
             logger.info(
                 f"Successfully detected for {product_type}: "
                 f"max_core={result.max_core_number}, max_winding={result.max_winding_number}"
@@ -424,9 +378,8 @@ Return both max_core_number and max_winding_number."""
         """
         logger.info(f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}'")
 
-        # Use pre-formatted text from both PDFs
-        base_context = base_pdf_data.get("formatted_text", "")
-        new_context = new_pdf_data.get("formatted_text", "")
+        base_context = _build_pdf_context([base_pdf_data])
+        new_context = _build_pdf_context([new_pdf_data])
 
         # Build the comparison prompt using the template
         additional_context_section = (
@@ -441,9 +394,7 @@ Return both max_core_number and max_winding_number."""
         )
 
         try:
-            # Create a structured output LLM for comparison
-            structured_comparison_llm = self.llm.with_structured_output(PDFComparisonResult)
-            result = await structured_comparison_llm.ainvoke(prompt)
+            result = await self.comparison_llm.ainvoke(prompt)
             logger.info(f"Successfully compared PDFs. Found {result.total_changes} changes.")
             return result
         except Exception as e:
