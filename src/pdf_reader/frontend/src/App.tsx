@@ -5,6 +5,7 @@ import { Home } from './components/Home'
 import { CompareView } from './components/DocCompare/CompareView'
 import { useAppStore } from './store/useAppStore'
 import { QAPopup } from './components/QAPopup'
+import { AuthModal } from './components/AuthModal'
 
 import './styles/styles.css'
 
@@ -16,6 +17,7 @@ function App() {
     <>
       <Notifications />
       <QAPopup />
+      <AuthModal />
 
       <div className="app-layout">
         <div className="app-wrapper">

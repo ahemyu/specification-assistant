@@ -1,5 +1,5 @@
-import { useState, useRef, useEffect } from 'react'
-import { useAppStore, PDF_STORAGE_KEY, CHAT_STORAGE_KEY } from '../../store/useAppStore'
+import { useState, useRef } from 'react'
+import { useAppStore, CHAT_STORAGE_KEY, handleExpiredToken } from '../../store/useAppStore'
 import { showNotification } from '../../utils/notifications'
 import { Button } from '../ui'
 import { PreviewModal } from '../PreviewModal'
@@ -35,32 +35,8 @@ export function UploadView() {
     setIsDetectingProductType,
     setActiveSubMenuItem,
     setActiveView,
+    token,
   } = useAppStore()
-
-  // Load PDF state from localStorage on mount
-  useEffect(() => {
-    try {
-      const savedState = localStorage.getItem(PDF_STORAGE_KEY)
-      if (savedState) {
-        const { uploadedFileIds: ids, allUploadedFiles: files } = JSON.parse(savedState)
-        setUploadedFileIds(ids || [])
-        setAllUploadedFiles(files || [])
-        setProcessedFiles(files || [])
-      }
-    } catch (error) {
-      console.error('Error loading PDF state:', error)
-    }
-  }, [setUploadedFileIds, setAllUploadedFiles, setProcessedFiles])
-
-  // Save PDF state to localStorage whenever it changes
-  useEffect(() => {
-    if (uploadedFileIds.length > 0) {
-      localStorage.setItem(
-        PDF_STORAGE_KEY,
-        JSON.stringify({ uploadedFileIds, allUploadedFiles })
-      )
-    }
-  }, [uploadedFileIds, allUploadedFiles])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -105,10 +81,22 @@ export function UploadView() {
     showNotification('Processing PDFs...', 'info')
 
     try {
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/upload', {
         method: 'POST',
+        headers,
         body: formData,
       })
+
+      if (response.status === 401) {
+        handleExpiredToken();
+        setIsUploading(false);
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
@@ -209,7 +197,6 @@ export function UploadView() {
       localStorage.removeItem(CHAT_STORAGE_KEY)
 
       if (newFiles.length === 0) {
-        localStorage.removeItem(PDF_STORAGE_KEY)
         showNotification('All files deleted', 'info')
         setActiveView('spec_ai'); // Ensure we are in spec_ai view
         setActiveSubMenuItem('upload'); // Go to upload sub-menu
@@ -256,7 +243,6 @@ export function UploadView() {
       setProcessedFiles([])
       setAllUploadedFiles([])
       setConversationHistory([])
-      localStorage.removeItem(PDF_STORAGE_KEY)
       localStorage.removeItem(CHAT_STORAGE_KEY)
 
       setActiveView('spec_ai'); // Ensure we are in spec_ai view

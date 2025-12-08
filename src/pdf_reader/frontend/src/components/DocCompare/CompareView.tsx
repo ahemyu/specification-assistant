@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import type { ComparisonResult, ChangeFilter } from '../../types'
 import { showNotification } from '../../utils/notifications'
+import { useAppStore, handleExpiredToken } from '../../store/useAppStore'
 import { FaBalanceScale, FaSearchPlus } from 'react-icons/fa'
 import "../../styles/modules/home.css";
 
@@ -14,6 +15,9 @@ const STORAGE_KEYS = {
 }
 
 const StandardCompareView = () => {
+  // Get token from store
+  const token = useAppStore((state) => state.token);
+
   // State
   const [baseFile, setBaseFile] = useState<File | null>(null)
   const [newFile, setNewFile] = useState<File | null>(null)
@@ -106,10 +110,21 @@ const StandardCompareView = () => {
     const formData = new FormData()
     formData.append('files', file)
 
+    const headers: HeadersInit = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch('/upload', {
       method: 'POST',
+      headers,
       body: formData,
     })
+
+    if (response.status === 401) {
+      handleExpiredToken();
+      throw new Error('Session expired. Please log in again.');
+    }
 
     if (!response.ok) {
       const errorData = await response.json()

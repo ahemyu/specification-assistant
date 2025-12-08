@@ -3,7 +3,8 @@
 import json
 import logging
 
-from backend.dependencies import get_llm_extractor, get_pdf_data_for_file_ids
+from backend.database import get_db
+from backend.dependencies import get_llm_extractor, get_pdf_data_for_file_ids_async
 from backend.schemas.domain import SourceLocation
 from backend.schemas.requests import (
     CoreWindingCountRequest,
@@ -15,6 +16,7 @@ from backend.schemas.requests import (
 from backend.services.llm_key_extractor import LLMKeyExtractor
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +25,9 @@ router = APIRouter(prefix="", tags=["llm"])
 
 @router.post("/extract-keys")
 async def extract_keys(
-    request: KeyExtractionRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: KeyExtractionRequest,
+    db: AsyncSession = Depends(get_db),
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
 ) -> dict:
     """
     Extract keys from one or more previously uploaded PDFs using LLM.
@@ -35,7 +39,7 @@ async def extract_keys(
     Returns:
     - Dictionary mapping each key name to its KeyExtractionResult
     """
-    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
+    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
 
     # Extract all keys using LLM (now parallelized)
     try:
@@ -106,7 +110,11 @@ async def extract_keys(
 
 
 @router.post("/ask-question-stream")
-async def ask_question_stream(request: QuestionRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)):
+async def ask_question_stream(
+    request: QuestionRequest,
+    db: AsyncSession = Depends(get_db),
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
+):
     """
     Ask a general question about one or more previously uploaded PDFs using LLM with streaming.
 
@@ -117,7 +125,7 @@ async def ask_question_stream(request: QuestionRequest, llm_extractor: LLMKeyExt
     Returns:
     - Streaming response with Server-Sent Events (SSE) format
     """
-    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
+    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
 
     # Convert conversation history to dict format for LLM
     conversation_history = None
@@ -160,7 +168,9 @@ async def ask_question_stream(request: QuestionRequest, llm_extractor: LLMKeyExt
 
 @router.post("/compare-pdfs")
 async def compare_pdfs(
-    request: PDFComparisonRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: PDFComparisonRequest,
+    db: AsyncSession = Depends(get_db),
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
 ) -> dict:
     """
     Compare two versions of a PDF to identify changes in specifications.
@@ -174,7 +184,7 @@ async def compare_pdfs(
     - PDFComparisonResult with summary and list of changes
     """
     # Get both PDFs - helper will raise HTTPException if not found
-    pdf_data_list = get_pdf_data_for_file_ids([request.base_file_id, request.new_file_id])
+    pdf_data_list = await get_pdf_data_for_file_ids_async(db, [request.base_file_id, request.new_file_id])
     base_pdf_data, new_pdf_data = pdf_data_list[0], pdf_data_list[1]
 
     # Compare the PDFs using LLM
@@ -190,7 +200,9 @@ async def compare_pdfs(
 
 @router.post("/detect-product-type")
 async def detect_product_type(
-    request: ProductTypeDetectionRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: ProductTypeDetectionRequest,
+    db: AsyncSession = Depends(get_db),
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
 ) -> dict:
     """
     Detect product type from uploaded PDF specifications.
@@ -206,7 +218,7 @@ async def detect_product_type(
     Returns:
     - ProductTypeDetectionResult with detected type, confidence, and evidence
     """
-    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
+    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
 
     # Detect product type using LLM
     try:
@@ -219,7 +231,9 @@ async def detect_product_type(
 
 @router.post("/detect-core-winding-count")
 async def detect_core_winding_count(
-    request: CoreWindingCountRequest, llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor)
+    request: CoreWindingCountRequest,
+    db: AsyncSession = Depends(get_db),
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
 ) -> dict:
     """
     Detect the maximum number of cores/windings based on product type.
@@ -234,7 +248,7 @@ async def detect_core_winding_count(
     Returns:
     - CoreWindingCountResult with max_core_number and max_winding_number
     """
-    pdf_data_list = get_pdf_data_for_file_ids(request.file_ids)
+    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
 
     # Detect core/winding count using LLM
     try:

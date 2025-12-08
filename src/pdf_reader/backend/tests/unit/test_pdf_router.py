@@ -1,8 +1,6 @@
 """Unit tests for PDF upload and processing endpoints."""
 
 import pytest
-from backend.config import OUTPUT_DIR, UPLOADED_PDFS_DIR
-from backend.dependencies import pdf_storage
 
 
 @pytest.mark.unit
@@ -97,34 +95,28 @@ class TestPDFUpload:
 class TestPDFRetrieval:
     """Tests for PDF data retrieval endpoints."""
 
-    def test_get_pdf_preview_success(self, client, mock_pdf_data):
-        """Test successful PDF preview retrieval."""
-        # Setup: Add PDF to storage and create text file
-        file_id = mock_pdf_data["file_id"]
-        pdf_storage[file_id] = mock_pdf_data
+    def test_get_pdf_preview_success(self, client, sample_pdf_path):
+        """Test successful PDF preview retrieval after upload."""
+        # Upload a real PDF first
+        with open(sample_pdf_path, "rb") as f:
+            file_content = f.read()
+        files = {"files": ("test_preview.pdf", file_content, "application/pdf")}
+        upload_response = client.post("/upload", files=files)
+        assert upload_response.status_code == 200
 
-        # Create the expected text file
-        output_path = OUTPUT_DIR / f"{file_id}.txt"
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(mock_pdf_data["formatted_text"])
+        file_id = "test_preview"
 
-        try:
-            # Execute
-            response = client.get(f"/preview/{file_id}")
+        # Execute
+        response = client.get(f"/preview/{file_id}")
 
-            # Assert
-            assert response.status_code == 200
-            data = response.json()
-            assert "file_id" in data
-            assert "filename" in data
-            assert "content" in data
-            assert "size" in data
-            assert data["file_id"] == file_id
-        finally:
-            # Cleanup
-            if output_path.exists():
-                output_path.unlink()
+        # Assert
+        assert response.status_code == 200
+        data = response.json()
+        assert "file_id" in data
+        assert "filename" in data
+        assert "content" in data
+        assert "size" in data
+        assert data["file_id"] == file_id
 
     def test_get_pdf_preview_not_found(self, client):
         """Test retrieving non-existent PDF returns 404."""
@@ -139,28 +131,23 @@ class TestPDFRetrieval:
 class TestPDFDownload:
     """Tests for PDF file download endpoints."""
 
-    def test_download_file_success(self, client):
+    def test_download_file_success(self, client, sample_pdf_path):
         """Test successful download of extracted text file."""
-        # Setup: Create a text file
-        file_id = "test_download_123"
-        output_path = OUTPUT_DIR / f"{file_id}.txt"
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+        # Upload a real PDF first
+        with open(sample_pdf_path, "rb") as f:
+            file_content = f.read()
+        files = {"files": ("test_download.pdf", file_content, "application/pdf")}
+        upload_response = client.post("/upload", files=files)
+        assert upload_response.status_code == 200
 
-        test_content = "Sample extracted text content"
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(test_content)
+        file_id = "test_download"
 
-        try:
-            # Execute
-            response = client.get(f"/download/{file_id}")
+        # Execute
+        response = client.get(f"/download/{file_id}")
 
-            # Assert
-            assert response.status_code == 200
-            assert response.headers["content-type"] == "text/plain; charset=utf-8"
-        finally:
-            # Cleanup
-            if output_path.exists():
-                output_path.unlink()
+        # Assert
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "text/plain; charset=utf-8"
 
     def test_download_file_not_found(self, client):
         """Test download of non-existent file returns 404."""
@@ -171,28 +158,24 @@ class TestPDFDownload:
         assert response.status_code == 404
         assert "not found" in response.json()["detail"].lower()
 
-    def test_view_pdf_success(self, client):
+    def test_view_pdf_success(self, client, sample_pdf_path):
         """Test successful viewing of original PDF file."""
-        # Setup: Create a PDF file
-        file_id = "test_view_456"
-        pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
-        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        # Upload a real PDF first
+        with open(sample_pdf_path, "rb") as f:
+            file_content = f.read()
+        files = {"files": ("test_view.pdf", file_content, "application/pdf")}
+        upload_response = client.post("/upload", files=files)
+        assert upload_response.status_code == 200
 
-        with open(pdf_path, "wb") as f:
-            f.write(b"%PDF-1.4 fake pdf content")
+        file_id = "test_view"
 
-        try:
-            # Execute
-            response = client.get(f"/view-pdf/{file_id}")
+        # Execute
+        response = client.get(f"/view-pdf/{file_id}")
 
-            # Assert
-            assert response.status_code == 200
-            assert response.headers["content-type"] == "application/pdf"
-            assert "inline" in response.headers["content-disposition"]
-        finally:
-            # Cleanup
-            if pdf_path.exists():
-                pdf_path.unlink()
+        # Assert
+        assert response.status_code == 200
+        assert response.headers["content-type"] == "application/pdf"
+        assert "inline" in response.headers["content-disposition"]
 
     def test_view_pdf_not_found(self, client):
         """Test viewing non-existent PDF returns 404."""
@@ -207,44 +190,31 @@ class TestPDFDownload:
 class TestPDFDeletion:
     """Tests for PDF deletion functionality."""
 
-    def test_delete_pdf_success(self, client, mock_pdf_data):
-        """Test successful PDF deletion from storage and disk."""
-        # Setup: Add PDF to storage
-        file_id = mock_pdf_data["file_id"]
-        pdf_storage[file_id] = mock_pdf_data
+    def test_delete_pdf_success(self, client, sample_pdf_path):
+        """Test successful PDF deletion from database."""
+        # Upload a real PDF first
+        with open(sample_pdf_path, "rb") as f:
+            file_content = f.read()
+        files = {"files": ("test_delete.pdf", file_content, "application/pdf")}
+        upload_response = client.post("/upload", files=files)
+        assert upload_response.status_code == 200
 
-        # Create the files on disk
-        text_path = OUTPUT_DIR / f"{file_id}.txt"
-        pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
+        file_id = "test_delete"
 
-        text_path.parent.mkdir(parents=True, exist_ok=True)
-        pdf_path.parent.mkdir(parents=True, exist_ok=True)
+        # Execute
+        response = client.delete(f"/delete-pdf/{file_id}")
 
-        with open(text_path, "w") as f:
-            f.write("test content")
-        with open(pdf_path, "wb") as f:
-            f.write(b"fake pdf")
+        # Assert
+        assert response.status_code == 200
 
-        try:
-            # Execute
-            response = client.delete(f"/delete-pdf/{file_id}")
+        # Verify the PDF is gone
+        preview_response = client.get(f"/preview/{file_id}")
+        assert preview_response.status_code == 404
 
-            # Assert
-            assert response.status_code == 200
-            assert file_id not in pdf_storage
-            assert not text_path.exists()
-            assert not pdf_path.exists()
-        finally:
-            # Cleanup any remaining files
-            if text_path.exists():
-                text_path.unlink()
-            if pdf_path.exists():
-                pdf_path.unlink()
-
-    def test_delete_pdf_not_in_storage(self, client):
-        """Test deleting PDF that doesn't exist in storage still succeeds."""
-        # Execute (file_id not in storage)
+    def test_delete_pdf_not_found(self, client):
+        """Test deleting PDF that doesn't exist returns 404."""
+        # Execute
         response = client.delete("/delete-pdf/nonexistent_file")
 
-        # Assert - should still return 200 as per current implementation
-        assert response.status_code == 200
+        # Assert
+        assert response.status_code == 404

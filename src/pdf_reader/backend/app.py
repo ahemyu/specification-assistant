@@ -4,8 +4,8 @@ import logging
 from contextlib import asynccontextmanager
 
 from backend.config import PDF_READER_DIR
-from backend.dependencies import load_existing_pdfs
-from backend.routers import excel, llm, pdf
+from backend.database import close_db, init_db
+from backend.routers import auth, excel, llm, pdf
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -18,18 +18,27 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
     """Handle application lifespan events (startup and shutdown)."""
-    # Startup: Load existing PDFs from disk
+    # Startup: Initialize database
     logger.info("Application starting up...")
-    load_existing_pdfs()
+    try:
+        await init_db()
+        logger.info("Database initialized successfully")
+    except Exception as e:
+        logger.warning("Database initialization failed: %s. Auth and document features may not work.", str(e))
     logger.info("Startup complete")
     yield
-    # Shutdown: Clean up resources if needed
+    # Shutdown: Clean up resources
     logger.info("Application shutting down...")
+    try:
+        await close_db()
+    except Exception as e:
+        logger.warning("Error closing database: %s", str(e))
 
 
 app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
 
 # Include routers (must be before catch-all static mount)
+app.include_router(auth.router)
 app.include_router(pdf.router)
 app.include_router(llm.router)
 app.include_router(excel.router)
