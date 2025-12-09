@@ -1,5 +1,5 @@
-import { FaUser, FaCog, FaSignOutAlt, FaFileAlt, FaBalanceScale, FaUpload, FaKey, FaListAlt, FaMoon } from "react-icons/fa";
-import { IoHome, IoChevronForward, IoSunny } from "react-icons/io5"; // Import IoChevronForward
+import { FaUser, FaCog, FaSignOutAlt, FaSignInAlt, FaFileAlt, FaBalanceScale, FaUpload, FaKey, FaListAlt, FaMoon } from "react-icons/fa";
+import { IoHome, IoChevronForward, IoSunny } from "react-icons/io5";
 import { useAppStore } from "../store/useAppStore";
 import { useState, useEffect } from "react";
 import './../styles/modules/theme-toggle.css';
@@ -14,6 +14,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const uploadedFileIds = useAppStore((state) => state.uploadedFileIds);
   const activeSubMenuItem = useAppStore((state) => state.activeSubMenuItem);
   const setActiveSubMenuItem = useAppStore((state) => state.setActiveSubMenuItem);
+  const isAuthenticated = useAppStore((state) => state.isAuthenticated);
+  const setShowAuthModal = useAppStore((state) => state.setShowAuthModal);
+  const setAuthModalMode = useAppStore((state) => state.setAuthModalMode);
+  const logout = useAppStore((state) => state.logout);
 
   const [theme, setTheme] = useState(localStorage.getItem('theme') || 'light');
 
@@ -47,6 +51,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const handleSubMenuClick = (item: "upload" | "extract" | "summary") => {
     setActiveView("spec_ai");
     setActiveSubMenuItem(item);
+  };
+
+  const handleLoginClick = () => {
+    setAuthModalMode("login");
+    setShowAuthModal(true);
+  };
+
+  const handleLogoutClick = () => {
+    logout();
   };
 
   return (
@@ -130,10 +143,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           <span className="icon">{theme === 'light' ? <FaMoon /> : <IoSunny />}</span>
           <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
         </li>
-        <li className="menu-item">
-          <span className="icon"><FaSignOutAlt /></span>
-          <span>Abmelden</span>
-        </li>
+        {isAuthenticated ? (
+          <li className="menu-item" onClick={handleLogoutClick}>
+            <span className="icon"><FaSignOutAlt /></span>
+            <span>Abmelden</span>
+          </li>
+        ) : (
+          <li className="menu-item" onClick={handleLoginClick}>
+            <span className="icon"><FaSignInAlt /></span>
+            <span>Anmelden</span>
+          </li>
+        )}
       </ul>
     </aside>
   );

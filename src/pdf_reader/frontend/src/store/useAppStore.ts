@@ -14,6 +14,25 @@ import type { KeyWithCategory } from '../data/keyTemplates'
 export type ActiveView = 'home' | 'spec_ai' | 'compare';
 export type ActiveSubMenuItem = 'upload' | 'extract' | 'summary' | null;
 
+// Auth types
+export interface AuthUser {
+  id: number;
+  email: string;
+  username: string;
+  is_active: boolean;
+  is_superuser: boolean;
+}
+
+export interface AuthState {
+  user: AuthUser | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  authError: string | null;
+  showAuthModal: boolean;
+  authModalMode: 'login' | 'register';
+}
+
 interface AppState {
   // File management state
   uploadedFileIds: string[]
@@ -59,6 +78,15 @@ interface AppState {
   activeSubMenuItem: ActiveSubMenuItem;
   isQAPopupOpen: boolean;
 
+  // Auth state
+  user: AuthUser | null;
+  token: string | null;
+  isAuthenticated: boolean;
+  isAuthLoading: boolean;
+  authError: string | null;
+  showAuthModal: boolean;
+  authModalMode: 'login' | 'register';
+
   // Actions
   setUploadedFileIds: (ids: string[]) => void
   setProcessedFiles: (files: ProcessedFile[]) => void
@@ -90,6 +118,18 @@ interface AppState {
   setActiveView: (view: ActiveView) => void;
   setActiveSubMenuItem: (item: ActiveSubMenuItem) => void;
   setIsQAPopupOpen: (isOpen: boolean) => void;
+
+  // Auth actions
+  setUser: (user: AuthUser | null) => void;
+  setToken: (token: string | null) => void;
+  setIsAuthenticated: (isAuth: boolean) => void;
+  setIsAuthLoading: (isLoading: boolean) => void;
+  setAuthError: (error: string | null) => void;
+  setShowAuthModal: (show: boolean) => void;
+  setAuthModalMode: (mode: 'login' | 'register') => void;
+  login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, username: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
 
   // Helper actions
   resetExtractionState: () => void
@@ -136,6 +176,15 @@ export const useAppStore = create<AppState>((set) => ({
   activeSubMenuItem: null,
   isQAPopupOpen: false,
 
+  // Auth initial state
+  user: null,
+  token: localStorage.getItem('auth_token'),
+  isAuthenticated: !!localStorage.getItem('auth_token'),
+  isAuthLoading: false,
+  authError: null,
+  showAuthModal: false,
+  authModalMode: 'login',
+
   // Setters
   setUploadedFileIds: (ids) => set({ uploadedFileIds: ids }),
   setProcessedFiles: (files) => set({ processedFiles: files }),
@@ -168,6 +217,100 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveSubMenuItem: (item) => set({ activeSubMenuItem: item }),
   setIsQAPopupOpen: (isOpen) => set({ isQAPopupOpen: isOpen }),
 
+  // Auth setters and actions
+  setUser: (user) => set({ user }),
+  setToken: (token) => set({ token }),
+  setIsAuthenticated: (isAuth) => set({ isAuthenticated: isAuth }),
+  setIsAuthLoading: (isLoading) => set({ isAuthLoading: isLoading }),
+  setAuthError: (error) => set({ authError: error }),
+  setShowAuthModal: (show) => set({ showAuthModal: show }),
+  setAuthModalMode: (mode) => set({ authModalMode: mode }),
+
+  login: async (email: string, password: string) => {
+    set({ isAuthLoading: true, authError: null });
+    try {
+      const response = await fetch('/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        set({ authError: data.detail || 'Login failed', isAuthLoading: false });
+        return false;
+      }
+      const data = await response.json();
+      localStorage.setItem('auth_token', data.access_token);
+
+      // Fetch user info
+      const userResponse = await fetch('/auth/me', {
+        headers: { 'Authorization': `Bearer ${data.access_token}` },
+      });
+      const user = userResponse.ok ? await userResponse.json() : null;
+
+      set({
+        token: data.access_token,
+        user,
+        isAuthenticated: true,
+        isAuthLoading: false,
+        showAuthModal: false,
+        authError: null,
+      });
+      return true;
+    } catch {
+      set({ authError: 'Network error', isAuthLoading: false });
+      return false;
+    }
+  },
+
+  register: async (email: string, username: string, password: string) => {
+    set({ isAuthLoading: true, authError: null });
+    try {
+      const response = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, username, password }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        set({ authError: data.detail || 'Registration failed', isAuthLoading: false });
+        return false;
+      }
+      set({ isAuthLoading: false, authModalMode: 'login', authError: null });
+      return true;
+    } catch {
+      set({ authError: 'Network error', isAuthLoading: false });
+      return false;
+    }
+  },
+
+  logout: async () => {
+    const token = localStorage.getItem('auth_token');
+    if (token) {
+      try {
+        await fetch('/auth/logout', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+      } catch {
+        // Ignore errors, still clear local state
+      }
+    }
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+    set({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      authError: null,
+      // Clear uploaded files state
+      uploadedFileIds: [],
+      processedFiles: [],
+      allUploadedFiles: [],
+      conversationHistory: [],
+    });
+  },
+
   // Helper actions
   resetExtractionState: () =>
     set({
@@ -199,4 +342,16 @@ export const useAppStore = create<AppState>((set) => ({
 
 // Storage keys constants
 export const CHAT_STORAGE_KEY = 'spec_ai_chat_history'
-export const PDF_STORAGE_KEY = 'spec_ai_uploaded_pdfs'
+
+// Helper to handle expired tokens - call this when API returns 401
+export const handleExpiredToken = () => {
+  localStorage.removeItem('auth_token');
+  useAppStore.setState({
+    user: null,
+    token: null,
+    isAuthenticated: false,
+    authError: 'Session expired. Please log in again.',
+    showAuthModal: true,
+    authModalMode: 'login',
+  });
+}

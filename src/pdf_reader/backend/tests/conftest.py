@@ -10,7 +10,6 @@ sys.path.insert(0, str(src_dir))
 
 import pytest  # noqa: E402
 from backend.app import app  # noqa: E402
-from backend.dependencies import pdf_storage  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 
 
@@ -18,14 +17,6 @@ from fastapi.testclient import TestClient  # noqa: E402
 def client() -> TestClient:
     """Create a test client for the FastAPI application."""
     return TestClient(app)
-
-
-@pytest.fixture(scope="function", autouse=True)
-def clear_storage():
-    """Clear in-memory storage before each test."""
-    pdf_storage.clear()
-    yield
-    # No cleanup needed after yield - next test will clear before it runs
 
 
 @pytest.fixture

@@ -5,20 +5,21 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-from backend.config import OPENAI_API_KEY, OUTPUT_DIR, UPLOADED_PDFS_DIR
+from backend.config import OPENAI_API_KEY
+from backend.database import get_db
+from backend.models.user import User
+from backend.services.auth import decode_access_token, get_user_by_id
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.ext.asyncio import AsyncSession
 
 if TYPE_CHECKING:
     from backend.services.llm_key_extractor import LLMKeyExtractor
 
 logger = logging.getLogger(__name__)
 
-# Ensure directories exist at module load time
-OUTPUT_DIR.mkdir(exist_ok=True)
-UPLOADED_PDFS_DIR.mkdir(exist_ok=True)
-
-# In-memory storage for processed PDF data
-# Key: file_id, Value: processed pdf_data dict from process_single_pdf
-pdf_storage: dict[str, dict] = {}
+# OAuth2 scheme for token-based authentication
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 # Lazy-initialized LLM key extractor (created on first access)
 _llm_extractor: LLMKeyExtractor | None = None
@@ -75,72 +76,129 @@ def reset_llm_extractor() -> None:
     _llm_extractor_initialized = False
 
 
-def get_pdf_storage() -> dict[str, dict]:
-    """Dependency to get the PDF storage."""
-    return pdf_storage
-
-
-def get_pdf_data_for_file_ids(file_ids: list[str]) -> list[dict]:
+async def get_pdf_data_for_file_ids_async(db: AsyncSession, file_ids: list[str]) -> list[dict]:
     """
-    Retrieve PDF data for a list of file IDs from storage.
+    Retrieve PDF data for a list of file IDs from database.
 
     Args:
-        file_ids: List of file IDs to look up
+        db: Database session.
+        file_ids: List of file IDs to look up.
 
     Returns:
-        List of PDF data dictionaries
+        List of PDF data dictionaries in the format expected by LLM extractors.
 
     Raises:
-        HTTPException: If any file_id is not found in storage
+        HTTPException: If any file_id is not found in database.
     """
+    from backend.services.document import get_document_by_file_id
     from fastapi import HTTPException
 
     pdf_data_list = []
     for file_id in file_ids:
-        if file_id not in pdf_storage:
+        document = await get_document_by_file_id(db, file_id)
+        if document is None:
             raise HTTPException(
                 status_code=404, detail=f"File with ID {file_id} not found. Please upload the file first."
             )
-        pdf_data_list.append(pdf_storage[file_id])
+        pdf_data_list.append(document.to_pdf_data_dict())
     return pdf_data_list
 
 
-def load_existing_pdfs() -> None:
+async def get_current_user(
+    token: str | None = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    """Get the current authenticated user from the JWT token.
+
+    Args:
+        token: The JWT token from the Authorization header.
+        db: The database session.
+
+    Returns:
+        The authenticated User.
+
+    Raises:
+        HTTPException: If token is missing, invalid, or user not found.
     """
-    Load existing PDF files from disk on startup and populate pdf_storage.
-    This ensures PDFs persist across app restarts.
+    if token is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Not authenticated",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token_data = decode_access_token(token)
+    if token_data is None or token_data.user_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = await get_user_by_id(db, token_data.user_id)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    if not user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User account is inactive",
+        )
+
+    return user
+
+
+async def get_current_user_optional(
+    token: str | None = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    """Get the current user if authenticated, otherwise return None.
+
+    This is useful for endpoints that work for both authenticated
+    and unauthenticated users but may provide different responses.
+
+    Args:
+        token: The JWT token from the Authorization header.
+        db: The database session.
+
+    Returns:
+        The authenticated User if token is valid, None otherwise.
     """
-    from backend.services.process_pdfs import process_single_pdf
+    if token is None:
+        return None
 
-    logger.info("Loading existing PDFs from disk...")
-    loaded_count = 0
+    token_data = decode_access_token(token)
+    if token_data is None or token_data.user_id is None:
+        return None
 
-    # Check for existing PDF files
-    if not UPLOADED_PDFS_DIR.exists():
-        logger.info("No uploaded PDFs directory found")
-        return
+    user = await get_user_by_id(db, token_data.user_id)
+    if user is None or not user.is_active:
+        return None
 
-    pdf_files = list(UPLOADED_PDFS_DIR.glob("*.pdf"))
+    return user
 
-    if not pdf_files:
-        logger.info("No existing PDFs found")
-        return
 
-    for pdf_file in pdf_files:
-        try:
-            # Process the PDF
-            pdf_data = process_single_pdf(pdf_file, filename=pdf_file.name)
+async def get_current_superuser(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Get the current user and verify they are a superuser.
 
-            # Use the file stem (filename without extension) as file_id
-            file_id = pdf_file.stem
+    Args:
+        current_user: The currently authenticated user.
 
-            # Store in memory
-            pdf_storage[file_id] = pdf_data
+    Returns:
+        The authenticated User if they are a superuser.
 
-            loaded_count += 1
-            logger.info(f"Loaded {pdf_file.name} with file_id: {file_id}")
-
-        except Exception as e:
-            logger.error(f"Error loading {pdf_file.name}: {str(e)}")
-
-    logger.info(f"Successfully loaded {loaded_count} PDF(s) from disk")
+    Raises:
+        HTTPException: If the user is not a superuser.
+    """
+    if not current_user.is_superuser:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="The user doesn't have enough privileges",
+        )
+    return current_user

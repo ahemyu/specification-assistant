@@ -5,20 +5,27 @@ import logging
 import os
 from concurrent.futures import ProcessPoolExecutor
 from io import BytesIO
-from pathlib import Path
 
-from backend.config import OUTPUT_DIR, UPLOADED_PDFS_DIR
-from backend.dependencies import get_pdf_storage
+from backend.database import get_db
+from backend.dependencies import get_current_user_optional
+from backend.models.user import User
+from backend.services.document import (
+    create_document,
+    delete_document,
+    get_all_documents,
+    get_document_by_file_id,
+)
 from backend.services.process_pdfs import process_single_pdf
-from fastapi import APIRouter, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi.responses import Response
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="", tags=["pdf"])
 
 
-def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) -> dict:
+def _process_single_file(file_contents: bytes, filename: str) -> dict:
     """
     Process a single PDF file synchronously.
 
@@ -27,7 +34,6 @@ def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) 
     Args:
         file_contents: The PDF file contents as bytes
         filename: The name of the file
-        output_dir: Directory to save the output text file
 
     Returns:
         Dictionary with processing result or error information
@@ -38,21 +44,18 @@ def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) 
         # Process PDF from memory
         pdf_data = process_single_pdf(BytesIO(file_contents), filename=filename)
 
-        # Convert structured data to formatted text
-        text_content = pdf_data["formatted_text"]
-
-        # Save extracted text to output directory
-        safe_filename = filename.replace(".pdf", ".txt")
-        output_path = output_dir / safe_filename
-
-        with open(output_path, "w", encoding="utf-8") as f:
-            f.write(text_content)
-
-        file_id = output_path.stem
+        file_id = filename.replace(".pdf", "")
 
         logger.info(f"Successfully processed {filename}")
 
-        return {"success": True, "filename": filename, "file_id": file_id, "pdf_data": pdf_data}
+        return {
+            "success": True,
+            "filename": filename,
+            "file_id": file_id,
+            "pdf_data": pdf_data,
+            "file_size_bytes": len(file_contents),
+            "pdf_binary": file_contents,
+        }
 
     except Exception as e:
         logger.error(f"Error processing {filename}: {str(e)}")
@@ -60,17 +63,22 @@ def _process_single_file(file_contents: bytes, filename: str, output_dir: Path) 
 
 
 @router.post("/upload")
-async def upload_pdfs(files: list[UploadFile] = File(...)):
+async def upload_pdfs(
+    files: list[UploadFile] = File(...),
+    db: AsyncSession = Depends(get_db),
+    current_user: User | None = Depends(get_current_user_optional),
+):
     """
-    Upload and process multiple PDF files in-memory with parallel processing.
-    Also saves the original PDF files to disk for persistence across restarts.
+    Upload and process multiple PDF files with parallel processing.
+    Stores PDF binary and extracted text directly in the database.
 
     Returns JSON with extracted content and file IDs for download.
     """
-    pdf_storage = get_pdf_storage()
     processed = []
     failed = []
 
+    # Get user_id if authenticated
+    user_id = current_user.id if current_user else None
     # Filter out non-PDF files and read all file contents
     valid_files = []
     for file in files:
@@ -79,22 +87,6 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
             continue
 
         contents = await file.read()
-
-        # Save the original PDF file to disk for persistence
-        try:
-            # Create a safe filename based on the original name
-            safe_filename = file.filename.replace(".pdf", "") + ".pdf"
-            pdf_file_path = UPLOADED_PDFS_DIR / safe_filename
-
-            with open(pdf_file_path, "wb") as f:
-                f.write(contents)
-
-            logger.info(f"Saved PDF file to {pdf_file_path}")
-        except Exception as e:
-            logger.error(f"Error saving PDF file {file.filename}: {str(e)}")
-            failed.append(f"{file.filename} (error saving to disk)")
-            continue
-
         valid_files.append((contents, file.filename))
 
     if not valid_files:
@@ -106,21 +98,39 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
     with ProcessPoolExecutor(max_workers=max_workers) as executor:
         # Submit all processing tasks
         tasks = [
-            loop.run_in_executor(executor, _process_single_file, file_contents, filename, OUTPUT_DIR)
+            loop.run_in_executor(executor, _process_single_file, file_contents, filename)
             for file_contents, filename in valid_files
         ]
 
         # Wait for all tasks to complete
         results = await asyncio.gather(*tasks)
 
-    # Process results
+    # Process results and save to database
     for result in results:
         if result["success"]:
             file_id = result["file_id"]
             pdf_data = result["pdf_data"]
+            file_size_bytes = result["file_size_bytes"]
+            pdf_binary = result["pdf_binary"]
 
-            # Store processed PDF data in memory for later extraction
-            pdf_storage[file_id] = pdf_data
+            # Check if document already exists (re-upload case)
+            existing_doc = await get_document_by_file_id(db, file_id)
+            if existing_doc:
+                # Delete old record to replace with new one
+                await delete_document(db, file_id)
+
+            # Store document in database (including PDF binary)
+            await create_document(
+                db=db,
+                file_id=file_id,
+                original_filename=result["filename"],
+                total_pages=pdf_data["total_pages"],
+                file_size_bytes=file_size_bytes,
+                formatted_text=pdf_data["formatted_text"],
+                line_id_map=pdf_data.get("line_id_map", {}),
+                pdf_binary=pdf_binary,
+                user_id=user_id,
+            )
 
             processed.append(
                 {
@@ -138,66 +148,64 @@ async def upload_pdfs(files: list[UploadFile] = File(...)):
 
 
 @router.get("/download/{file_id}")
-async def download_file(file_id: str):
-    """Download the extracted text file."""
-    # Try with .txt extension
-    file_path = OUTPUT_DIR / f"{file_id}.txt"
+async def download_file(file_id: str, db: AsyncSession = Depends(get_db)):
+    """Download the extracted text file from database."""
+    document = await get_document_by_file_id(db, file_id)
 
-    if not file_path.exists():
+    if not document or not document.formatted_text:
         raise HTTPException(status_code=404, detail="File not found")
 
-    return FileResponse(path=file_path, media_type="text/plain", filename=f"extracted_{file_id}.txt")
+    return Response(
+        content=document.formatted_text,
+        media_type="text/plain",
+        headers={"Content-Disposition": f"attachment; filename=extracted_{file_id}.txt"},
+    )
 
 
 @router.get("/preview/{file_id}")
-async def preview_file(file_id: str):
+async def preview_file(file_id: str, db: AsyncSession = Depends(get_db)):
     """
     Get the text content of an extracted file for preview.
 
     Returns JSON with the text content and metadata.
     """
-    file_path = OUTPUT_DIR / f"{file_id}.txt"
+    document = await get_document_by_file_id(db, file_id)
 
-    if not file_path.exists():
+    if not document:
         raise HTTPException(status_code=404, detail="File not found")
 
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            content = f.read()
-
-        return {"file_id": file_id, "filename": f"{file_id}.txt", "content": content, "size": len(content)}
-    except Exception as e:
-        logger.error(f"Error reading file {file_id}: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+    content = document.formatted_text or ""
+    return {
+        "file_id": file_id,
+        "filename": f"{file_id}.txt",
+        "content": content,
+        "size": len(content),
+    }
 
 
 @router.get("/view-pdf/{file_id}")
-async def view_pdf(file_id: str):
+async def view_pdf(file_id: str, db: AsyncSession = Depends(get_db)):
     """
     Serve the original uploaded PDF file for viewing in browser.
 
     Returns the PDF file with inline content disposition for browser viewing.
     """
-    # The PDF file should be in the uploaded_pdfs directory
-    pdf_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
+    document = await get_document_by_file_id(db, file_id)
 
-    logger.info(f"Serving PDF {file_id} from {pdf_path} (exists: {pdf_path.exists()})")
-
-    if not pdf_path.exists():
+    if not document or not document.pdf_binary:
         raise HTTPException(status_code=404, detail="PDF file not found")
 
-    return FileResponse(
-        path=pdf_path,
+    return Response(
+        content=document.pdf_binary,
         media_type="application/pdf",
-        filename=f"{file_id}.pdf",
         headers={"Content-Disposition": f"inline; filename={file_id}.pdf"},
     )
 
 
 @router.delete("/delete-pdf/{file_id}")
-async def delete_pdf(file_id: str):
+async def delete_pdf(file_id: str, db: AsyncSession = Depends(get_db)):
     """
-    Delete a PDF from storage (text file, original PDF, and in-memory data).
+    Delete a PDF from database.
 
     Args:
         file_id: The ID of the file to delete
@@ -205,26 +213,31 @@ async def delete_pdf(file_id: str):
     Returns:
         Success message
     """
-    pdf_storage = get_pdf_storage()
-
-    # Remove from in-memory storage
-    if file_id in pdf_storage:
-        del pdf_storage[file_id]
-
-    # Remove the text file from disk
-    text_file_path = OUTPUT_DIR / f"{file_id}.txt"
-    if text_file_path.exists():
-        try:
-            text_file_path.unlink()
-        except Exception as e:
-            logger.error(f"Error deleting text file {text_file_path}: {str(e)}")
-
-    # Remove the original PDF file from disk
-    pdf_file_path = UPLOADED_PDFS_DIR / f"{file_id}.pdf"
-    if pdf_file_path.exists():
-        try:
-            pdf_file_path.unlink()
-        except Exception as e:
-            logger.error(f"Error deleting PDF file {pdf_file_path}: {str(e)}")
+    deleted = await delete_document(db, file_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail=f"Document {file_id} not found")
 
     return {"message": f"File {file_id} deleted successfully"}
+
+
+@router.get("/documents")
+async def list_documents(db: AsyncSession = Depends(get_db)):
+    """
+    List all uploaded documents.
+
+    Returns list of documents with metadata (no full text content).
+    This is useful for the frontend to display available documents on load.
+    """
+    documents = await get_all_documents(db)
+    return {
+        "documents": [
+            {
+                "file_id": doc.file_id,
+                "original_filename": doc.original_filename,
+                "total_pages": doc.total_pages,
+                "file_size_bytes": doc.file_size_bytes,
+                "created_at": doc.created_at.isoformat(),
+            }
+            for doc in documents
+        ]
+    }
