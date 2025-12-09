@@ -15,6 +15,7 @@ FastAPI web service for extracting and analyzing PDF documents with LLM-powered 
 
 - **Python 3.11+** with `uv` (`pip install uv`)
 - **Node.js 18+** with npm
+- **Docker** (for the MySQL database)
 - **Git**
 
 ## Environment Variables
@@ -30,9 +31,11 @@ export OPENAI_API_KEY="Your key here"
    ```bash
    ./start.sh
    ```
+   - Starts the MySQL database container via Docker Compose.
    - Builds the frontend via `npm run build`.
    - Loads `.env` (prompts for `OPENAI_API_KEY` if missing).
    - Starts the FastAPI server with `uv run main.py`.
+   - On shutdown (Ctrl+C), the script stops the MySQL container automatically.
 
 ## Linux/macOS Manual Workflow
 
@@ -121,21 +124,23 @@ Access http://localhost:8000.
 
 ## Usage
 
-1. Upload PDFs via the web UI.
-2. Preview extracted text.
-3. Extract specific keys using LLM (or provide your own keys via Excel/manual input).
-4. Ask questions about uploaded PDFs.
-5. Download results as Excel.
+1. Register or log in via the web UI.
+2. Upload PDFs via the web UI.
+3. Ask questions about uploaded PDFs via the Chat Button.
+4. Preview extracted text and tables.
+5. Extract keys appropriate for selected product type using LLM
+6. Review and accept/edit keys extracted from the LLM.
+7. Download results as Excel.
+
+User accounts, uploaded PDFs + metdata, and extraction results (coming soon) are stored in the MySQL database.
 
 ## Project Structure
 
 ```
 pdf_reader/
 ├── backend/              # FastAPI routers, services, schemas
-├── frontend/             # React + Vite app (src/, dist/, archived code)
+├── frontend/             # React + Vite app (src/, dist/)
 ├── main.py               # Entry point used by uv/uvicorn
-├── output/               # Extracted text files
-└── uploaded_pdfs/        # Uploaded PDF storage
 ```
 
 ## Tech Stack
