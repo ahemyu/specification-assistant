@@ -5,17 +5,17 @@ This guide explains how to run the Specification Assistant application using Doc
 ## Prerequisites
 
 - Docker installed on your system
-- Docker Compose (optional, but recommended)
-- Google API Key (for LLM features like key extraction and Q&A)
+- Docker Compose
+- OpenAI API Key (for LLM features like key extraction and Q&A)
 
 ## Quick Start with Docker Compose
 
 1. Clone the repository and navigate to the project directory
 
-2. Create a `.env` file with your Google API key:
+2. Create a `.env` file with your configuration:
    ```bash
    cp .env.example .env
-   # Edit .env and add your GOOGLE_API_KEY
+   # Edit .env and configure your settings
    ```
 
 3. Build and run the application:
@@ -23,61 +23,85 @@ This guide explains how to run the Specification Assistant application using Doc
    docker-compose up -d
    ```
 
+   This starts three services:
+   - **app**: The main application (FastAPI backend + React frontend) on port 8000
+   - **db**: MySQL database on port 3306
+   - **adminer**: Database admin UI on port 8080
+
 4. Access the application at http://localhost:8000
 
-5. Stop the application:
+5. Access database admin UI at http://localhost:8080
+
+6. Stop the application:
    ```bash
    docker-compose down
    ```
 
-## Using Docker CLI
-
-### Build the image
-
-```bash
-docker build -t specification-assistant .
-```
-
-### Run the container
-
-```bash
-docker run -d \
-  --name specification-assistant \
-  -p 8000:8000 \
-  -e GOOGLE_API_KEY=your_api_key_here \
-  -v $(pwd)/uploads:/app/src/pdf_reader/uploads \
-  -v $(pwd)/output:/app/src/pdf_reader/output \
-  specification-assistant
-```
-
-### View logs
-
-```bash
-docker logs -f specification-assistant
-```
-
-### Stop the container
-
-```bash
-docker stop specification-assistant
-docker rm specification-assistant
-```
+7. Stop and remove all data (including database):
+   ```bash
+   docker-compose down -v
+   ```
 
 ## Environment Variables
 
-- `GOOGLE_API_KEY`: Required for LLM-based features (key extraction, Q&A)
+Required:
+- `OPENAI_API_KEY`: Required for LLM-based features (key extraction, Q&A)
+
+Optional (with defaults):
+- `OPENAI_BASE_URL`: OpenAI API base URL (default: Azure OpenAI endpoint)
+- `MYSQL_DATABASE`: Database name (default: specification_assistant)
+- `MYSQL_USER`: Database user (default: app_user)
+- `MYSQL_PASSWORD`: Database password (default: app_password)
+- `MYSQL_ROOT_PASSWORD`: MySQL root password (default: root_password)
+- `JWT_SECRET_KEY`: Secret for JWT tokens (default: change-this-secret-key-in-production)
+- `JWT_ACCESS_TOKEN_EXPIRE_MINUTES`: Token expiry in minutes (default: 1440)
+
+## Services
+
+### Application (app)
+- FastAPI backend with React frontend
+- Port: 8000
+- Depends on: MySQL database
+- Health check enabled
+
+### Database (db)
+- MySQL 8.0
+- Port: 3306
+- Data persisted in Docker volume `db_data`
+- Health check enabled
+
+### Adminer (adminer)
+- Database administration UI
+- Port: 8080
+- Connect using: Server=db, User/Password from env vars
 
 ## Volumes
 
-The application uses two volumes to persist data:
-
-- `/app/src/pdf_reader/uploads`: Stores uploaded PDF files
-- `/app/src/pdf_reader/output`: Stores extracted text files
+- `db_data`: MySQL database files (PDFs and extracted text are stored in the database)
 
 ## Ports
 
 - Port `8000`: FastAPI application (web interface and API)
+- Port `3306`: MySQL database
+- Port `8080`: Adminer database UI
 
-## Health Check
+## View Logs
 
-The container includes a health check that runs every 30 seconds to ensure the application is responding correctly.
+```bash
+# All services
+docker-compose logs -f
+
+# Specific service
+docker-compose logs -f app
+docker-compose logs -f db
+```
+
+## Rebuild After Changes
+
+```bash
+docker-compose up -d --build
+```
+
+## Health Checks
+
+Both the application and database containers include health checks that run every 10-30 seconds to ensure services are responding correctly.

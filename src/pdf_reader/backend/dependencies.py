@@ -3,18 +3,15 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 from backend.config import OPENAI_API_KEY
 from backend.database import get_db
 from backend.models.user import User
 from backend.services.auth import decode_access_token, get_user_by_id
+from backend.services.llm_key_extractor import LLMKeyExtractor
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.ext.asyncio import AsyncSession
-
-if TYPE_CHECKING:
-    from backend.services.llm_key_extractor import LLMKeyExtractor
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +45,12 @@ def get_llm_extractor() -> LLMKeyExtractor:
             logger.warning("OPENAI_API_KEY not found. LLM key extraction endpoints will not be available.")
         else:
             try:
-                from backend.services.llm_key_extractor import LLMKeyExtractor
-
                 _llm_extractor = LLMKeyExtractor(api_key=OPENAI_API_KEY)
                 logger.info("LLM key extractor initialized successfully")
             except Exception as e:
                 logger.warning(f"Failed to initialize LLM key extractor: {str(e)}")
 
     if _llm_extractor is None:
-        from fastapi import HTTPException
-
         raise HTTPException(
             status_code=503, detail="LLM service is not available. OPENAI_API_KEY may not be configured."
         )

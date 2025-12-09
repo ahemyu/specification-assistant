@@ -23,6 +23,19 @@ FastAPI web service for extracting and analyzing PDF documents with LLM-powered 
 Create `.env` in the project root and set required values:
 export OPENAI_API_KEY="Your key here"
 
+## Docker Compose
+
+Start the complete application (backend, database, and Adminer for DB administration) from the project root:
+
+```bash
+docker-compose up -d
+```
+
+- App: http://localhost:8000
+- Adminer (DB UI): http://localhost:8080 (Server: `db`, credentials from `.env` or defaults)
+
+See `DOCKER.md` for configuration and details.
+
 ## Linux/macOS Quick Start
 
 1. Run `uv sync` from the repo root the first time to install Python deps.

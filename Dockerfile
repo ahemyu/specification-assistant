@@ -1,4 +1,21 @@
-# Use Python 3.11 slim image for smaller size
+# Stage 1: Build frontend
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy frontend package files
+COPY src/pdf_reader/frontend/package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy frontend source
+COPY src/pdf_reader/frontend/ ./
+
+# Build frontend
+RUN npm run build
+
+# Stage 2: Python application
 FROM python:3.11-slim
 
 # Set working directory
@@ -7,6 +24,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy dependency files
@@ -21,8 +39,8 @@ RUN uv pip install --system --no-cache -r pyproject.toml
 # Copy application source code
 COPY src/ ./src/
 
-# Create necessary directories for uploads and outputs
-RUN mkdir -p /app/src/pdf_reader/uploads /app/src/pdf_reader/output /app/src/pdf_reader/uploaded_pdfs
+# Copy built frontend from builder stage
+COPY --from=frontend-builder /app/frontend/dist ./src/pdf_reader/frontend/dist
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1
@@ -35,8 +53,8 @@ EXPOSE 8000
 WORKDIR /app/src/pdf_reader
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000').read()" || exit 1
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=5 \
+    CMD curl -f http://localhost:8000/ || exit 1
 
 # Run the FastAPI application with uvicorn
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8000"]

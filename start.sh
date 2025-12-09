@@ -10,7 +10,7 @@ ENV_FILE="${ROOT_DIR}/.env"
 cleanup() {
   echo ""
   echo "Shutting down database..."
-  (cd "${BACKEND_DIR}" && docker-compose down)
+  (cd "${ROOT_DIR}" && docker-compose down)
   echo "Cleanup complete"
 }
 
@@ -33,14 +33,14 @@ echo "Building frontend (npm run build)"
   npm run build
 )
 
-echo "Starting database (docker-compose up -d)"
+echo "Starting database (docker-compose up -d db)"
 (
-  cd "${BACKEND_DIR}" &&
-  docker-compose up -d
+  cd "${ROOT_DIR}" &&
+  docker-compose up -d db
 )
 
 echo "Waiting for database to be ready..."
-until docker exec pdf_reader_db_1 mysqladmin ping -h localhost --silent 2>/dev/null; do
+until docker exec specification-assistant-db mysqladmin ping -h localhost --silent 2>/dev/null; do
   sleep 1
 done
 echo "Database is ready"
