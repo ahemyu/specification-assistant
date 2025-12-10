@@ -1,38 +1,51 @@
-# Windows Setup Script for Specification Assistant
+# Windows Startup Script for Specification Assistant
 # Run this script from the project root directory after installing prerequisites
 
+$ErrorActionPreference = "Stop"
+
+$ROOT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+$FRONTEND_DIR = Join-Path $ROOT_DIR "src\pdf_reader\frontend"
+$BACKEND_DIR = Join-Path $ROOT_DIR "src\pdf_reader"
+$ENV_FILE = Join-Path $ROOT_DIR ".env"
+
 Write-Host "========================================" -ForegroundColor Cyan
-Write-Host "Specification Assistant - Windows Setup" -ForegroundColor Cyan
+Write-Host "Specification Assistant - Windows Start" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
+
+# Cleanup function to stop database on exit
+function Cleanup {
+    Write-Host ""
+    Write-Host "Shutting down database..." -ForegroundColor Yellow
+    Push-Location $ROOT_DIR
+    docker-compose down
+    Pop-Location
+    Write-Host "Cleanup complete" -ForegroundColor Green
+}
+
+# Register cleanup on script exit
+Register-EngineEvent PowerShell.Exiting -Action { Cleanup } | Out-Null
+
+# Validate directories exist
+if (-not (Test-Path $FRONTEND_DIR)) {
+    Write-Host "[ERROR] Frontend directory not found at $FRONTEND_DIR" -ForegroundColor Red
+    exit 1
+}
+
+if (-not (Test-Path $BACKEND_DIR)) {
+    Write-Host "[ERROR] Backend directory not found at $BACKEND_DIR" -ForegroundColor Red
+    exit 1
+}
 
 # Check prerequisites
 Write-Host "Checking prerequisites..." -ForegroundColor Yellow
 
-# Check Python
+# Check Docker
 try {
-    $pythonVersion = python --version 2>&1
-    Write-Host "[OK] Python found: $pythonVersion" -ForegroundColor Green
+    $dockerVersion = docker --version 2>&1
+    Write-Host "[OK] Docker found: $dockerVersion" -ForegroundColor Green
 } catch {
-    Write-Host "[ERROR] Python not found. Please install Python 3.11+ and add it to PATH." -ForegroundColor Red
-    exit 1
-}
-
-# Check Node.js
-try {
-    $nodeVersion = node --version 2>&1
-    Write-Host "[OK] Node.js found: $nodeVersion" -ForegroundColor Green
-} catch {
-    Write-Host "[ERROR] Node.js not found. Please install Node.js 18+ (LTS)." -ForegroundColor Red
-    exit 1
-}
-
-# Check npm
-try {
-    $npmVersion = npm --version 2>&1
-    Write-Host "[OK] npm found: v$npmVersion" -ForegroundColor Green
-} catch {
-    Write-Host "[ERROR] npm not found. Please install Node.js which includes npm." -ForegroundColor Red
+    Write-Host "[ERROR] Docker not found. Please install Docker Desktop." -ForegroundColor Red
     exit 1
 }
 
@@ -45,33 +58,17 @@ try {
     exit 1
 }
 
-Write-Host ""
-Write-Host "All prerequisites found!" -ForegroundColor Green
-Write-Host ""
-
-# Check and set API key
-Write-Host "----------------------------------------" -ForegroundColor Cyan
-Write-Host "Environment Variable Setup" -ForegroundColor Cyan
-Write-Host "----------------------------------------" -ForegroundColor Cyan
-
-$existingKey = [System.Environment]::GetEnvironmentVariable('OPENAI_API_KEY', 'User')
-if ($existingKey) {
-    Write-Host "OPENAI_API_KEY is already set." -ForegroundColor Green
-    $response = Read-Host "Do you want to update it? (y/n)"
-    if ($response -eq 'y' -or $response -eq 'Y') {
-        $apiKey = Read-Host "Enter your Azure OpenAI API key"
-        [System.Environment]::SetEnvironmentVariable('OPENAI_API_KEY', $apiKey, 'User')
-        Write-Host "API key updated successfully!" -ForegroundColor Green
-        $env:OPENAI_API_KEY = $apiKey
-    }
-} else {
-    Write-Host "OPENAI_API_KEY is not set." -ForegroundColor Yellow
-    $apiKey = Read-Host "Enter your Azure OpenAI API key"
-    [System.Environment]::SetEnvironmentVariable('OPENAI_API_KEY', $apiKey, 'User')
-    Write-Host "API key set successfully!" -ForegroundColor Green
-    $env:OPENAI_API_KEY = $apiKey
+# Check Node.js
+try {
+    $nodeVersion = node --version 2>&1
+    Write-Host "[OK] Node.js found: $nodeVersion" -ForegroundColor Green
+} catch {
+    Write-Host "[ERROR] Node.js not found. Please install Node.js 18+ (LTS)." -ForegroundColor Red
+    exit 1
 }
 
+Write-Host ""
+Write-Host "All prerequisites found!" -ForegroundColor Green
 Write-Host ""
 
 # Install Python dependencies
@@ -100,7 +97,7 @@ Write-Host "Installing Frontend Dependencies" -ForegroundColor Cyan
 Write-Host "----------------------------------------" -ForegroundColor Cyan
 Write-Host "Running: npm install (in src/pdf_reader/frontend)" -ForegroundColor Yellow
 
-Push-Location src/pdf_reader/frontend
+Push-Location $FRONTEND_DIR
 
 try {
     npm install
@@ -115,6 +112,8 @@ try {
     exit 1
 }
 
+Pop-Location
+
 Write-Host ""
 
 # Build frontend
@@ -122,6 +121,8 @@ Write-Host "----------------------------------------" -ForegroundColor Cyan
 Write-Host "Building Frontend" -ForegroundColor Cyan
 Write-Host "----------------------------------------" -ForegroundColor Cyan
 Write-Host "Running: npm run build" -ForegroundColor Yellow
+
+Push-Location $FRONTEND_DIR
 
 try {
     npm run build
@@ -139,20 +140,103 @@ try {
 Pop-Location
 
 Write-Host ""
-Write-Host "========================================" -ForegroundColor Green
-Write-Host "Setup Complete!" -ForegroundColor Green
-Write-Host "========================================" -ForegroundColor Green
+
+# Start database
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+Write-Host "Starting Database" -ForegroundColor Cyan
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+Write-Host "Running: docker-compose up -d db" -ForegroundColor Yellow
+
+Push-Location $ROOT_DIR
+
+try {
+    docker-compose up -d db
+    if ($LASTEXITCODE -ne 0) {
+        throw "docker-compose up failed"
+    }
+    Write-Host "[OK] Database container started!" -ForegroundColor Green
+} catch {
+    Write-Host "[ERROR] Failed to start database container." -ForegroundColor Red
+    Pop-Location
+    exit 1
+}
+
+Pop-Location
+
 Write-Host ""
-Write-Host "To start the application:" -ForegroundColor Cyan
-Write-Host "  1. Navigate to src/pdf_reader:" -ForegroundColor White
-Write-Host "     cd src\pdf_reader" -ForegroundColor Yellow
+
+# Wait for database to be ready
+Write-Host "Waiting for database to be ready..." -ForegroundColor Yellow
+$maxAttempts = 30
+$attempt = 0
+while ($attempt -lt $maxAttempts) {
+    try {
+        $result = docker exec specification-assistant-db mysqladmin ping -h localhost --silent 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "[OK] Database is ready!" -ForegroundColor Green
+            break
+        }
+    } catch {}
+    Start-Sleep -Seconds 1
+    $attempt++
+}
+
+if ($attempt -eq $maxAttempts) {
+    Write-Host "[ERROR] Database did not become ready in time." -ForegroundColor Red
+    Cleanup
+    exit 1
+}
+
 Write-Host ""
-Write-Host "  2. Start the backend server:" -ForegroundColor White
-Write-Host "     uv run main.py" -ForegroundColor Yellow
+
+# Load environment variables
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+Write-Host "Loading Environment Variables" -ForegroundColor Cyan
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+
+if (Test-Path $ENV_FILE) {
+    Write-Host "Loading .env from $ENV_FILE" -ForegroundColor Yellow
+    Get-Content $ENV_FILE | ForEach-Object {
+        if ($_ -match '^\s*([^#][^=]+)=(.*)$') {
+            $name = $matches[1].Trim()
+            $value = $matches[2].Trim()
+            # Remove surrounding quotes if present
+            if ($value -match '^["''](.*)["'']$') {
+                $value = $matches[1]
+            }
+            [System.Environment]::SetEnvironmentVariable($name, $value, 'Process')
+        }
+    }
+    Write-Host "[OK] .env loaded" -ForegroundColor Green
+} else {
+    Write-Host ".env not found. You'll be prompted for required values." -ForegroundColor Yellow
+}
+
+# Check and set API key if not already set
+if (-not $env:OPENAI_API_KEY) {
+    $apiKey = Read-Host "Enter OPENAI_API_KEY" -AsSecureString
+    $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($apiKey)
+    $env:OPENAI_API_KEY = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
+}
+
 Write-Host ""
-Write-Host "  3. Open your browser and go to:" -ForegroundColor White
-Write-Host "     http://localhost:8000" -ForegroundColor Yellow
+
+# Start FastAPI server
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+Write-Host "Starting FastAPI Server" -ForegroundColor Cyan
+Write-Host "----------------------------------------" -ForegroundColor Cyan
+Write-Host "Running: uv run main.py" -ForegroundColor Yellow
 Write-Host ""
-Write-Host "Note: If you just set the API key for the first time," -ForegroundColor Cyan
-Write-Host "      you may need to close and reopen PowerShell for it to take effect." -ForegroundColor Cyan
+Write-Host "Access the application at: http://localhost:8000" -ForegroundColor Green
+Write-Host "Press Ctrl+C to stop the server and database." -ForegroundColor Yellow
 Write-Host ""
+
+Push-Location $BACKEND_DIR
+
+try {
+    uv run main.py
+} finally {
+    Pop-Location
+    Cleanup
+}
