@@ -41,9 +41,11 @@ async def extract_keys(
     """
     pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
 
-    # Extract all keys using LLM (now parallelized)
+    # Extract all keys using LLM (always uses gpt-4.1 for accuracy)
     try:
-        results = await llm_extractor.extract_keys(key_names=request.key_names, pdf_data=pdf_data_list)
+        results = await llm_extractor.extract_keys(
+            key_names=request.key_names, pdf_data=pdf_data_list
+        )
 
         # Transform matched_line_ids to bounding_box coordinates
         # Split multi-page source_locations into one per page with page-specific bounding boxes
@@ -139,7 +141,6 @@ async def ask_question_stream(
                 question=request.question,
                 pdf_data=pdf_data_list,
                 conversation_history=conversation_history,
-                model_name=request.model_name,
             ):
                 # Send system message if this is the first message
                 if system_message:
@@ -187,10 +188,12 @@ async def compare_pdfs(
     pdf_data_list = await get_pdf_data_for_file_ids_async(db, [request.base_file_id, request.new_file_id])
     base_pdf_data, new_pdf_data = pdf_data_list[0], pdf_data_list[1]
 
-    # Compare the PDFs using LLM
+    # Compare the PDFs using LLM (always uses gpt-4.1 for accuracy)
     try:
         result = await llm_extractor.compare_pdfs(
-            base_pdf_data=base_pdf_data, new_pdf_data=new_pdf_data, additional_context=request.additional_context or ""
+            base_pdf_data=base_pdf_data,
+            new_pdf_data=new_pdf_data,
+            additional_context=request.additional_context or "",
         )
         return result.model_dump()
     except Exception as e:
@@ -220,7 +223,7 @@ async def detect_product_type(
     """
     pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
 
-    # Detect product type using LLM
+    # Detect product type using LLM (always uses gpt-4.1-mini)
     try:
         result = await llm_extractor.detect_product_type(pdf_data=pdf_data_list)
         return result.model_dump()
@@ -250,7 +253,7 @@ async def detect_core_winding_count(
     """
     pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
 
-    # Detect core/winding count using LLM
+    # Detect core/winding count using LLM (always uses gpt-4.1-mini)
     try:
         result = await llm_extractor.detect_core_winding_count(
             pdf_data=pdf_data_list, product_type=request.product_type

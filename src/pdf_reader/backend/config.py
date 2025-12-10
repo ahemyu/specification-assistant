@@ -9,15 +9,25 @@ BACKEND_DIR = Path(__file__).parent
 # PDF_READER_DIR: src/pdf_reader/ - root of the pdf_reader package
 PDF_READER_DIR = BACKEND_DIR.parent
 
-# OpenAI / Azure OpenAI configuration
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-DEFAULT_OPENAI_BASE_URL = "https://westeurope.api.cognitive.microsoft.com/openai/v1/"
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", DEFAULT_OPENAI_BASE_URL)
-DEFAULT_MODEL_NAME = "gpt-4.1"
+# Azure OpenAI configuration - GPT-4.1 (used for key extraction, PDF comparison)
+GPT41_API_KEY = os.getenv("GPT41_API_KEY")
+GPT41_ENDPOINT = os.getenv("GPT41_ENDPOINT", "https://westeurope.api.cognitive.microsoft.com/")
+GPT41_DEPLOYMENT = os.getenv("GPT41_DEPLOYMENT", "gpt-4.1")
+
+# Azure OpenAI configuration - GPT-4.1-mini (used for chat, detection)
+GPT41_MINI_API_KEY = os.getenv("GPT41_MINI_API_KEY")
+GPT41_MINI_ENDPOINT = os.getenv("GPT41_MINI_ENDPOINT", "https://mf-gwc-tg.cognitiveservices.azure.com/")
+GPT41_MINI_DEPLOYMENT = os.getenv("GPT41_MINI_DEPLOYMENT", "gpt-4.1-mini-GWC-TG")
+
+# Shared Azure OpenAI settings
+AZURE_OPENAI_API_VERSION = os.getenv("AZURE_OPENAI_API_VERSION", "2025-01-01-preview")
 
 # LLM batch processing configuration
-DEFAULT_BATCH_SIZE = 20  # number of keys sent per LLM request (optimized for ~50K token PDFs)
-MAX_CONCURRENT_BATCHES = 1  # how many batches are sent at once
+DEFAULT_BATCH_SIZE = 20  # number of keys sent per LLM request
+MAX_CONCURRENT_BATCHES_GPT41 = 1  # gpt-4.1 has lower rate limits
+
+# Legacy config for backward compatibility
+OPENAI_API_KEY = GPT41_API_KEY
 
 # MySQL Database configuration
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
