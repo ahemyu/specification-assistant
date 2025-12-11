@@ -427,10 +427,10 @@ export function ExtractionView() {
         />
       ) : (
         <div id="extractionSetupView">
-          <h1 className="page-title">Extract Keys from PDFs</h1>
-          <p className="subtitle">
-            Select the product type to extract relevant specifications
-          </p>
+          <div className="upload-header">
+            <h1>Extract Keys from PDFs</h1>
+            <p className="subtitle"> Select the product type to extract relevant specifications</p>
+          </div>
 
           {/* Product Type Selection - Hidden when in manual mode */}
           {!showDevInput && (
@@ -455,7 +455,7 @@ export function ExtractionView() {
                     {type === 'Kombiwandler' && <img src="/assets/combi-transformer.png" alt="Combi Transformer" style={{ height: '10em' }} />}
                   </div>
                   <div className="product-card-content">
-                    <h3 className="product-card-title">{type}</h3>
+                    <h4 className="product-card-title">{type}</h4>
                     {isDetected && productTypeConfidence > 0 && (
                       <div className="confidence-bar-container">
                         <div className="confidence-bar-bg">
@@ -476,76 +476,139 @@ export function ExtractionView() {
           </div>
           )}
 
-          {/* Template Keys Preview and Extract Button - Hidden when in manual mode */}
-          {!showDevInput && selectedProductType && templateKeys.length > 0 && (
-            <div className="template-key-header-section">
-              <div className="key-input-area">
-                <div className="template-key-header">
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                      Template: {selectedProductType}
-                      {(detectedCoreCount !== null || detectedWindingCount !== null) && (
-                        <div className="detected-counts-container">
-                          {detectedCoreCount !== null && (
-                            <div className="detected-count-badge">
-                              <span className="detected-count-number core">{detectedCoreCount}</span>
-                              <span className="detected-count-label">Kern{detectedCoreCount !== 1 ? 'e' : ''}</span>
+                    {/* Template Keys Preview and Extract Button - Hidden when in manual mode */}          {!showDevInput && selectedProductType && templateKeys.length > 0 && (
+
+                      <div className="template-key-header-section">
+
+                        <div className="key-input-area">
+
+                          <div className="template-key-header">
+
+                            <div>
+
+                              <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+
+                                Template: {selectedProductType}
+
+                                {(detectedCoreCount !== null || detectedWindingCount !== null) && (
+
+                                  <div className="detected-counts-container">
+
+                                    {detectedCoreCount !== null && (
+
+                                      <div className="detected-count-badge">
+
+                                        <span className="detected-count-number core">{detectedCoreCount}</span>
+
+                                        <span className="detected-count-label">Kern{detectedCoreCount !== 1 ? 'e' : ''}</span>
+
+                                      </div>
+
+                                    )}
+
+                                    {detectedWindingCount !== null && (
+
+                                      <div className="detected-count-badge">
+
+                                        <span className="detected-count-number winding">{detectedWindingCount}</span>
+
+                                        <span className="detected-count-label">Wicklung{detectedWindingCount !== 1 ? 'en' : ''}</span>
+
+                                      </div>
+
+                                    )}
+
+                                  </div>
+
+                                )}
+
+                              </h3>
+
+                              <p className="template-key-count-text">
+
+                                {templateKeys.length} keys will be extracted
+
+                              </p>
+
                             </div>
-                          )}
-                          {detectedWindingCount !== null && (
-                            <div className="detected-count-badge">
-                              <span className="detected-count-number winding">{detectedWindingCount}</span>
-                              <span className="detected-count-label">Wicklung{detectedWindingCount !== 1 ? 'en' : ''}</span>
-                            </div>
-                          )}
+
+                            <button
+
+                              onClick={() => setShowAllKeysModal(true)}
+
+                              className="view-all-keys-button"
+
+                            >
+
+                              View All Keys
+
+                            </button>
+
+                          </div>
+
                         </div>
-                      )}
-                    </h3>
-                    <p className="template-key-count-text">
-                      {templateKeys.length} keys will be extracted
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowAllKeysModal(true)}
-                    className="view-all-keys-button"
-                  >
-                    View All Keys
-                  </button>
-                </div>
 
-                <Button
-                  id="extractTemplateBtn"
-                  className="extract-btn"
-                  onClick={handleExtractFromTemplate}
-                  disabled={uploadedFileIds.length === 0 || isExtracting || isDetectingCounts}
-                  isLoading={isExtracting}
-                  title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : isDetectingCounts ? 'Optimizing key list...' : ''}
-                  style={{ marginTop: '1rem', width: '100%' }}
-                >
-                  {isExtracting ? `Extracting ${templateKeys.length} keys...` : `Extract ${templateKeys.length} Keys`}
-                </Button>
+          
 
-                {uploadedFileIds.length === 0 && (
-                  <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em', textAlign: 'center' }}>
-                    Please upload PDF files in the Upload tab first
-                  </p>
-                )}
+                        <Button
 
-                {extractionComplete && extractionResultsData && extractionResultsData.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      console.log('Show Results button clicked')
-                      console.log('extractionResultsData:', extractionResultsData)
-                      openCarousel()
-                    }}
-                    className="view-results-btn-inline"
-                    style={{ marginTop: '1rem', width: '100%' }}
-                  >
-                    View Results ({extractionResultsData.length} keys)
-                  </Button>
-                )}
-              </div>
-            </div>
+                          id="extractTemplateBtn"
+
+                          className="extract-btn"
+
+                          onClick={handleExtractFromTemplate}
+
+                          disabled={uploadedFileIds.length === 0 || isExtracting || isDetectingCounts}
+
+                          isLoading={isExtracting}
+
+                          title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : isDetectingCounts ? 'Optimizing key list...' : ''}
+
+                        >
+
+                          {isExtracting ? `Extracting ${templateKeys.length} keys...` : `Extract ${templateKeys.length} Keys`}
+
+                        </Button>
+
+          
+
+                        {uploadedFileIds.length === 0 && (
+
+                          <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em', textAlign: 'center' }}>
+
+                            Please upload PDF files in the Upload tab first
+
+                          </p>
+
+                        )}
+
+          
+
+                        {extractionComplete && extractionResultsData && extractionResultsData.length > 0 && (
+
+                                                    <Button
+
+                                                      onClick={() => {
+
+                                                        console.log('Show Results button clicked')
+
+                                                        console.log('extractionResultsData:', extractionResultsData)
+
+                                                        openCarousel()
+
+                                                      }}
+
+                                                      className="view-results-btn-inline"
+
+                                                    >
+
+                                                      View Results ({extractionResultsData.length} keys)
+
+                                                    </Button>
+
+                        )}
+
+                      </div>
           )}
 
           {/* Manual Input Toggle - Available for all users */}
@@ -555,7 +618,7 @@ export function ExtractionView() {
                 onClick={() => setShowDevInput(true)}
                 style={{
                   padding: '0.5rem 1rem',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   border: '1px solid #6B7280',
                   backgroundColor: 'transparent',
                   color: '#9CA3AF',

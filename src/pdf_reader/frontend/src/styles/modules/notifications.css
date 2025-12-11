@@ -13,8 +13,8 @@
 .notification {
   background: var(--background-color);
   padding: 16px 20px;
-  border-radius: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-radius: var(--border-radius-standard);
+  box-shadow: var(--box-shadow-lg);
   display: flex;
   align-items: center;
   justify-content: space-between;

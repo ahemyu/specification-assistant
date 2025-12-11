@@ -13,7 +13,7 @@
 
 .qa-popup-content {
   background-color: white;
-  border-radius: 20px;
+  border-radius: var(--border-radius-standard);
   width: 80%;
   max-width: 800px;
   max-height: 800px;

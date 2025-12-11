@@ -21,10 +21,10 @@
     max-width: 500px;
     min-height: 220px; /* Use min-height for flexibility */
     padding: 40px;
-    border-radius: 25px; /* Slightly more rounded */
-    background: var(--background-color-light); /* Use a variable for better theme integration */
+    border-radius: var(--border-radius-bigger); /* Slightly more rounded */
+    background: var(--background-color); /* Use a variable for better theme integration */
     border: 2px dashed var(--border-color); /* Dashed border for clear drop indication */
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); /* Softer shadow */
+    box-shadow: var(--box-shadow-md); /* Softer shadow */
     cursor: pointer;
     transition: all 0.3s ease-in-out; /* Smoother transition */
     text-align: center;
@@ -33,14 +33,14 @@
 
 .drop-zone:hover {
   border-color: var(--primary-color); /* Highlight border on hover */
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.12); /* Enhanced shadow on hover */
-  transform: translateY(-3px); /* Subtle lift effect */
+  box-shadow: var(--box-shadow-lg); /* Enhanced shadow on hover */
+  transform: scale(1.02); /* Subtle zoom effect */
 }
 
 .drop-zone.dragging {
     background: var(--primary-color-light); /* Lighter primary color when dragging */
     border-color: var(--primary-color);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.16);
+    box-shadow: var(--box-shadow-xl);
     transform: scale(1.01); /* Slightly more subtle scale */
 }
 
@@ -48,10 +48,8 @@
     margin-bottom: 20px;
     color: var(--primary-color); /* Use primary color for icon */
     transition: color 0.3s ease-in-out;
-}
-
-.drop-zone:hover .drop-zone-icon {
-  color: var(--primary-color-dark); /* Darken icon on hover */
+    display: flex;
+    justify-content: center;
 }
 
 .drop-zone-text h2 {
@@ -67,7 +65,7 @@
 
 .upload-btn {
     padding: 14px 48px;
-    background: var(--accent-color);
+    background: var(--secondary-color);
     color: var(--text-color-inverted);
     border: none;
     border-radius: 30px;
@@ -76,13 +74,13 @@
     font-weight: 600;
     transition: all 0.3s ease;
     margin-top: 60px;
-    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.25);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .upload-btn:hover:not(:disabled) {
-    background: var(--accent-color);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(135, 189, 37, 0.35);
+    background: var(--secondary-color);
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
 }
 
 .upload-btn:disabled {
@@ -93,7 +91,7 @@
 }
 
 .selected-files {
-    margin-top: 24px;
+    margin-top: 80px;
     text-align: left;
     width: 100%;
     max-width: 600px;
@@ -103,8 +101,7 @@
     list-style: none;
     padding: 16px;
     background: var(--background-color);
-    border-radius: 20px;
-    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-standard);
     max-height: 200px;
     overflow-y: auto;
 }
@@ -138,7 +135,7 @@
     margin-top: 20px;
     margin-bottom: 16px;
     padding: 10px 24px;
-    border-radius: 40px;
+    border-radius: var(--border-radius-bigger);
 
 }
 
@@ -147,7 +144,7 @@
     background: var(--background-color);
     color: var(--error-color);
     border: 2px solid var(--error-color);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     cursor: pointer;
     transition: all 0.3s ease;
     font-weight: 600;
@@ -169,72 +166,97 @@
 }
 
 .file-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 24px;
 }
 
 .file-card {
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 20px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 20px;
+    background: var(--background-color);
+    border-radius: var(--border-radius-bigger);
+    padding: 10px 20px;
+    box-shadow: var(--box-shadow-sm);
     transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
+    border: 1px solid var(--background-color);
 }
 
 .file-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--box-shadow-md);
+    border-color: var(--secondary-color);
 }
 
-.file-card-icon {
-    color: var(--special-color-2); /* secondary color */
-    text-align: center;
+.file-card-icon-container {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--primary-color);
 }
 
-.file-card-info {
-    text-align: center;
+.file-card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0; /* Prevents text overflow */
+}
+
+.file-card-name {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: var(--text-color);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .file-card-details {
     font-size: 0.9em;
-    color: var(--text-color-lighter);
+    color: var(--text-color-light);
+    margin: 0;
 }
 
 .file-card-actions {
     display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: auto; /* pushes actions to the bottom */
-    padding-top: 15px;
-    border-top: 1px solid var(--border-color);
+    align-items: center;
+    gap: 8px;
+    border-top: none;
+    padding-top: 0;
+    margin-top: 0;
 }
 
 .action-btn {
-    background: none;
-    border: none;
+    background: var(--background-color);
     cursor: pointer;
-    font-size: 1.2em;
-    padding: 8px;
-    border-radius: 50%;
+    font-size: 1.1em;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-standard);
     transition: all 0.2s ease;
-    color: var(--text-color-lighter);
+    color: var(--text-color-light);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0;
 }
 
 .action-btn:hover {
     background: var(--background-color-lighter);
     color: var(--text-color);
+    border-color: var(--border-color-light);
+    transform: scale(1.05);
+    box-shadow: var(--box-shadow-sm);
 }
 
-.action-btn.preview:hover { color: var(--special-color-1); }
-.action-btn.download:hover { color: var(--special-color-3); }
-.action-btn.delete:hover { color: var(--special-color-4); }
+.action-btn.preview:hover { color: var(--special-color-1); border-color: var(--special-color-1); }
+.action-btn.download:hover { color: var(--special-color-3); border-color: var(--special-color-3); }
+.action-btn.delete:hover { color: var(--special-color-4); border-color: var(--special-color-4); }
 
 .result-item { display: none; }
 
@@ -244,7 +266,7 @@
     background: var(--primary-color);
     color: var(--text-color-inverted);
     text-decoration: none;
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     margin-top: 16px;
     transition: all 0.3s ease;
     font-weight: 600;
@@ -264,7 +286,7 @@
     background: var(--accent-color);
     color: var(--text-color-inverted);
     border: none;
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     cursor: pointer;
     margin-top: 16px;
     margin-right: 12px;
@@ -287,7 +309,7 @@
     background: var(--background-color);
     color: var(--error-color);
     border: 2px solid var(--error-color);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     cursor: pointer;
     margin-top: 16px;
     margin-right: 12px;
@@ -327,22 +349,16 @@
 [data-theme='dark'] .drop-zone {
   background: rgba(45, 55, 72, 0.9); /* Darker background with transparency */
   border: 2px dashed rgba(255, 255, 255, 0.3); /* Lighter dashed border for dark theme */
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--box-shadow-xl);
 }
 
 [data-theme='dark'] .drop-zone:hover {
   border-color: var(--primary-color-dark); /* Darken primary color on hover for dark theme */
-  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--box-shadow-2xl);
 }
 
 [data-theme='dark'] .drop-zone.dragging {
     background: rgba(74, 85, 104, 0.9);
     border-color: var(--primary-color-dark);
     transform: scale(1.01);
-}
-
-[data-theme='dark'] .file-card {
-  background: rgba(45, 55, 72, 0.75); /* #2d3748 with transparency */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
 }

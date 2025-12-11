@@ -263,7 +263,7 @@ export function UploadView() {
   return (
     <div className="tab-view active" id="uploadView">
       <div className="upload-header">
-        <h1 className="page-title">SpecAI</h1>
+        <h1>SpecAI</h1>
         <p className="subtitle"> Upload your PDF files and use LLMs to extract keys or ask questions</p>
       </div>
       <section className="upload-section">
@@ -333,10 +333,10 @@ export function UploadView() {
             <div className="file-grid">
               {allUploadedFiles.map((file) => (
                 <div key={file.file_id} className="file-card" data-file-id={file.file_id}>
-                  <div className="file-card-icon">
-                    <FaFilePdf size={40} />
+                  <div className="file-card-icon-container">
+                    <FaFilePdf size={24} />
                   </div>
-                  <div className="file-card-info">
+                  <div className="file-card-content">
                     <h4 className="file-card-name">{file.original_filename}</h4>
                     <p className="file-card-details">
                       Pages: {(file as any).total_pages || 'N/A'}

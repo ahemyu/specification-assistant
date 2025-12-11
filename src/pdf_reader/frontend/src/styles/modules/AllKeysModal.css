@@ -15,13 +15,13 @@
 
 .all-keys-modal-content {
   background-color: var(--background-color);
-  border-radius: 20px;
+  border-radius: var(--border-radius-standard);
   max-width: 900px; /* Increased max-width */
   max-height: 90vh; /* Increased max-height */
   width: 100%;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.2); /* Softer, larger shadow */
+  box-shadow: var(--box-shadow-2xl); /* Softer, larger shadow */
   border: 1px solid var(--border-color);
   overflow: hidden;
   /* Add animation */
@@ -56,7 +56,7 @@
   color: var(--text-color-lighter);
   cursor: pointer;
   padding: 8px;
-  border-radius: 50%;
+  border-radius: var(--border-radius-standard);
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
@@ -130,7 +130,7 @@
 }
 
 .key-item:hover {
-  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.06); /* Softer, larger hover shadow */
+  box-shadow: var(--box-shadow-md); /* Softer, larger hover shadow */
   border-color: var(--secondary-color);
 }
 

@@ -34,7 +34,7 @@ export const Home = () => {
   return (
     <div className="home-container">
       <div className="home-header">
-        <h1 className="page-title">Willkommen</h1>
+        <h1>Willkommen</h1>
         <p className="subtitle">Wählen Sie ein Werkzeug, um zu beginnen</p>
       </div>
       <div className="cards-wrapper">

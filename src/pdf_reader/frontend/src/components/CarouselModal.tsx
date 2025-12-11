@@ -473,7 +473,7 @@ function ExtractionResultCard({
         <span className={`review-status-badge status-${status}`}>
           {status === 'accepted' && 'Accepted'}
           {status === 'edited' && 'Edited'}
-          {status === 'pending' && 'Pending Review'}
+          {status === 'pending' && 'Pending'}
         </span>
       </div>
 
@@ -490,10 +490,10 @@ function ExtractionResultCard({
               onClick={onAccept}
               disabled={status !== 'pending'}
             >
-              Accept (Enter)
+              Approve
             </button>
             <button className="edit-value-btn" onClick={onEnterEdit}>
-              Edit (E)
+              Edit
             </button>
           </div>
         </div>
@@ -521,10 +521,10 @@ function ExtractionResultCard({
           </div>
           <div className="edit-actions">
             <button className="save-edit-btn" onClick={onSaveEdit}>
-              Save (Enter)
+              Save
             </button>
             <button className="cancel-edit-btn" onClick={onCancelEdit}>
-              Cancel (Esc)
+              Cancel
             </button>
           </div>
         </div>

@@ -8,10 +8,10 @@
 .excel-upload-area {
     background: var(--background-color);
     padding: 32px;
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     margin-bottom: 24px;
     border: 2px solid var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--box-shadow-sm);
 }
 
 .file-input-group {
@@ -25,7 +25,7 @@
     padding: 16px 32px;
     background: var(--button-primary-bg);
     color: var(--text-color-inverted);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     cursor: pointer;
     font-weight: 600;
     transition: all 0.3s ease;
@@ -33,7 +33,7 @@
 }
 
 .excel-upload-label:hover {
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
@@ -56,7 +56,7 @@
 .keys-preview {
     background: var(--background-color-light);
     padding: 20px;
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     margin-bottom: 24px;
     border: 2px solid var(--border-color);
 }
@@ -73,7 +73,7 @@
 .keys-preview li {
     background: var(--background-color);
     padding: 8px 12px;
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     color: var(--text-color-light);
     font-size: 0.9em;
     border: 1px solid var(--border-color);
@@ -82,11 +82,10 @@
 /* Manual Input Area */
 .key-input-area {
     background: var(--background-color);
-    padding: 32px;
-    border-radius: 20px;
+    padding: 24px;
+    border-radius: var(--border-radius-standard);
     margin-bottom: 24px;
-    border: 2px solid var(--border-color);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--box-shadow-sm);
 }
 
 .key-input-group {
@@ -109,7 +108,7 @@
     width: 100%;
     padding: 14px 16px;
     border: 2px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     font-size: 0.95em;
     resize: vertical;
@@ -132,19 +131,20 @@
     background: var(--secondary-color);
     color: var(--text-color-inverted);
     border: none;
-    border-radius: 40px;
+    border-radius: var(--border-radius-bigger);
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
     transition: all 0.3s ease;
     display: block;
-    margin: 0 auto;
+    margin: 1rem auto; /* Added margin-top: 1rem and changed margin: 0 auto to margin: 1rem auto */
+    max-width: 300px; /* Added max-width */
     box-shadow: 0 4px 12px rgba(89, 189, 185, 0.25);
 }
 
 .extract-btn:hover:not(:disabled) {
     background: var(--button-secondary-bg);
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(89, 189, 185, 0.35);
 }
 
@@ -163,11 +163,11 @@
 .extraction-result-item {
     background: var(--background-color);
     border: 2px solid var(--border-color);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     padding: 28px;
     margin-bottom: 24px;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--box-shadow-sm);
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -182,14 +182,14 @@
 
 .extraction-result-item:hover {
     border-color: var(--primary-color);
-    box-shadow: 0 8px 24px rgba(28, 44, 140, 0.15);
-    transform: translateY(-2px);
+    box-shadow: var(--box-shadow-lg);
+    transform: scale(1.02);
 }
 
 .key-value {
     padding: 16px;
     background: var(--background-color-light);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     border: 1px solid var(--border-color);
     flex-shrink: 0;
 }
@@ -217,7 +217,7 @@
     color: var(--text-color-light);
     padding: 16px;
     background: var(--background-color-light);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     flex: 1;
     overflow-y: auto;
     min-height: 0;
@@ -290,7 +290,7 @@
     background: var(--button-secondary-bg);
     border-color: var(--secondary-color);
     color: var(--text-color-inverted);
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(89, 189, 185, 0.3);
 }
 
@@ -302,7 +302,7 @@
 }
 
 .reference-btn:active {
-    transform: translateY(0);
+    transform: scale(1);
 }
 
 /* Extraction action buttons container - appears centered below Extract Keys button */
@@ -321,22 +321,25 @@
     background: var(--button-primary-bg);
     color: var(--text-color-inverted);
     border: none;
-    border-radius: 40px;
+    border-radius: var(--border-radius-bigger);
     cursor: pointer;
     font-size: 1em;
     font-weight: 600;
     transition: all 0.3s ease;
     box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
     white-space: nowrap;
+    display: block; /* Ensure it's a block element for margin auto to work */
+    margin: 1rem auto; /* Center horizontally with margin auto */
+    max-width: 300px; /* Control its width */
 }
 
 .view-results-btn-inline:hover {
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
 .view-results-btn-inline:active {
-    transform: translateY(0);
+    transform: scale(1);
     box-shadow: 0 3px 10px rgba(28, 44, 140, 0.3);
 }
 
@@ -357,12 +360,12 @@
 
 .download-excel-btn-inline:hover {
     background: var(--accent-color);
-    transform: translateY(-1px);
+    transform: scale(1.05);
     box-shadow: 0 4px 10px rgba(135, 189, 37, 0.35);
 }
 
 .download-excel-btn-inline:active {
-    transform: translateY(0);
+    transform: scale(1);
     box-shadow: 0 2px 6px rgba(135, 189, 37, 0.25);
 }
 
@@ -389,11 +392,11 @@
 /* Review Status Badges */
 .review-status-badge {
     padding: 8px 20px;
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     font-size: 0.85em;
     font-weight: 600;
     white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--box-shadow-sm);
     transition: all 0.3s ease;
 }
 
@@ -428,6 +431,7 @@
     gap: 12px;
     flex-wrap: wrap;
     margin-top: 12px;
+    justify-content: flex-end;
 }
 
 .accept-btn {
@@ -445,13 +449,11 @@
 }
 
 .accept-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(135, 189, 37, 0.4);
-    background: var(--button-accent-bg);
+    transform: scale(1.05);
 }
 
 .accept-btn:active:not(:disabled) {
-    transform: translateY(0);
+    transform: scale(1);
 }
 
 .accept-btn:disabled {
@@ -476,13 +478,13 @@
 }
 
 .edit-value-btn:hover {
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(89, 189, 185, 0.4);
     background: var(--button-secondary-bg);
 }
 
 .edit-value-btn:active {
-    transform: translateY(0);
+    transform: scale(1);
 }
 
 /* Edit Mode Container */
@@ -492,9 +494,9 @@
     gap: 16px;
     padding: 20px;
     background: var(--background-color-light);
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     border: 2px solid var(--secondary-color);
-    box-shadow: 0 4px 16px rgba(89, 189, 185, 0.15);
+    box-shadow: var(--box-shadow-lg);
 }
 
 .edit-value-input-container {
@@ -552,12 +554,12 @@
 }
 
 .save-edit-btn:hover {
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
 .save-edit-btn:active {
-    transform: translateY(0);
+    transform: scale(1);
 }
 
 .cancel-edit-btn {
@@ -575,12 +577,12 @@
 
 .cancel-edit-btn:hover {
     background: linear-gradient(135deg, var(--background-color-lighter) 0%, var(--border-color-light) 100%);
-    transform: translateY(-2px);
+    transform: scale(1.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .cancel-edit-btn:active {
-    transform: translateY(0);
+    transform: scale(1);
 }
 
 /* Detected Counts Display */
@@ -597,8 +599,7 @@
     gap: 0.4rem;
     padding: 0.3rem 0.7rem;
     background-color: var(--background-color-light);
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
+    border-radius: var(--border-radius-standard);
     font-size: 0.8rem;
     font-weight: 600;
     transition: all 0.2s ease;
@@ -610,7 +611,7 @@
     justify-content: center;
     min-width: 20px;
     height: 20px;
-    border-radius: 4px;
+    border-radius: var(--border-radius-standard);
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--text-color-inverted);
@@ -618,11 +619,11 @@
 }
 
 .detected-count-number.core {
-    background-color: var(--secondary-color);
+    background-color: var(--primary-color);
 }
 
 .detected-count-number.winding {
-    background-color: var(--primary-color);
+    background-color: var(--accent-color);
 }
 
 .detected-count-label {
@@ -667,7 +668,7 @@
     gap: 0.4rem;
     padding: 0.3rem 0.8rem;
     background-color: #FEF3C7; /* Light yellow background */
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
     border: 2px solid #FCD34D; /* Yellow border */
     font-weight: 600;
     margin-left: 0.75rem;
@@ -701,10 +702,9 @@
 /* View All Keys Button */
 .view-all-keys-button {
     padding: 0.4rem 0.9rem;
-    background-color: var(--background-color);
+    background-color: var(--background-color-light);
     color: var(--text-color-light);
-    border: 2px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: var(--border-radius-standard);
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 500;
@@ -712,6 +712,5 @@
 }
 
 .view-all-keys-button:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+    background-color: var(--background-color-lighter);
 }
