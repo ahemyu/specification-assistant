@@ -27,23 +27,42 @@
   width: 300px;
   box-shadow: var(--box-shadow-lg);
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; /* Added border-color to transition */
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .card:hover {
-  transform: scale(1.05);
-  box-shadow: var(--box-shadow-xl);
+  transform: scale(var(--scale-md));
+  box-shadow: var(--box-shadow-2xl); /* More prominent shadow on hover */
+  border-color: var(--primary-color); /* Highlight border on hover */
 }
 
 .card-icon {
   margin-bottom: 20px;
   color: var(--primary-color);
+  /* Revert to simpler styling, remove fixed dimensions and overflow */
+  display: flex; /* Keep for centering if desired */
+  justify-content: center;
+  align-items: center;
+}
+
+.card-icon svg {
+    fill: var(--primary-color); /* Default color */
+    transition: fill 0.3s ease; /* Transition fill property */
+    display: inline-block;
+}
+
+.card:hover .card-icon {
+    /* No background shimmer */
+}
+
+.card:hover .card-icon svg {
+    fill: url(#shimmer-grad); /* Apply shimmer to icon fill */
+    /* No scale transform */
 }
 
 .card-content {
@@ -76,12 +95,13 @@
 
 [data-theme='dark'] .card {
   background: rgba(45, 55, 72, 0.75); /* #2d3748 with transparency */
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color); /* Updated to use variable */
   box-shadow: var(--box-shadow-xl);
 }
 
 [data-theme='dark'] .card:hover {
   box-shadow: var(--box-shadow-2xl);
+  border-color: var(--primary-color); /* Highlight border on hover in dark theme */
 }
 
 [data-theme='dark'] .card.disabled {

@@ -33,7 +33,7 @@
 }
 
 .excel-upload-label:hover {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
@@ -144,7 +144,7 @@
 
 .extract-btn:hover:not(:disabled) {
     background: var(--button-secondary-bg);
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 6px 16px rgba(89, 189, 185, 0.35);
 }
 
@@ -183,7 +183,7 @@
 .extraction-result-item:hover {
     border-color: var(--primary-color);
     box-shadow: var(--box-shadow-lg);
-    transform: scale(1.02);
+    transform: scale(var(--scale-sm));
 }
 
 .key-value {
@@ -290,7 +290,7 @@
     background: var(--button-secondary-bg);
     border-color: var(--secondary-color);
     color: var(--text-color-inverted);
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 4px 12px rgba(89, 189, 185, 0.3);
 }
 
@@ -334,7 +334,7 @@
 }
 
 .view-results-btn-inline:hover {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
@@ -360,7 +360,7 @@
 
 .download-excel-btn-inline:hover {
     background: var(--accent-color);
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 4px 10px rgba(135, 189, 37, 0.35);
 }
 
@@ -449,7 +449,7 @@
 }
 
 .accept-btn:hover:not(:disabled) {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
 }
 
 .accept-btn:active:not(:disabled) {
@@ -478,7 +478,7 @@
 }
 
 .edit-value-btn:hover {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 6px 16px rgba(89, 189, 185, 0.4);
     background: var(--button-secondary-bg);
 }
@@ -554,7 +554,7 @@
 }
 
 .save-edit-btn:hover {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
 }
 
@@ -577,7 +577,7 @@
 
 .cancel-edit-btn:hover {
     background: linear-gradient(135deg, var(--background-color-lighter) 0%, var(--border-color-light) 100%);
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 

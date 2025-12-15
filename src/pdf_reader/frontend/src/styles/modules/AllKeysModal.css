@@ -66,7 +66,7 @@
 .all-keys-modal-close-btn:hover {
   background: var(--background-color-lighter); /* Lighter hover background */
   color: var(--text-color);
-  transform: scale(1.1); /* Match chat close button */
+  transform: scale(var(--scale-lg)); /* Match chat close button */
 }
 
 .all-keys-modal-body {

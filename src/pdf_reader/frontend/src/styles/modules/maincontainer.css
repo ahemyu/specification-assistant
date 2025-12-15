@@ -60,7 +60,7 @@
 }
 
 .copilot-button:hover {
-  transform: scale(1.05); 
+  transform: scale(var(--scale-md)); 
   box-shadow: var(--box-shadow-xl);
 }
 .scroll-area {
@@ -93,7 +93,7 @@
 }
 
 .product-card:hover {
-  transform: scale(1.02);
+  transform: scale(var(--scale-sm));
   box-shadow: var(--box-shadow-xl);
   border-color: var(--secondary-color);
 }
@@ -209,5 +209,5 @@
 }
 
 .lang-toggle:hover {
-  transform: translateY(-2px);
+  transform: scale(var(--scale-sm));
 }

@@ -87,7 +87,7 @@
 .modal-close:hover {
     background: var(--background-color-lighter);
     color: var(--text-color);
-    transform: scale(1.1);
+    transform: scale(var(--scale-lg));
 }
 
 .modal-body {

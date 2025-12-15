@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown'
 import { useAppStore } from '../store/useAppStore'
 import type { ChatMessage } from '../types'
 import { IoClose, IoTrashOutline, IoSend } from "react-icons/io5";
+import { useTranslation } from '../core/i18n/LanguageContext'
 
 interface ChatProps {
   modelOptions?: string[]
@@ -10,6 +11,7 @@ interface ChatProps {
 }
 
 export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: ChatProps) {
+  const { t } = useTranslation()
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedModel, setSelectedModel] = useState(defaultModel)
@@ -74,16 +76,16 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
   }, [conversationHistory])
 
   const handleClearChat = useCallback(() => {
-    if (window.confirm('Are you sure you want to clear the conversation history?')) {
+    if (window.confirm(t('confirmClearChat'))) {
       clearChat()
       localStorage.removeItem('specification_assistant_chat_history')
     }
-  }, [clearChat])
+  }, [clearChat, t])
 
   const submitQuestion = useCallback(async () => {
     const trimmedQuestion = question.trim()
     if (!trimmedQuestion || uploadedFileIds.length === 0) {
-      alert('Please enter a question and ensure PDFs are uploaded.')
+      alert(t('enterQuestionError'))
       return
     }
 
@@ -187,7 +189,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
       setStreamingContent('')
       addChatMessage({
         role: 'assistant',
-        content: `Error: ${errorMessage}`,
+        content: `${t('errorPrefix')}${errorMessage}`,
       })
     } finally {
       setIsLoading(false)
@@ -195,7 +197,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
       setStreamingContent('')
       textareaRef.current?.focus()
     }
-  }, [question, uploadedFileIds, conversationHistory, selectedModel, addChatMessage, setConversationHistory])
+  }, [question, uploadedFileIds, conversationHistory, selectedModel, addChatMessage, setConversationHistory, t])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -212,7 +214,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
         {/* Header */}
         <div className="chat-header">
           <div className="model-picker-inline">
-            <label htmlFor="modelSelect" className="model-picker-label">Model:</label>
+            <label htmlFor="modelSelect" className="model-picker-label">{t('modelLabel')}</label>
             <select
               id="modelSelect"
               className="model-select"
@@ -226,10 +228,10 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               ))}
             </select>
           </div>
-          <button className="clear-chat-btn" onClick={handleClearChat} title="Clear Chat">
+          <button className="clear-chat-btn" onClick={handleClearChat} title={t('clearChatTitle')}>
             <IoTrashOutline size={24} />
           </button>
-          <button className="close-chat-btn" onClick={() => setIsQAPopupOpen(false)} title="Close Chat">
+          <button className="close-chat-btn" onClick={() => setIsQAPopupOpen(false)} title={t('closeChatTitle')}>
             <IoClose size={24} />
           </button>
         </div>
@@ -238,7 +240,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
         <div className="chat-messages-container" ref={messagesContainerRef}>
           {visibleMessages.length === 0 && !isStreaming ? (
             <div className="chat-welcome">
-              <p>Welcome! Ask me anything about your uploaded documents.</p>
+              <p>{t('chatWelcomeMessage')}</p>
             </div>
           ) : (
             <>
@@ -247,7 +249,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
               ))}
               {isStreaming && streamingContent && (
                 <div className="chat-message assistant">
-                  <div className="chat-message-role">Assistant</div>
+                  <div className="chat-message-role">{t('assistantRole')}</div>
                   <div className="chat-message-content">
                     <ReactMarkdown>{streamingContent}</ReactMarkdown>
                   </div>
@@ -275,7 +277,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
             value={question}
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type your question here..."
+            placeholder={t('chatPlaceholder')}
             disabled={isLoading || uploadedFileIds.length === 0}
             rows={1}
             aria-label="Enter your question"
@@ -285,7 +287,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
             id="askBtn"
             onClick={submitQuestion}
             disabled={isLoading || !question.trim() || uploadedFileIds.length === 0}
-            title="Send message"
+            title={t('sendMessageTitle')}
           >
             <IoSend />
           </button>
@@ -300,9 +302,10 @@ interface ChatMessageProps {
 }
 
 function ChatMessageComponent({ message }: ChatMessageProps) {
+  const { t } = useTranslation()
   const isUser = message.role === 'user';
-  const roleLabel = isUser ? 'You' : 'Assistant';
-  const isError = message.role === 'assistant' && message.content.startsWith('Error:');
+  const roleLabel = isUser ? t('youRole') : t('assistantRole');
+  const isError = message.role === 'assistant' && message.content.startsWith(t('errorPrefix'));
 
   return (
     <div className={`chat-message ${message.role}`}>

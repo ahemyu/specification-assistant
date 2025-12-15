@@ -75,7 +75,7 @@
 }
 
 .summary-actions .btn-primary:hover {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 6px 16px rgba(135, 189, 37, 0.4);
 }
 
@@ -89,7 +89,7 @@
 .summary-actions .btn-secondary:hover {
     background: var(--primary-color);
     color: var(--text-color-inverted);
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
 }
 
@@ -246,7 +246,7 @@
 }
 
 .review-btn:hover {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: 0 4px 10px rgba(28, 44, 140, 0.3);
 }
 

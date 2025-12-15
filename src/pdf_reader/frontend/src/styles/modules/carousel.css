@@ -133,7 +133,7 @@
 .carousel-nav-btn:hover:not(:disabled) {
     background: var(--background-color-lighter);
     color: var(--text-color);
-    transform: scale(1.1);
+    transform: scale(var(--scale-lg));
 }
 
 .carousel-nav-btn:active:not(:disabled) {
@@ -225,7 +225,7 @@
 
 .completion-download-btn:hover,
 .completion-view-summary-btn:hover {
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: var(--box-shadow-lg);
 }
 
@@ -354,7 +354,7 @@
     background: var(--background-color-light);
     border-color: var(--border-color);
     color: var(--text-color);
-    transform: scale(1.02);
+    transform: scale(var(--scale-sm));
 }
 
 .carousel-card .reference-btn.active {

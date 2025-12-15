@@ -6,7 +6,7 @@ export const LanguageToggle: React.FC = () => {
   const toggle = () => setLanguage(language === 'de' ? 'en' : 'de')
 
   return (
-    <button className="lang-toggle" onClick={toggle} aria-label="Toggle language">
+    <button className="lang-toggle" onClick={toggle} aria-label="Toggle language" title={t('toggleButton')}>
       <span className="lang-flag" aria-hidden>
         {language === 'de' ? (
           // German flag (simple SVG)
@@ -29,7 +29,6 @@ export const LanguageToggle: React.FC = () => {
           </svg>
         )}
       </span>
-      <span className="lang-text">{t('toggleButton')}</span>
     </button>
   )
 }

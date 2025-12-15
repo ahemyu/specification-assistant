@@ -6,6 +6,7 @@ import { CompareView } from './components/DocCompare/CompareView'
 import { useAppStore } from './store/useAppStore'
 import { QAPopup } from './components/QAPopup'
 import { AuthModal } from './components/AuthModal'
+import { GradientDefinitions } from './components/GradientDefinitions'
 
 import './styles/styles.css'
 
@@ -18,6 +19,7 @@ function App() {
       <Notifications />
       <QAPopup />
       <AuthModal />
+      <GradientDefinitions />
 
       <div className="app-layout">
         <div className="app-wrapper">

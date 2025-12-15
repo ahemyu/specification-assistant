@@ -150,13 +150,13 @@ export function ExtractionView() {
 
   const handleExtractFromTemplate = async () => {
     if (!selectedProductType || templateKeys.length === 0 || uploadedFileIds.length === 0) {
-      showNotification('Please select a product type and upload PDFs first', 'error')
+      showNotification(t('selectProductAndUpload'), 'error')
       return
     }
 
     setIsExtracting(true)
     setExtractionComplete(false)
-    showNotification(`Extracting ${templateKeys.length} keys using AI...`, 'info')
+    showNotification(t('extractingKeysNotification').replace('{count}', String(templateKeys.length)), 'info')
 
     try {
       const response = await fetch('/extract-keys', {
@@ -170,7 +170,7 @@ export function ExtractionView() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to extract keys')
+        throw new Error(errorData.detail || t('failedToExtract'))
       }
 
       const backendData: ExtractionResponse = await response.json()
@@ -187,7 +187,7 @@ export function ExtractionView() {
       console.log('Setting extractionComplete to true...')
       setExtractionComplete(true)
 
-      showNotification('Keys extracted successfully!', 'success')
+      showNotification(t('keysExtractedSuccess'), 'success')
 
       // Force carousel to open with multiple attempts
       console.log('Attempting to open carousel in 200ms...')
@@ -221,7 +221,7 @@ export function ExtractionView() {
   const handleExtractManually = async () => {
     const keysText = manualKeys.trim()
     if (!keysText || uploadedFileIds.length === 0) {
-      showNotification('Please enter at least one key to extract', 'error')
+      showNotification(t('enterKeyError'), 'error')
       return
     }
 
@@ -231,13 +231,13 @@ export function ExtractionView() {
       .filter((k) => k.length > 0)
 
     if (keyNames.length === 0) {
-      showNotification('Please enter at least one key to extract', 'error')
+      showNotification(t('enterKeyError'), 'error')
       return
     }
 
     setIsExtracting(true)
     setExtractionComplete(false)
-    showNotification('Extracting keys using AI...', 'info')
+    showNotification(t('extractingManualNotification'), 'info')
 
     try {
       const response = await fetch('/extract-keys', {
@@ -251,7 +251,7 @@ export function ExtractionView() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to extract keys')
+        throw new Error(errorData.detail || t('failedToExtract'))
       }
 
       const backendData: ExtractionResponse = await response.json()
@@ -268,7 +268,7 @@ export function ExtractionView() {
       console.log('Setting extractionComplete to true...')
       setExtractionComplete(true)
 
-      showNotification('Keys extracted successfully!', 'success')
+      showNotification(t('keysExtractedSuccess'), 'success')
 
       // Force carousel to open with multiple attempts
       console.log('Attempting to open carousel in 200ms...')
@@ -336,7 +336,7 @@ export function ExtractionView() {
     if (!currentData || currentData.length === 0) {
       console.error('❌ CANNOT OPEN CAROUSEL: No extraction results available')
       console.error('extractionResultsData is:', currentData)
-      showNotification('No extraction results available', 'error')
+      showNotification(t('noResultsAvailable'), 'error')
       return
     }
 
@@ -346,7 +346,7 @@ export function ExtractionView() {
     } catch (error) {
       console.error('ERROR OPENING CAROUSEL:', error)
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
-      showNotification('Error opening results viewer. Please try again.', 'error')
+      showNotification(t('errorOpeningCarousel'), 'error')
     }
   }
 
@@ -385,13 +385,13 @@ export function ExtractionView() {
               <Spinner className="size-16 text-[#59BDB9]" />
             </div>
             <h2 className="loading-overlay-title">
-              Extracting the Keys...
+              {t('extractingTitle')}
             </h2>
             <p className="loading-overlay-description">
-              The AI is extracting <strong>{templateKeys.length} keys</strong> from your PDF files
+              {t('theAIIsExtracting')} <strong>{templateKeys.length} {t('keys')}</strong> {t('fromYourPDFs')}
             </p>
             <p className="loading-overlay-timing">
-              This could take several minutes to complete depending on document complexity and size
+              {t('extractingTiming')}
             </p>
           </div>
         </div>
@@ -405,17 +405,17 @@ export function ExtractionView() {
               <Spinner className="size-16 text-[#59BDB9]" />
             </div>
             <h2 className="loading-overlay-title" style={{ transition: 'opacity 0.3s ease' }}>
-              {isDetectingProductType ? 'Detecting Product Type...' : 'Optimizing Key List...'}
+              {isDetectingProductType ? t('detectingProductTypeTitle') : t('optimizingKeyListTitle')}
             </h2>
             <p className="loading-overlay-description" style={{ transition: 'opacity 0.3s ease' }}>
               {isDetectingProductType ? (
-                <>The AI is analyzing your PDF files to determine the product type</>
+                <>{t('detectDesc1')}</>
               ) : (
-                <>Detecting core and winding counts to customize the template for your <strong>{selectedProductType}</strong></>
+                <>{t('detectDesc2Template').replace('{productType}', t(('product_type_' + (selectedProductType?.toLowerCase() || '')) as any))}</>
               )}
             </p>
             <p className="loading-overlay-timing">
-              This should take just a few moments
+              {t('detectTiming')}
             </p>
           </div>
         </div>
@@ -457,7 +457,7 @@ export function ExtractionView() {
                     {type === 'Kombiwandler' && <img src="/assets/combi-transformer.png" alt="Combi Transformer" style={{ height: '10em' }} />}
                   </div>
                   <div className="product-card-content">
-                    <h4 className="product-card-title">{type}</h4>
+                    <h4 className="product-card-title">{t(('product_type_' + type.toLowerCase()) as any)}</h4>
                     {isDetected && productTypeConfidence > 0 && (
                       <div className="confidence-bar-container">
                         <div className="confidence-bar-bg">
@@ -490,7 +490,7 @@ export function ExtractionView() {
 
                               <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
 
-                                Template: {selectedProductType}
+                                {t('templateLabel').replace('{productType}', t(('product_type_' + (selectedProductType?.toLowerCase() || '')) as any))}
 
                                 {(detectedCoreCount !== null || detectedWindingCount !== null) && (
 
@@ -502,7 +502,7 @@ export function ExtractionView() {
 
                                         <span className="detected-count-number core">{detectedCoreCount}</span>
 
-                                        <span className="detected-count-label">Kern{detectedCoreCount !== 1 ? 'e' : ''}</span>
+                                        <span className="detected-count-label">{detectedCoreCount !== 1 ? t('cores') : t('core')}</span>
 
                                       </div>
 
@@ -514,7 +514,7 @@ export function ExtractionView() {
 
                                         <span className="detected-count-number winding">{detectedWindingCount}</span>
 
-                                        <span className="detected-count-label">Wicklung{detectedWindingCount !== 1 ? 'en' : ''}</span>
+                                        <span className="detected-count-label">{detectedWindingCount !== 1 ? t('windings') : t('winding')}</span>
 
                                       </div>
 
@@ -528,7 +528,7 @@ export function ExtractionView() {
 
                               <p className="template-key-count-text">
 
-                                {templateKeys.length} keys will be extracted
+                                {t('keysWillBeExtracted').replace('{count}', String(templateKeys.length))}
 
                               </p>
 
@@ -604,7 +604,7 @@ export function ExtractionView() {
 
                                                     >
 
-                                                      View Results ({extractionResultsData.length} keys)
+                                                      {t('viewResultsWithCount').replace('{count}', String(extractionResultsData.length))}
 
                                                     </Button>
 

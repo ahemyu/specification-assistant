@@ -34,14 +34,14 @@
 .drop-zone:hover {
   border-color: var(--primary-color); /* Highlight border on hover */
   box-shadow: var(--box-shadow-lg); /* Enhanced shadow on hover */
-  transform: scale(1.02); /* Subtle zoom effect */
+  transform: scale(var(--scale-sm)); /* Subtle zoom effect */
 }
 
 .drop-zone.dragging {
     background: var(--primary-color-light); /* Lighter primary color when dragging */
     border-color: var(--primary-color);
     box-shadow: var(--box-shadow-xl);
-    transform: scale(1.01); /* Slightly more subtle scale */
+    transform: scale(var(--scale-sm)); /* Slightly more subtle scale */
 }
 
 .drop-zone-icon {
@@ -65,7 +65,7 @@
 
 .upload-btn {
     padding: 14px 48px;
-    background: var(--secondary-color);
+    background: var(--primary-color);
     color: var(--text-color-inverted);
     border: none;
     border-radius: 30px;
@@ -78,9 +78,22 @@
 }
 
 .upload-btn:hover:not(:disabled) {
-    background: var(--secondary-color);
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+    /* Shimmer Gradient */
+    background: linear-gradient(
+        120deg, 
+        var(--primary-color) 0%, 
+        var(--primary-color) 30%, 
+        var(--secondary-color) 42%,
+        var(--accent-color) 50%,
+        var(--secondary-color) 58%,   
+        var(--primary-color) 70%, 
+        var(--primary-color) 100%
+    );
+    background-size: 300% 100%;
+    animation: shimmer 3s infinite linear;
+    
+    transform: scale(var(--scale-md)) translateY(-3px);
+    box-shadow: var(--box-shadow-lg);
 }
 
 .upload-btn:disabled {
@@ -181,13 +194,14 @@
     border-radius: var(--border-radius-bigger);
     padding: 10px 20px;
     box-shadow: var(--box-shadow-sm);
-    transition: all 0.3s ease;
-    border: 1px solid var(--background-color);
+    transition: all 0.3s ease, border-color 0.3s ease;
+    border: 1px solid var(--border-color); /* Updated to use border-color variable */
 }
 
 .file-card:hover {
-    box-shadow: var(--box-shadow-md);
-    border-color: var(--secondary-color);
+    box-shadow: var(--box-shadow-2xl);
+    border-color: var(--primary-color);
+    transform: scale(var(--scale-sm)); /* Added scale effect for consistency */
 }
 
 .file-card-icon-container {
@@ -197,6 +211,22 @@
     justify-content: center;
     align-items: center;
     color: var(--primary-color);
+    /* Revert to simpler styling, remove fixed dimensions and overflow */
+}
+
+.file-card-icon-container svg {
+    fill: var(--primary-color); /* Default color */
+    transition: fill 0.3s ease; /* Transition fill property */
+    display: inline-block;
+}
+
+.file-card:hover .file-card-icon-container {
+    /* No background shimmer */
+}
+
+.file-card:hover .file-card-icon-container svg {
+    fill: url(#shimmer-grad); /* Apply shimmer to icon fill */
+    /* No scale transform */
 }
 
 .file-card-content {
@@ -250,7 +280,7 @@
     background: var(--background-color-lighter);
     color: var(--text-color);
     border-color: var(--border-color-light);
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
     box-shadow: var(--box-shadow-sm);
 }
 
@@ -360,5 +390,16 @@
 [data-theme='dark'] .drop-zone.dragging {
     background: rgba(74, 85, 104, 0.9);
     border-color: var(--primary-color-dark);
-    transform: scale(1.01);
+    transform: scale(var(--scale-sm));
+}
+
+[data-theme='dark'] .file-card {
+  background: rgba(45, 55, 72, 0.75); /* Match home.css card dark background */
+  border: 1px solid var(--border-color);
+  box-shadow: var(--box-shadow-xl);
+}
+
+[data-theme='dark'] .file-card:hover {
+  box-shadow: var(--box-shadow-2xl);
+  border-color: var(--primary-color);
 }

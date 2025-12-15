@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Button } from './ui';
 import type { ExtractionResult } from '../types';
 import '../styles/modules/ManualKeyInput.css';
+import { useTranslation } from '../core/i18n/LanguageContext';
 
 interface ManualKeyInputProps {
   onHide: () => void;
@@ -26,25 +27,26 @@ export function ManualKeyInput({
   extractionResultsData,
   onViewResults,
 }: ManualKeyInputProps) {
+  const { t } = useTranslation();
   const keyTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   return (
     <div className="manual-key-input-container">
       <div className="key-input-area">
         <div className="manual-input-header">
-          <h3>Enter Keys to Extract Manually</h3>
+          <h3>{t('manualInputHeader')}</h3>
           <button onClick={onHide} className="hide-manual-input-btn">
-            Hide
+            {t('hideButton')}
           </button>
         </div>
-        <p className="section-subtitle">Enter one key per line</p>
+        <p className="section-subtitle">{t('manualInputSubtitle')}</p>
 
         <div className="key-input-group">
           <textarea
             id="keyInput"
             ref={keyTextareaRef}
             rows={8}
-            placeholder="Enter key names, one per line..."
+            placeholder={t('manualInputPlaceholder')}
             value={manualKeys}
             onChange={(e) => onManualKeysChange(e.target.value)}
           />
@@ -56,14 +58,14 @@ export function ManualKeyInput({
           onClick={onExtract}
           disabled={uploadedFileIds.length === 0 || isExtracting}
           isLoading={isExtracting}
-          title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : ''}
+          title={uploadedFileIds.length === 0 ? t('pleaseUploadFirst') : ''}
         >
-          {isExtracting ? 'Extracting keys...' : 'Extract Keys'}
+          {isExtracting ? t('extractingKeysLoading') : t('extractKeysButton')}
         </Button>
 
         {uploadedFileIds.length === 0 && (
           <p className="upload-notice">
-            Please upload PDF files in the Upload tab first
+            {t('pleaseUploadFirstNotice')}
           </p>
         )}
 
@@ -72,10 +74,10 @@ export function ManualKeyInput({
             <div className="spinner" />
             <div>
               <div className="extraction-notice-title">
-                Extracting keys using AI...
+                {t('extractingKeysNoticeTitle')}
               </div>
               <div className="extraction-notice-subtitle">
-                This may take a few moments depending on the number of keys and pages
+                {t('extractingKeysNoticeSubtitle')}
               </div>
             </div>
           </div>
@@ -86,7 +88,7 @@ export function ManualKeyInput({
             onClick={onViewResults}
             className="view-results-btn-inline"
           >
-            View Results ({extractionResultsData.length} keys)
+            {t('viewResultsWithCount').replace('{count}', String(extractionResultsData.length))}
           </Button>
         )}
       </div>

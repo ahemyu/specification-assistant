@@ -88,7 +88,7 @@
 .control-btn:hover:not(:disabled) {
     background: var(--background-color-lighter);
     color: var(--text-color);
-    transform: scale(1.05);
+    transform: scale(var(--scale-md));
 }
 
 .control-btn:active:not(:disabled) {
