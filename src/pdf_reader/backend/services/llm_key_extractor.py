@@ -80,7 +80,7 @@ class LLMKeyExtractor:
     - gpt-4.1-mini: Chat, product type detection, core/winding count (speed-critical)
     """
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(self):
         """
         Initialize the LLM key extractor.
 
@@ -96,8 +96,10 @@ class LLMKeyExtractor:
         self.gpt41_mini_llm = _create_gpt41_mini_llm(temperature=0)
         self.product_type_llm = self.gpt41_mini_llm.with_structured_output(ProductTypeDetectionResult)
         self.core_winding_llm = self.gpt41_mini_llm.with_structured_output(CoreWindingCountResult)
+        self.qa_llm = _create_gpt41_mini_llm(temperature=0.3)
 
         logger.info("Initialized LLM key extractor (gpt-4.1 for extraction, gpt-4.1-mini for detection)")
+
 
     async def _extract_keys_batch(
         self,
@@ -105,8 +107,6 @@ class LLMKeyExtractor:
         pdf_data: list[dict],
     ) -> dict[str, KeyExtractionResult | None]:
         """Extract a batch of keys from the same PDF data in a single LLM call.
-
-        Always uses gpt-4.1 for accuracy.
         """
         logger.info("Extracting batch of %s keys from %s PDF(s) using gpt-4.1", len(key_names), len(pdf_data))
 
@@ -160,6 +160,7 @@ class LLMKeyExtractor:
             logger.error(f"Error extracting batch of keys {key_names} after {llm_call_time:.1f}s: {str(e)}")
             return {name: None for name in key_names}
 
+
     async def extract_keys(
         self,
         key_names: list[str],
@@ -168,8 +169,8 @@ class LLMKeyExtractor:
     ) -> dict[str, KeyExtractionResult | None]:
         """Extract multiple keys from the same PDF data using batched LLM calls.
 
-        Always uses gpt-4.1 for accuracy. Keys are grouped into batches to reduce
-        the number of requests. Uses single concurrent batch for gpt-4.1 rate limits.
+        Keys are grouped into batches to reduce
+        the number of requests.
 
         Args:
             key_names: List of key names to extract
@@ -224,7 +225,6 @@ class LLMKeyExtractor:
     ):
         """
         Answer a general question about the PDF documents with streaming response.
-        Chat always uses gpt-4.1-mini for speed and higher rate limits.
 
         Args:
             question: The user's question about the documents
@@ -240,9 +240,6 @@ class LLMKeyExtractor:
                                       message, None otherwise)
         """
         logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s) using gpt-4.1-mini")
-
-        # Use gpt-4.1-mini with slightly higher temperature for chat
-        qa_llm = _create_gpt41_mini_llm(temperature=0.3)
 
         # Check if we have a system message in conversation history
         has_system_message = (
@@ -286,7 +283,7 @@ class LLMKeyExtractor:
 
         try:
             first_chunk = True
-            async for chunk in qa_llm.astream(messages):
+            async for chunk in self.qa_llm.astream(messages):
                 content = chunk.content if hasattr(chunk, "content") else str(chunk)
                 if content:
                     # Yield system message only with the first chunk
@@ -303,8 +300,6 @@ class LLMKeyExtractor:
     async def detect_product_type(self, pdf_data: list[dict]) -> ProductTypeDetectionResult:
         """
         Detect the product type from PDF specifications.
-
-        Always uses gpt-4.1-mini for speed.
 
         Args:
             pdf_data: List of dictionaries containing PDF data from process_single_pdf()
@@ -329,8 +324,6 @@ class LLMKeyExtractor:
     async def detect_core_winding_count(self, pdf_data: list[dict], product_type: str) -> CoreWindingCountResult:
         """
         Detect the maximum number of cores and/or windings based on product type.
-
-        Always uses gpt-4.1-mini for speed.
 
         Args:
             pdf_data: List of dictionaries containing PDF data from process_single_pdf()
@@ -399,8 +392,6 @@ Return both max_core_number and max_winding_number."""
     ) -> PDFComparisonResult:
         """
         Compare two PDF versions and identify changes in specifications.
-
-        Always uses gpt-4.1 for accuracy.
 
         Args:
             base_pdf_data: Dictionary containing the base/old PDF data
