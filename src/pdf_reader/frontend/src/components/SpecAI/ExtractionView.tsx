@@ -9,6 +9,7 @@ import type { ExtractionResult } from '../../types'
 import { AllKeysModal } from '../AllKeysModal'
 import { ManualKeyInput } from '../ManualKeyInput'
 import { Spinner } from '@/components/ui/spinner'
+import { useTranslation } from '../../core/i18n/LanguageContext'
 
 // Backend extraction response format
 interface BackendExtractionResult {
@@ -81,6 +82,7 @@ export function ExtractionView() {
     setDetectedCoreCount,
     setDetectedWindingCount,
   } = useAppStore()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (detectedProductType && !selectedProductType) {
@@ -428,8 +430,8 @@ export function ExtractionView() {
       ) : (
         <div id="extractionSetupView">
           <div className="upload-header">
-            <h1>Extract Keys from PDFs</h1>
-            <p className="subtitle"> Select the product type to extract relevant specifications</p>
+            <h1>{t('extractHeader')}</h1>
+            <p className="subtitle">{t('extractSubtitle')}</p>
           </div>
 
           {/* Product Type Selection - Hidden when in manual mode */}
@@ -540,7 +542,7 @@ export function ExtractionView() {
 
                             >
 
-                              View All Keys
+                              {t('viewAllKeys')}
 
                             </button>
 
@@ -562,11 +564,11 @@ export function ExtractionView() {
 
                           isLoading={isExtracting}
 
-                          title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : isDetectingCounts ? 'Optimizing key list...' : ''}
+                          title={uploadedFileIds.length === 0 ? t('pleaseUploadFirst') : isDetectingCounts ? t('optimizingKeyListTitle') : ''}
 
                         >
 
-                          {isExtracting ? `Extracting ${templateKeys.length} keys...` : `Extract ${templateKeys.length} Keys`}
+                          {isExtracting ? `${t('extracting')} ${templateKeys.length} ${t('keys')}...` : `${t('extractBtn')} ${templateKeys.length} ${t('keys')}`}
 
                         </Button>
 
@@ -576,7 +578,7 @@ export function ExtractionView() {
 
                           <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em', textAlign: 'center' }}>
 
-                            Please upload PDF files in the Upload tab first
+                            {t('pleaseUploadFirst')}
 
                           </p>
 
@@ -636,7 +638,7 @@ export function ExtractionView() {
                   e.currentTarget.style.backgroundColor = 'transparent'
                 }}
               >
-                Or enter keys manually...
+                {t('manualInputToggle')}
               </button>
             </div>
           )}
