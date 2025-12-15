@@ -42,11 +42,12 @@ See `DOCKER.md` for configuration and details.
 2. Run `npm install` once inside `src/pdf_reader/frontend/`.
 3. Execute the startup script from the root:
    ```bash
-   ./start.sh
+   ./start.sh        # dev mode, port 8000 (default)
+   sudo ./start.sh prod   # prod mode, port 80 (requires root)
    ```
    - Starts the MySQL database container via Docker Compose.
    - Builds the frontend via `npm run build`.
-   - Loads `.env` (prompts for `OPENAI_API_KEY` if missing).
+   - Loads `.env` (prompts for `GPT41_API_KEY` and `GPT41_MINI_API_KEY` if missing).
    - Starts the FastAPI server with `uv run main.py`.
    - On shutdown (Ctrl+C), the script stops the MySQL container automatically.
 

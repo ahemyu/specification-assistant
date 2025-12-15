@@ -1,6 +1,17 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Usage: ./start.sh [dev|prod]
+#   dev  - runs on port 8000 (default)
+#   prod - runs on port 80 (requires root)
+
+MODE="${1:-dev}"
+if [ "$MODE" = "prod" ]; then
+  export APP_PORT=80
+else
+  export APP_PORT=8000
+fi
+
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRONTEND_DIR="${ROOT_DIR}/src/pdf_reader/frontend"
 BACKEND_DIR="${ROOT_DIR}/src/pdf_reader"
@@ -56,12 +67,18 @@ else
   echo ".env not found. You'll be prompted for required values."
 fi
 
-if [ -z "${OPENAI_API_KEY:-}" ]; then
-  read -r -s -p "Enter OPENAI_API_KEY: " OPENAI_API_KEY
+if [ -z "${GPT41_API_KEY:-}" ]; then
+  read -r -s -p "Enter GPT41_API_KEY: " GPT41_API_KEY
   echo
-  export OPENAI_API_KEY
+  export GPT41_API_KEY
 fi
 
-echo "Starting FastAPI server (uv run main.py)"
+if [ -z "${GPT41_MINI_API_KEY:-}" ]; then
+  read -r -s -p "Enter GPT41_MINI_API_KEY: " GPT41_MINI_API_KEY
+  echo
+  export GPT41_MINI_API_KEY
+fi
+
+echo "Starting FastAPI server on port ${APP_PORT} (uv run main.py)"
 cd "${BACKEND_DIR}"
 uv run main.py
