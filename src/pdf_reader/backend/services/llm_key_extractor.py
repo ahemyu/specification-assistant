@@ -1,10 +1,20 @@
-"""LLM-based key extraction service using LangChain and OpenAI."""
+"""LLM-based key extraction service using LangChain and Azure OpenAI."""
 
 import asyncio
 import logging
 import time
 
-from backend.config import DEFAULT_BATCH_SIZE, MAX_CONCURRENT_BATCHES, OPENAI_BASE_URL
+from backend.config import (
+    AZURE_OPENAI_API_VERSION,
+    DEFAULT_BATCH_SIZE,
+    GPT41_API_KEY,
+    GPT41_DEPLOYMENT,
+    GPT41_ENDPOINT,
+    GPT41_MINI_API_KEY,
+    GPT41_MINI_DEPLOYMENT,
+    GPT41_MINI_ENDPOINT,
+    MAX_CONCURRENT_BATCHES_GPT41,
+)
 from backend.schemas.domain import (
     CoreWindingCountResult,
     KeyExtractionResult,
@@ -21,9 +31,31 @@ from backend.services.llm_prompts import (
     QA_SYSTEM_PROMPT,
 )
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_openai import ChatOpenAI
+from langchain_openai import AzureChatOpenAI
 
 logger = logging.getLogger(__name__)
+
+
+def _create_gpt41_llm(temperature: float = 0) -> AzureChatOpenAI:
+    """Create an AzureChatOpenAI instance for gpt-4.1."""
+    return AzureChatOpenAI(
+        azure_deployment=GPT41_DEPLOYMENT,
+        api_key=GPT41_API_KEY,
+        azure_endpoint=GPT41_ENDPOINT,
+        api_version=AZURE_OPENAI_API_VERSION,
+        temperature=temperature,
+    )
+
+
+def _create_gpt41_mini_llm(temperature: float = 0) -> AzureChatOpenAI:
+    """Create an AzureChatOpenAI instance for gpt-4.1-mini."""
+    return AzureChatOpenAI(
+        azure_deployment=GPT41_MINI_DEPLOYMENT,
+        api_key=GPT41_MINI_API_KEY,
+        azure_endpoint=GPT41_MINI_ENDPOINT,
+        api_version=AZURE_OPENAI_API_VERSION,
+        temperature=temperature,
+    )
 
 
 def _build_pdf_context(pdf_data: list[dict]) -> str:
@@ -41,33 +73,33 @@ def _build_pdf_context(pdf_data: list[dict]) -> str:
 
 
 class LLMKeyExtractor:
-    """Service class for extracting specific keys from PDF text using LLM."""
+    """Service class for extracting specific keys from PDF text using LLM.
 
-    def __init__(self, api_key: str, model_name: str = "gpt-4.1"):
+    Model usage:
+    - gpt-4.1: Key extraction, PDF comparison (accuracy-critical)
+    - gpt-4.1-mini: Chat, product type detection, core/winding count (speed-critical)
+    """
+
+    def __init__(self):
         """
         Initialize the LLM key extractor.
 
         Args:
-            api_key: Azure OpenAI API key
-            model_name: Name of the OpenAI model to use for key extraction (default: gpt-4.1)
+            api_key: Deprecated, kept for backward compatibility.
         """
-        self.llm = ChatOpenAI(
-            model=model_name,
-            api_key=api_key,
-            base_url=OPENAI_BASE_URL,
-            temperature=0,  # Use deterministic output for extraction tasks
-        )
-        # Store API credentials for creating Q&A LLM instances with different models
-        self.api_key = api_key
-        self.base_url = OPENAI_BASE_URL
+        # Pre-initialize LLMs for gpt-4.1 (extraction/comparison)
+        self.gpt41_llm = _create_gpt41_llm(temperature=0)
+        self.multi_structured_llm = self.gpt41_llm.with_structured_output(MultiKeyExtractionResult)
+        self.comparison_llm = self.gpt41_llm.with_structured_output(PDFComparisonResult)
 
-        # Pre-initialize structured output LLMs for different result types
-        self.multi_structured_llm = self.llm.with_structured_output(MultiKeyExtractionResult)
-        self.product_type_llm = self.llm.with_structured_output(ProductTypeDetectionResult)
-        self.core_winding_llm = self.llm.with_structured_output(CoreWindingCountResult)
-        self.comparison_llm = self.llm.with_structured_output(PDFComparisonResult)
+        # Pre-initialize LLMs for gpt-4.1-mini (detection/chat)
+        self.gpt41_mini_llm = _create_gpt41_mini_llm(temperature=0)
+        self.product_type_llm = self.gpt41_mini_llm.with_structured_output(ProductTypeDetectionResult)
+        self.core_winding_llm = self.gpt41_mini_llm.with_structured_output(CoreWindingCountResult)
+        self.qa_llm = _create_gpt41_mini_llm(temperature=0.3)
 
-        logger.info(f"Initialized LLM key extractor with model: {model_name}")
+        logger.info("Initialized LLM key extractor (gpt-4.1 for extraction, gpt-4.1-mini for detection)")
+
 
     async def _extract_keys_batch(
         self,
@@ -75,12 +107,8 @@ class LLMKeyExtractor:
         pdf_data: list[dict],
     ) -> dict[str, KeyExtractionResult | None]:
         """Extract a batch of keys from the same PDF data in a single LLM call.
-
-        This method is internal and focuses on token/request efficiency. It returns a
-        mapping from each key name in the batch to its extraction result (or None if
-        extraction failed or the key could not be determined).
         """
-        logger.info("Extracting batch of %s keys from %s PDF(s)", len(key_names), len(pdf_data))
+        logger.info("Extracting batch of %s keys from %s PDF(s) using gpt-4.1", len(key_names), len(pdf_data))
 
         full_context = _build_pdf_context(pdf_data)
 
@@ -132,29 +160,34 @@ class LLMKeyExtractor:
             logger.error(f"Error extracting batch of keys {key_names} after {llm_call_time:.1f}s: {str(e)}")
             return {name: None for name in key_names}
 
+
     async def extract_keys(
         self,
         key_names: list[str],
         pdf_data: list[dict],
         batch_size: int = DEFAULT_BATCH_SIZE,
-        max_concurrent_batches: int = MAX_CONCURRENT_BATCHES,
     ) -> dict[str, KeyExtractionResult | None]:
         """Extract multiple keys from the same PDF data using batched LLM calls.
 
-        Keys are grouped into batches to reduce the number of requests and repeated
-        context tokens. Batches are executed with bounded concurrency to respect
-        rate limits while keeping latency reasonable.
+        Keys are grouped into batches to reduce
+        the number of requests.
+
+        Args:
+            key_names: List of key names to extract
+            pdf_data: List of PDF data dictionaries
+            batch_size: Number of keys per batch
         """
         if not key_names:
             return {}
 
+        max_concurrent = MAX_CONCURRENT_BATCHES_GPT41
         start_time = time.time()
 
         logger.info(
-            "Starting batched extraction of %s keys (batch_size=%s, max_concurrent_batches=%s)",
+            "Starting batched extraction of %s keys (batch_size=%s, max_concurrent=%s, model=gpt-4.1)",
             len(key_names),
             batch_size,
-            max_concurrent_batches,
+            max_concurrent,
         )
 
         # Split keys into batches
@@ -162,7 +195,7 @@ class LLMKeyExtractor:
 
         logger.info(f"Split {len(key_names)} keys into {len(batches)} batches")
 
-        semaphore = asyncio.Semaphore(max_concurrent_batches)
+        semaphore = asyncio.Semaphore(max_concurrent)
 
         async def run_batch(batch_index: int, batch: list[str]) -> dict[str, KeyExtractionResult | None]:
             async with semaphore:
@@ -189,7 +222,6 @@ class LLMKeyExtractor:
         question: str,
         pdf_data: list[dict],
         conversation_history: list[dict[str, str]] | None = None,
-        model_name: str | None = None,
     ):
         """
         Answer a general question about the PDF documents with streaming response.
@@ -200,7 +232,6 @@ class LLMKeyExtractor:
                       Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
             conversation_history: Optional list of previous messages in format
                                   [{"role": "system"|"user"|"assistant", "content": str}]
-            model_name: Optional model name (defaults to gpt-4.1)
 
         Yields:
             Tuples of (chunk_content, system_message_content)
@@ -208,12 +239,7 @@ class LLMKeyExtractor:
             - system_message_content: The system message content (only on first chunk for first
                                       message, None otherwise)
         """
-        logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s)")
-
-        # Create Q&A LLM instance with the specified model
-        selected_model = model_name or "gpt-4.1"
-        qa_llm = ChatOpenAI(model=selected_model, api_key=self.api_key, base_url=self.base_url, temperature=0.3)
-        logger.info(f"Using model: {selected_model}")
+        logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s) using gpt-4.1-mini")
 
         # Check if we have a system message in conversation history
         has_system_message = (
@@ -257,7 +283,7 @@ class LLMKeyExtractor:
 
         try:
             first_chunk = True
-            async for chunk in qa_llm.astream(messages):
+            async for chunk in self.qa_llm.astream(messages):
                 content = chunk.content if hasattr(chunk, "content") else str(chunk)
                 if content:
                     # Yield system message only with the first chunk
@@ -282,7 +308,7 @@ class LLMKeyExtractor:
         Returns:
             ProductTypeDetectionResult with detected type, confidence, and evidence
         """
-        logger.info(f"Detecting product type from {len(pdf_data)} PDF(s)")
+        logger.info(f"Detecting product type from {len(pdf_data)} PDF(s) using gpt-4.1-mini")
 
         full_context = _build_pdf_context(pdf_data)
         prompt = PRODUCT_TYPE_DETECTION_PROMPT.format(full_context=full_context)
@@ -306,7 +332,7 @@ class LLMKeyExtractor:
         Returns:
             CoreWindingCountResult with max core and winding numbers
         """
-        logger.info(f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s)")
+        logger.info(f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s) using gpt-4.1-mini")
 
         full_context = _build_pdf_context(pdf_data)
 
@@ -376,7 +402,7 @@ Return both max_core_number and max_winding_number."""
         Returns:
             PDFComparisonResult with summary and list of changes
         """
-        logger.info(f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}'")
+        logger.info(f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}' using gpt-4.1")
 
         base_context = _build_pdf_context([base_pdf_data])
         new_context = _build_pdf_context([new_pdf_data])
