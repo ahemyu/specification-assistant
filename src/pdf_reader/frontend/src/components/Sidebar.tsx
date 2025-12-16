@@ -14,6 +14,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const activeView = useAppStore((state) => state.activeView);
   const setActiveView = useAppStore((state) => state.setActiveView);
   const uploadedFileIds = useAppStore((state) => state.uploadedFileIds);
+  const extractionResultsData = useAppStore((state) => state.extractionResultsData);
   const activeSubMenuItem = useAppStore((state) => state.activeSubMenuItem);
   const setActiveSubMenuItem = useAppStore((state) => state.setActiveSubMenuItem);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
@@ -110,13 +111,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   <span className="icon"><FaKey /></span>
                   <span>{t('extractKeysTitle')}</span>
                 </li>
-                <li
-                  className={`menu-item ${activeSubMenuItem === "summary" ? "active" : ""}`}
-                  onClick={() => handleSubMenuClick("summary")}
-                >
-                  <span className="icon"><FaListAlt /></span>
-                  <span>{t('summaryTitle')}</span>
-                </li>
+                {extractionResultsData && extractionResultsData.length > 0 && (
+                  <li
+                    className={`menu-item ${activeSubMenuItem === "summary" ? "active" : ""}`}
+                    onClick={() => handleSubMenuClick("summary")}
+                  >
+                    <span className="icon"><FaListAlt /></span>
+                    <span>{t('summaryTitle')}</span>
+                  </li>
+                )}
               </>
             )}
           </ul>

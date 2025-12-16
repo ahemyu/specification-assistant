@@ -101,12 +101,16 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: var(--box-shadow-md);
+    max-height: calc(100vh - 300px); /* Limit height to prevent overflow */
+    overflow-y: auto; /* Add vertical scrolling when needed */
+    overflow-x: auto; /* Add horizontal scrolling when needed */
 }
 
 /* Summary Table */
 .summary-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: auto; /* Allow table to adjust to content */
 }
 
 .summary-table thead {
@@ -147,31 +151,21 @@
     font-weight: 600;
     color: var(--text-color);
     font-size: 0.95em;
-    min-width: 150px;
+    width: 20%; /* Fixed percentage width */
+    min-width: 120px; /* Minimum width */
+    max-width: 200px; /* Maximum width */
+    word-wrap: break-word; /* Allow text to wrap */
+    white-space: normal; /* Allow text wrapping */
 }
 
 .value-cell {
     color: var(--text-color-light);
     font-size: 0.95em;
-    max-width: 400px;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-
-.value-cell::-webkit-scrollbar {
-    height: 6px;
-}
-
-.value-cell::-webkit-scrollbar-track {
-    background: var(--background-color-lighter);
-}
-
-.value-cell::-webkit-scrollbar-thumb {
-    background: var(--border-color-light);
-}
-
-.value-cell::-webkit-scrollbar-thumb:hover {
-    background: var(--text-color-lighter);
+    width: 35%; /* Fixed percentage width */
+    min-width: 200px; /* Minimum width */
+    max-width: 400px; /* Maximum width */
+    word-wrap: break-word; /* Allow text to wrap */
+    white-space: normal; /* Allow text wrapping */
 }
 
 .value-cell.value-not-found {
@@ -180,18 +174,24 @@
 }
 
 .status-cell {
-    min-width: 120px;
+    width: 15%; /* Fixed percentage width */
+    min-width: 100px;
+    max-width: 150px;
 }
 
 .source-cell {
     color: var(--text-color-lighter);
     font-size: 0.85em;
-    min-width: 150px;
+    width: 15%; /* Fixed percentage width */
+    min-width: 100px;
+    max-width: 150px;
 }
 
 .actions-cell {
     text-align: right;
-    min-width: 100px;
+    width: 15%; /* Fixed percentage width */
+    min-width: 80px;
+    max-width: 120px;
     vertical-align: middle;
 }
 
