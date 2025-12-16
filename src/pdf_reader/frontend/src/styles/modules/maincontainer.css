@@ -22,6 +22,7 @@
 .main-content main {
   flex: 1; /* fill remaining vertical space */
   padding: 1.5rem;
+  padding-bottom: 4rem; /* Increased bottom padding to accommodate Copilot button */
   border-radius: 8px;
   overflow-y: auto;
 }
@@ -38,8 +39,8 @@
 
 .copilot-button-container {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  bottom: 30px; /* Increased from 20px to 30px for better clearance */
+  right: 25px; /* Increased from 20px to 25px for better spacing */
   z-index: 999;
 }
 
@@ -67,6 +68,8 @@
   overflow-y: auto;
   height: 100%;
   padding: 2rem;
+  padding-bottom: 5rem; /* Extra padding to prevent content from being hidden behind Copilot button */
+  margin-bottom: -2rem; /* Compensate for the extra padding to maintain layout */
 }
 
 .product-cards-wrapper {
