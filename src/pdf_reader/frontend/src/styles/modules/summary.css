@@ -144,6 +144,7 @@
 .summary-table td {
     padding: 20px;
     vertical-align: middle;
+    text-align: left; /* Default left alignment for most cells */
 }
 
 /* Table Cell Styles */
@@ -161,9 +162,9 @@
 .value-cell {
     color: var(--text-color-light);
     font-size: 0.95em;
-    width: 35%; /* Fixed percentage width */
+    width: 40%; /* Increased width to fill space from removed source column */
     min-width: 200px; /* Minimum width */
-    max-width: 400px; /* Maximum width */
+    max-width: 450px; /* Increased maximum width */
     word-wrap: break-word; /* Allow text to wrap */
     white-space: normal; /* Allow text wrapping */
 }
@@ -174,24 +175,16 @@
 }
 
 .status-cell {
-    width: 15%; /* Fixed percentage width */
-    min-width: 100px;
-    max-width: 150px;
-}
-
-.source-cell {
-    color: var(--text-color-lighter);
-    font-size: 0.85em;
-    width: 15%; /* Fixed percentage width */
-    min-width: 100px;
-    max-width: 150px;
+    width: 20%; /* Increased width to fill space from removed source column */
+    min-width: 120px;
+    max-width: 180px;
 }
 
 .actions-cell {
-    text-align: right;
-    width: 15%; /* Fixed percentage width */
-    min-width: 80px;
-    max-width: 120px;
+    text-align: center; /* Center the content horizontally */
+    width: 20%; /* Increased width to fill space from removed source column */
+    min-width: 100px;
+    max-width: 150px;
     vertical-align: middle;
 }
 
@@ -244,6 +237,7 @@
     box-shadow: var(--box-shadow-sm);
     display: inline-block;
     vertical-align: middle;
+    margin: 0 auto; /* Center the button horizontally within the cell */
 }
 
 .review-btn:hover {
