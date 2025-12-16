@@ -26,6 +26,7 @@ export function UploadView() {
   const {
     uploadedFileIds,
     allUploadedFiles,
+    extractionResultsData,
     setUploadedFileIds,
     setProcessedFiles,
     setAllUploadedFiles,
@@ -140,15 +141,16 @@ export function UploadView() {
       setActiveView('spec_ai');
       setActiveSubMenuItem('extract');
 
-      // Detect product type from uploaded PDFs in background
-      setIsDetectingProductType(true)
-      fetch('/detect-product-type', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_ids: newFileIds,
-        }),
-      })
+      // Detect product type from uploaded PDFs in background (only if no existing extraction results)
+      if (!extractionResultsData || extractionResultsData.length === 0) {
+        setIsDetectingProductType(true)
+        fetch('/detect-product-type', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_ids: newFileIds,
+          }),
+        })
         .then(async (detectionResponse) => {
           if (detectionResponse.ok) {
             const detectionData = await detectionResponse.json()
@@ -166,6 +168,10 @@ export function UploadView() {
         .finally(() => {
           setIsDetectingProductType(false)
         })
+      } else {
+        // Skip product type detection since extraction results already exist
+        console.log('Skipping product type detection - extraction results already exist')
+      }
     } catch (error) {
       showNotification(
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,

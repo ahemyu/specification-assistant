@@ -96,16 +96,18 @@ export function ExtractionView() {
     if (selectedProductType && uploadedFileIds.length > 0) {
       const baseKeys = getKeysForProductType(selectedProductType)
 
-      // Detect core/winding counts to optimize key list
-      setIsDetectingCounts(true)
-      fetch('/detect-core-winding-count', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_ids: uploadedFileIds,
-          product_type: selectedProductType,
-        }),
-      })
+      // Only detect core/winding counts if no extraction results exist
+      if (!extractionResultsData || extractionResultsData.length === 0) {
+        // Detect core/winding counts to optimize key list
+        setIsDetectingCounts(true)
+        fetch('/detect-core-winding-count', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_ids: uploadedFileIds,
+            product_type: selectedProductType,
+          }),
+        })
         .then(async (response) => {
           if (response.ok) {
             const data = await response.json()
@@ -138,6 +140,12 @@ export function ExtractionView() {
         .finally(() => {
           setIsDetectingCounts(false)
         })
+      } else {
+        // Skip count detection since extraction results already exist
+        console.log('Skipping core/winding count detection - extraction results already exist')
+        // Use all keys since we're not optimizing
+        setTemplateKeys(baseKeys)
+      }
     } else if (selectedProductType) {
       // No PDFs uploaded yet, just load base template
       const keys = getKeysForProductType(selectedProductType)
