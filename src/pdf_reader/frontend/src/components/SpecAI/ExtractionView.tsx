@@ -81,6 +81,7 @@ export function ExtractionView() {
     setTemplateKeys,
     setDetectedCoreCount,
     setDetectedWindingCount,
+    setActiveSubMenuItem,
   } = useAppStore()
   const { t } = useTranslation()
 
@@ -358,11 +359,13 @@ export function ExtractionView() {
     setIsCarouselOpen(false)
     setShowSummary(true)
     setCurrentExtractionState('summary')
+    setActiveSubMenuItem('summary')
   }
 
   const handleReviewKey = () => {
     // Reopen carousel for reviewing
     setShowSummary(false)
+    setActiveSubMenuItem('extract')
     openCarousel()
   }
 
@@ -373,6 +376,7 @@ export function ExtractionView() {
     setShowDevInput(false)
     setExtractionComplete(false)
     setCurrentExtractionState('setup')
+    setActiveSubMenuItem('upload')
   }
 
   return (
