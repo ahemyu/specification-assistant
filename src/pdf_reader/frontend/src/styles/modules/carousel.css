@@ -8,9 +8,9 @@
     max-width: 1800px;
     height: 90vh;
     background: var(--background-color);
-    border-radius: 20px; /* Matches Chat UI */
+    border-radius: var(--border-radius-bigger); /* Matches Chat UI */
     overflow: hidden;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.07); /* Matches Chat UI */
+    box-shadow: var(--box-shadow-md); /* Matches Chat UI */
     margin: 0 auto;
     border: 1px solid var(--border-color); /* Matches Chat UI */
 }
@@ -73,7 +73,6 @@
     padding: 2px 10px; /* Reduced padding */
     background: transparent; /* Transparent background */
     color: var(--text-color-light);
-    border-radius: 10px; /* Reduced border-radius */
     font-weight: 500; /* Lighter font weight */
     font-size: 0.85rem; /* Reduced font size */
     border: none; /* No border */
@@ -99,9 +98,9 @@
     display: flex;
     flex-direction: column;
     background: var(--background-color);
-    border-radius: 16px;
+    border-radius: var(--border-radius-standard);
     border: 1px solid var(--border-color);
-    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    box-shadow: var(--box-shadow-sm);
 }
 
 .carousel-card {
@@ -114,7 +113,7 @@
     flex-direction: column;
 }
 
-/* Navigation Buttons - Chat Style */
+/* Navigation Buttons */
 .carousel-nav-btn {
     width: 40px;
     height: 40px;
@@ -128,15 +127,13 @@
     justify-content: center;
     transition: all 0.2s ease;
     flex-shrink: 0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    box-shadow: var(--box-shadow-sm);
 }
 
 .carousel-nav-btn:hover:not(:disabled) {
-    background: var(--primary-color);
-    color: var(--text-color-inverted);
-    border-color: var(--primary-color);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--background-color-lighter);
+    color: var(--text-color);
+    transform: scale(var(--scale-lg));
 }
 
 .carousel-nav-btn:active:not(:disabled) {
@@ -228,8 +225,8 @@
 
 .completion-download-btn:hover,
 .completion-view-summary-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    transform: scale(var(--scale-md));
+    box-shadow: var(--box-shadow-lg);
 }
 
 /* Custom scrollbar for carousel card */
@@ -256,6 +253,10 @@
     border-radius: 0;
 }
 
+.carousel-card .extraction-result-item:hover {
+    transform: none; /* Remove hover zoom for carousel items */
+}
+
 .carousel-card .key-header {
     border-bottom: 1px solid var(--border-color-light);
     padding-bottom: 12px;
@@ -280,7 +281,7 @@
     min-height: 80px; /* Ensure description is always visible */
     padding: 12px 16px;
     margin-bottom: 16px; /* Spacing below description */
-    border-radius: 12px; /* Smoother corners */
+    border-radius: var(--border-radius-standard); /* Smoother corners */
     background: var(--background-color-light); /* Consistent background */
     flex: none; /* Do not let it grow/shrink */
     overflow-y: auto; /* Allow scrolling if content is too long */
@@ -289,14 +290,13 @@
 .carousel-card .source-locations {
     padding: 12px 16px;
     border-left: none; /* Removed the blue line */
-    border-radius: 8px; /* Consistent with other elements */
+    border-radius: var(--border-radius-standard); /* Consistent with other elements */
     background: var(--background-color-light);
     flex-shrink: 0;
 }
 
 .carousel-card .reference-buttons {
     margin-top: 8px; /* Reduced margin */
-    border-radius: 20px;
 }
 
 /* Responsive Design */
@@ -319,11 +319,46 @@
     font-size: 0.9em;
 }
 
+/* Modernize internal buttons */
 .carousel-card .accept-btn,
 .carousel-card .edit-value-btn {
-    border-radius: 20px; /* Bigger border-radius */
+    border-radius: 30px;
+    padding: 10px 20px;
+    font-weight: 600;
+    box-shadow: none;
+    border: 1px solid transparent;
+}
+
+.carousel-card .accept-btn {
+    background: var(--secondary-color);
+    color: var(--text-color-inverted);
+}
+
+.carousel-card .edit-value-btn {
+    background: var(--background-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
 }
 
 .carousel-card .reference-btn {
-    border-radius: 20px;
+    border-radius: var(--border-radius-standard);
+    border: 1px solid var(--border-color-light);
+    background: var(--background-color);
+    color: var(--text-color-light);
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.carousel-card .reference-btn:hover {
+    background: var(--background-color-light);
+    border-color: var(--border-color);
+    color: var(--text-color);
+    transform: scale(var(--scale-sm));
+}
+
+.carousel-card .reference-btn.active {
+    background: var(--secondary-color);
+    color: var(--text-color-inverted);
+    border-color: var(--secondary-color);
 }

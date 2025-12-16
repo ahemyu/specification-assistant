@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 import { useAppStore } from '../../store/useAppStore'
-import type { ExtractionResult } from '../../types'
+import { useTranslation } from '../../core/i18n/LanguageContext'
 
 interface SummaryViewProps {
   onReviewKey: (keyName: string) => void
@@ -8,6 +8,7 @@ interface SummaryViewProps {
 }
 
 export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewProps) {
+  const { t } = useTranslation()
   const { extractionResultsData, reviewedKeys, extractionResultsBackendFormat } = useAppStore()
 
   const results = extractionResultsData || []
@@ -67,21 +68,6 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
     }
   }, [getReviewedResults])
 
-  // Get source summary for display
-  const getSourceSummary = (result: ExtractionResult) => {
-    const locations = result.references || []
-    if (locations.length === 0) {
-      return 'No source'
-    }
-
-    if (locations.length === 1) {
-      const loc = locations[0]
-      return `${loc.file_id} p${loc.page_number}`
-    }
-
-    return `${locations.length} sources`
-  }
-
   // Sort results by key name
   const sortedResults = [...results].sort((a, b) => a.key.localeCompare(b.key))
 
@@ -90,18 +76,19 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
       {/* Header */}
       <div className="summary-header">
         <div className="summary-title-group">
-          <h2>Extraction Summary</h2>
+          <h2>{t('extractionSummaryTitle')}</h2>
           <p className="summary-subtitle">
-            Successfully extracted <span>{keyCount}</span> key{keyCount !== 1 ? 's' : ''} from your
-            documents
+            {t('extractionSummarySubtitle')
+              .replace('{count}', keyCount.toString())
+              .replace('{countPlural}', keyCount !== 1 ? 's' : '')}
           </p>
         </div>
         <div className="summary-actions">
           <button className="btn-secondary" onClick={onStartNewExtraction}>
-            Start New Extraction
+            {t('startNewExtraction')}
           </button>
           <button className="btn-primary" onClick={handleDownload}>
-            Download Results
+            {t('downloadResults')}
           </button>
         </div>
       </div>
@@ -111,11 +98,10 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
         <table className="summary-table">
           <thead>
             <tr>
-              <th>Key Name</th>
-              <th>Extracted Value</th>
-              <th>Status</th>
-              <th>Source</th>
-              <th>Actions</th>
+              <th>{t('keyNameHeader')}</th>
+              <th>{t('extractedValueHeader')}</th>
+              <th>{t('statusHeader')}</th>
+              <th>{t('actionsHeader')}</th>
             </tr>
           </thead>
           <tbody>
@@ -124,25 +110,23 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
               const reviewState = reviewedKeys[keyName]
               const value = reviewState?.value || result.value || 'Not found'
               const status = reviewState?.status || 'pending'
-              const sourceSummary = getSourceSummary(result)
 
               return (
                 <tr key={keyName} className="summary-row">
                   <td className="key-name-cell">{keyName}</td>
-                  <td className={`value-cell ${!value || value === 'Not found' ? 'value-not-found' : ''}`}>
+                  <td className={`value-cell ${!value || value === t('notFoundValue') ? 'value-not-found' : ''}`}>
                     {value}
                   </td>
                   <td className="status-cell">
                     <StatusBadge status={status} />
                   </td>
-                  <td className="source-cell">{sourceSummary}</td>
                   <td className="actions-cell">
                     <button
                       className="review-btn"
                       onClick={() => onReviewKey(keyName)}
-                      title="Review this key in detail"
+                      title={t('reviewButton')}
                     >
-                      Review
+                      {t('reviewButton')}
                     </button>
                   </td>
                 </tr>
@@ -160,6 +144,7 @@ interface StatusBadgeProps {
 }
 
 function StatusBadge({ status }: StatusBadgeProps) {
+  const { t } = useTranslation()
   return (
     <span className={`status-badge status-${status}`}>
       {status === 'accepted' && (
@@ -173,7 +158,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
               strokeLinejoin="round"
             />
           </svg>{' '}
-          Accepted
+          {t('acceptedStatus')}
         </>
       )}
       {status === 'edited' && (
@@ -187,7 +172,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
               strokeLinejoin="round"
             />
           </svg>{' '}
-          Edited
+          {t('editedStatus')}
         </>
       )}
       {status === 'pending' && (
@@ -195,7 +180,7 @@ function StatusBadge({ status }: StatusBadgeProps) {
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.5" />
           </svg>{' '}
-          Pending
+          {t('pendingStatus')}
         </>
       )}
     </span>

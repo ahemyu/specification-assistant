@@ -3,15 +3,18 @@ import { IoHome, IoChevronForward, IoSunny } from "react-icons/io5";
 import { useAppStore } from "../store/useAppStore";
 import { useState, useEffect } from "react";
 import './../styles/modules/theme-toggle.css';
+import { useTranslation } from "../core/i18n/LanguageContext";
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
+  const { t } = useTranslation();
   const activeView = useAppStore((state) => state.activeView);
   const setActiveView = useAppStore((state) => state.setActiveView);
   const uploadedFileIds = useAppStore((state) => state.uploadedFileIds);
+  const extractionResultsData = useAppStore((state) => state.extractionResultsData);
   const activeSubMenuItem = useAppStore((state) => state.activeSubMenuItem);
   const setActiveSubMenuItem = useAppStore((state) => state.setActiveSubMenuItem);
   const isAuthenticated = useAppStore((state) => state.isAuthenticated);
@@ -65,8 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   return (
     <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <header className="sidebar-header">
-        <img src={theme === 'dark' ? "/assets/trench-logo-dark.png" : "/assets/trench-logo.png"} alt="Trench Hub Logo" className="sidebar-logo" style={{ width: '200px', marginBottom: '20px' }} />
-        <h2 className="sidebar-title">Trench Hub</h2>
+        <img src={theme === 'dark' ? "/assets/trench-logo-dark.png" : "/assets/trench-logo.png"} alt="Trench Hub Logo" className="sidebar-logo" style={{ width: '200px' }} />
       </header>
 
       <ul className="sidebar-menu">
@@ -76,17 +78,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           onClick={() => handleMainViewClick("home")}
         >
           <span className="icon"><IoHome /></span>
-          <span>Home</span>
+          <span>{t('homeTitle')}</span>
         </li>
 
         {/* Tools Section */}
-        <h3 className="subsection-title">Tools</h3>
+        <h3 className="subsection-title">{t('toolsTitle')}</h3>
         <li
           className={`menu-item ${isSpecAIExpanded ? "active" : ""} ${!isSpecAIExpanded ? 'spec-assistant-collapsed' : ''}`}
           onClick={handleSpecAIClick}
         >
           <span className="icon"><FaFileAlt /></span>
-          <span>SpecAI</span>
+          <span>{t('specAITitle')}</span>
           <span className={`dropdown-icon ${isSpecAIExpanded ? "expanded" : ""}`}>
             <IoChevronForward />
           </span>
@@ -98,7 +100,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               onClick={() => handleSubMenuClick("upload")}
             >
               <span className="icon"><FaUpload /></span>
-              <span>Upload PDFs</span>
+              <span>{t('uploadPDFsTitle')}</span>
             </li>
             {hasUploadedFiles && (
               <>
@@ -107,15 +109,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
                   onClick={() => handleSubMenuClick("extract")}
                 >
                   <span className="icon"><FaKey /></span>
-                  <span>Extract Keys</span>
+                  <span>{t('extractKeysTitle')}</span>
                 </li>
-                <li
-                  className={`menu-item ${activeSubMenuItem === "summary" ? "active" : ""}`}
-                  onClick={() => handleSubMenuClick("summary")}
-                >
-                  <span className="icon"><FaListAlt /></span>
-                  <span>Summary</span>
-                </li>
+                {extractionResultsData && extractionResultsData.length > 0 && (
+                  <li
+                    className={`menu-item ${activeSubMenuItem === "summary" ? "active" : ""}`}
+                    onClick={() => handleSubMenuClick("summary")}
+                  >
+                    <span className="icon"><FaListAlt /></span>
+                    <span>{t('summaryTitle')}</span>
+                  </li>
+                )}
               </>
             )}
           </ul>
@@ -125,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           onClick={() => handleMainViewClick("compare")}
         >
           <span className="icon"><FaBalanceScale /></span>
-          <span>Doc Compare</span>
+          <span>{t('compareTitle')}</span>
         </li>
       </ul>
 
@@ -133,25 +137,25 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
       <ul className="sidebar-bottom">
         <li className="menu-item">
           <span className="icon"><FaUser /></span>
-          <span>Konto</span>
+          <span>{t('accountTitle')}</span>
         </li>
         <li className="menu-item">
           <span className="icon"><FaCog /></span>
-          <span>Einstellungen</span>
+          <span>{t('settingsTitle')}</span>
         </li>
         <li className="menu-item theme-toggle-container" onClick={toggleTheme}>
           <span className="icon">{theme === 'light' ? <FaMoon /> : <IoSunny />}</span>
-          <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+          <span>{theme === 'light' ? t('darkMode') : t('lightMode')}</span>
         </li>
         {isAuthenticated ? (
           <li className="menu-item" onClick={handleLogoutClick}>
             <span className="icon"><FaSignOutAlt /></span>
-            <span>Abmelden</span>
+            <span>{t('logoutTitle')}</span>
           </li>
         ) : (
           <li className="menu-item" onClick={handleLoginClick}>
             <span className="icon"><FaSignInAlt /></span>
-            <span>Anmelden</span>
+            <span>{t('loginTitle')}</span>
           </li>
         )}
       </ul>

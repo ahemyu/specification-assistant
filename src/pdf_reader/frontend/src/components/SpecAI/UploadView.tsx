@@ -5,6 +5,7 @@ import { Button } from '../ui'
 import { PreviewModal } from '../PreviewModal'
 import type { ProcessedFile } from '../../types'
 import { FaUpload, FaFilePdf, FaEye, FaDownload, FaTrash } from 'react-icons/fa'
+import { useTranslation } from '../../core/i18n/LanguageContext'
 
 interface UploadResponse {
   processed: ProcessedFile[]
@@ -25,6 +26,7 @@ export function UploadView() {
   const {
     uploadedFileIds,
     allUploadedFiles,
+    extractionResultsData,
     setUploadedFileIds,
     setProcessedFiles,
     setAllUploadedFiles,
@@ -37,6 +39,7 @@ export function UploadView() {
     setActiveView,
     token,
   } = useAppStore()
+  const { t } = useTranslation()
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -78,7 +81,7 @@ export function UploadView() {
     })
 
     setIsUploading(true)
-    showNotification('Processing PDFs...', 'info')
+    showNotification(t('processingNotification'), 'info')
 
     try {
       const headers: HeadersInit = {};
@@ -120,12 +123,12 @@ export function UploadView() {
       setAllUploadedFiles(newFiles)
 
       showNotification(
-        `Successfully processed ${data.processed.length} PDF(s). Total PDFs: ${newFileIds.length}`,
+        t('successProcessedNotification').replace('{count}', String(data.processed.length)).replace('{total}', String(newFileIds.length)),
         'success'
       )
 
       if (data.failed.length > 0) {
-        showNotification(`Failed to process: ${data.failed.join(', ')}`, 'error')
+        showNotification(t('failedProcessNotification').replace('{failed}', data.failed.join(', ')), 'error')
       }
 
       // Clear file input
@@ -138,15 +141,16 @@ export function UploadView() {
       setActiveView('spec_ai');
       setActiveSubMenuItem('extract');
 
-      // Detect product type from uploaded PDFs in background
-      setIsDetectingProductType(true)
-      fetch('/detect-product-type', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_ids: newFileIds,
-        }),
-      })
+      // Detect product type from uploaded PDFs in background (only if no existing extraction results)
+      if (!extractionResultsData || extractionResultsData.length === 0) {
+        setIsDetectingProductType(true)
+        fetch('/detect-product-type', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_ids: newFileIds,
+          }),
+        })
         .then(async (detectionResponse) => {
           if (detectionResponse.ok) {
             const detectionData = await detectionResponse.json()
@@ -164,6 +168,10 @@ export function UploadView() {
         .finally(() => {
           setIsDetectingProductType(false)
         })
+      } else {
+        // Skip product type detection since extraction results already exist
+        console.log('Skipping product type detection - extraction results already exist')
+      }
     } catch (error) {
       showNotification(
         `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -175,7 +183,7 @@ export function UploadView() {
   }
 
   const handleDeleteFile = async (fileId: string) => {
-    if (!confirm('Are you sure you want to delete this file?')) {
+    if (!confirm(t('confirmDeleteFile'))) {
       return
     }
 
@@ -197,11 +205,11 @@ export function UploadView() {
       localStorage.removeItem(CHAT_STORAGE_KEY)
 
       if (newFiles.length === 0) {
-        showNotification('All files deleted', 'info')
+        showNotification(t('allFilesDeletedNotification'), 'info')
         setActiveView('spec_ai'); // Ensure we are in spec_ai view
         setActiveSubMenuItem('upload'); // Go to upload sub-menu
       } else {
-        showNotification(`File deleted. ${newFiles.length} file(s) remaining`, 'success')
+        showNotification(t('fileDeletedRemaining').replace('{remaining}', String(newFiles.length)), 'success')
       }
     } catch (error) {
       showNotification(
@@ -213,15 +221,11 @@ export function UploadView() {
 
   const handleDeleteAllFiles = async () => {
     if (allUploadedFiles.length === 0) {
-      showNotification('No files to delete', 'info')
+      showNotification(t('noFilesToDelete'), 'info')
       return
     }
 
-    if (
-      !confirm(
-        `Are you sure you want to delete all ${allUploadedFiles.length} file(s)? This action cannot be undone.`
-      )
-    ) {
+    if (!confirm(t('confirmDeleteAll'))) {
       return
     }
 
@@ -247,7 +251,7 @@ export function UploadView() {
 
       setActiveView('spec_ai'); // Ensure we are in spec_ai view
       setActiveSubMenuItem('upload'); // Go to upload sub-menu
-      showNotification(`Successfully deleted all ${fileCount} file(s)`, 'success')
+      showNotification(t('deletingAllSuccess').replace('{count}', String(fileCount)), 'success')
     } catch (error) {
       showNotification(
         `Error deleting files: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -263,8 +267,8 @@ export function UploadView() {
   return (
     <div className="tab-view active" id="uploadView">
       <div className="upload-header">
-        <h1 className="page-title">SpecAI</h1>
-        <p className="subtitle"> Upload your PDF files and use LLMs to extract keys or ask questions</p>
+        <h1>{t('specAIHeader')}</h1>
+        <p className="subtitle">{t('specAISubtitle')}</p>
       </div>
       <section className="upload-section">
         <div
@@ -288,8 +292,8 @@ export function UploadView() {
             <FaUpload size={48} />
           </div>
           <div className="drop-zone-text">
-            <h2 className="section-title">Drag & Drop your PDF files here</h2>
-            <p>or click to select files</p>
+            <h2 className="section-title">{t('dropzoneTitle')}</h2>
+            <p>{t('dropzoneHint')}</p>
           </div>
         </div>
 
@@ -297,8 +301,7 @@ export function UploadView() {
           <div className="selected-files" id="selectedFiles">
             {allUploadedFiles.length > 0 && (
               <p style={{ marginBottom: '12px', color: '#59BDB9', fontWeight: 600 }}>
-                Adding {selectedFiles.length} new file(s) to {allUploadedFiles.length}{' '}
-                existing file(s)
+                {t('addingFilesInfo').replace('{newCount}', String(selectedFiles.length)).replace('{existingCount}', String(allUploadedFiles.length))}
               </p>
             )}
             <ul>
@@ -317,36 +320,36 @@ export function UploadView() {
           disabled={selectedFiles.length === 0 || isUploading}
           isLoading={isUploading}
         >
-          Upload and Process
+          {t('uploadButton')}
         </Button>
       </section>
 
       {allUploadedFiles.length > 0 && (
         <>
           <div className="results-header" id="resultsHeader">
-            <h3 className="subsection-title">Uploaded PDFs</h3>
+            <h3 className="subsection-title">{t('uploadedPDFs')}</h3>
             <button className="delete-all-btn" onClick={handleDeleteAllFiles}>
-              Delete All Files
+              {t('deleteAllFiles')}
             </button>
           </div>
           <div className="results" id="results">
             <div className="file-grid">
               {allUploadedFiles.map((file) => (
                 <div key={file.file_id} className="file-card" data-file-id={file.file_id}>
-                  <div className="file-card-icon">
-                    <FaFilePdf size={40} />
+                  <div className="file-card-icon-container">
+                    <FaFilePdf size={24} />
                   </div>
-                  <div className="file-card-info">
+                  <div className="file-card-content">
                     <h4 className="file-card-name">{file.original_filename}</h4>
                     <p className="file-card-details">
-                      Pages: {(file as any).total_pages || 'N/A'}
+                      {t('pagesLabel')} {(file as any).total_pages || 'N/A'}
                     </p>
                   </div>
                   <div className="file-card-actions">
                     <button
                       className="action-btn preview"
                       onClick={() => openPreview(file.file_id, file.original_filename)}
-                      title="Preview Text"
+                      title={t('previewTitle')}
                     >
                       <FaEye />
                     </button>
@@ -354,14 +357,14 @@ export function UploadView() {
                       href={`/download/${file.file_id}`}
                       className="action-btn download"
                       download
-                      title="Download Text File"
+                      title={t('downloadTitle')}
                     >
                       <FaDownload />
                     </a>
                     <button
                       className="action-btn delete"
                       onClick={() => handleDeleteFile(file.file_id)}
-                      title="Delete File"
+                      title={t('deleteTitle')}
                     >
                       <FaTrash />
                     </button>

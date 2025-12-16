@@ -13,9 +13,7 @@
     display: flex;
     flex-direction: column;
     background: var(--background-color-light);
-    border-radius: 20px;
     overflow: hidden;
-    border: 1px solid var(--border-color);
     position: relative; /* Essential for floating controls positioning */
 }
 
@@ -40,7 +38,7 @@
     backdrop-filter: blur(12px);
     border: 1px solid var(--border-color-light);
     border-radius: 32px;
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--box-shadow-xl);
     transition: all 0.3s ease;
 }
 
@@ -50,8 +48,8 @@
 }
 
 .pdf-floating-controls:hover {
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.15), 0 6px 16px rgba(0, 0, 0, 0.1);
-    transform: translateX(-50%) translateY(-2px);
+    box-shadow: var(--box-shadow-2xl);
+    transform: translateX(-50%);
 }
 
 /* Control Groups */
@@ -82,17 +80,15 @@
     justify-content: center;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    box-shadow: var(--box-shadow-sm);
     font-size: 1.2em; /* Icon size */
     padding: 0;
 }
 
 .control-btn:hover:not(:disabled) {
-    background: var(--primary-color);
-    color: var(--text-color-inverted);
-    border-color: var(--primary-color);
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--background-color-lighter);
+    color: var(--text-color);
+    transform: scale(var(--scale-md));
 }
 
 .control-btn:active:not(:disabled) {
@@ -155,7 +151,7 @@
 
 #pdfCanvas {
     display: block;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--box-shadow-2xl);
     background: var(--background-color);
     position: relative;
     z-index: 1;
@@ -223,7 +219,7 @@
     background: rgba(255, 255, 255, 0.9);
     padding: 24px 40px;
     border-radius: 24px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    box-shadow: var(--box-shadow-lg);
     backdrop-filter: blur(5px);
 }
 
@@ -266,7 +262,7 @@
     border: 1px solid var(--border-color);
     text-align: center;
     z-index: 10;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    box-shadow: var(--box-shadow-2xl);
     max-width: 80%;
 }
 

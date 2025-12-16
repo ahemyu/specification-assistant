@@ -3,14 +3,14 @@
   top: 0;
   left: -280px;
   width: 280px;
-  background: var(--background-color); /* brighter background */
+  background: var(--background-color);
   color: var(--text-color);
 
   padding: 24px 20px;
   transition: left 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.3s;
   z-index: 1000;
-  border-radius: 25px;
-  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-bigger);
+  box-shadow: var(--box-shadow-lg);
 
   display: flex;
   flex-direction: column;
@@ -62,18 +62,46 @@
 
 .sidebar-menu li:hover {
   background: var(--background-color-light); /* cadetblue subtle highlight */
-  transform: translateX(4px);
+  transform: scale(var(--scale-md));
+}
+
+.subsection-title {
+  margin-top: 32px; /* Space between menu sections */
 }
 
 /* --- ICONS --- */
 .icon {
   font-size: 22px;
   color: var(--text-color-lighter);
+  /* Revert to simpler styling, remove fixed dimensions and overflow */
+  display: flex; /* Keep for centering if desired */
+  justify-content: center;
+  align-items: center;
 }
 
 .icon.small {
   font-size: 18px;
-  color: var(--text-color-lighter);
+  /* Revert to simpler styling */
+}
+
+.icon svg {
+  fill: var(--text-color-lighter); /* Default color */
+  transition: fill 0.3s ease; /* Transition fill property */
+  font-size: 22px; /* Inherit size from .icon */
+}
+
+/* Apply shimmer to the .icon container on menu item hover */
+.sidebar-menu li:hover .icon,
+.sidebar-bottom li:hover .icon,
+.submenu .menu-item:hover .icon {
+    /* No background shimmer */
+}
+
+.sidebar-menu li:hover .icon svg,
+.sidebar-bottom li:hover .icon svg,
+.submenu .menu-item:hover .icon svg {
+    fill: url(#shimmer-grad); /* Apply shimmer to icon fill */
+    /* No scale transform */
 }
 
 /* --- LOWER MENU AREA --- */
@@ -101,7 +129,7 @@
 
 .sidebar-bottom li:hover {
   background: var(--background-color-light); /* cadetblue highlight */
-  transform: translateX(4px);
+  transform: scale(var(--scale-md));
 }
 
 /* --- DROPDOWN MENU ITEMS --- */
@@ -119,7 +147,7 @@
 
 .sidebar-menu .menu-item.dropdown:hover {
   background: var(--background-color-light); /* cadetblue */
-  transform: translateX(4px);
+  transform: scale(var(--scale-md));
 }
 
 .sidebar-menu .arrow {
@@ -147,8 +175,8 @@
 
 .menu-item:hover {
   background: var(--background-color-lighter); /* cadetblue hover */
-  transform: translateX(4px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transform: scale(var(--scale-md));
+  box-shadow: var(--box-shadow-md);
 }
 
 .menu-item.active {

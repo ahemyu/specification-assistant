@@ -53,6 +53,7 @@
     display: flex;
     gap: 12px;
     flex-shrink: 0;
+    margin-right: 120px; /* Move buttons left to make space for language toggle */
 }
 
 .summary-actions button {
@@ -75,7 +76,7 @@
 }
 
 .summary-actions .btn-primary:hover {
-    transform: translateY(-2px);
+    transform: scale(var(--scale-md));
     box-shadow: 0 6px 16px rgba(135, 189, 37, 0.4);
 }
 
@@ -83,13 +84,13 @@
     background: var(--background-color);
     color: var(--primary-color);
     border: 2px solid var(--primary-color);
-    box-shadow: 0 2px 8px rgba(28, 44, 140, 0.1);
+    box-shadow: var(--box-shadow-sm);
 }
 
 .summary-actions .btn-secondary:hover {
     background: var(--primary-color);
     color: var(--text-color-inverted);
-    transform: translateY(-2px);
+    transform: scale(var(--scale-md));
     box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
 }
 
@@ -99,13 +100,17 @@
     border: 2px solid var(--border-color);
     border-radius: 16px;
     overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--box-shadow-md);
+    max-height: calc(100vh - 300px); /* Limit height to prevent overflow */
+    overflow-y: auto; /* Add vertical scrolling when needed */
+    overflow-x: auto; /* Add horizontal scrolling when needed */
 }
 
 /* Summary Table */
 .summary-table {
     width: 100%;
     border-collapse: collapse;
+    table-layout: auto; /* Allow table to adjust to content */
 }
 
 .summary-table thead {
@@ -139,6 +144,7 @@
 .summary-table td {
     padding: 20px;
     vertical-align: middle;
+    text-align: left; /* Default left alignment for most cells */
 }
 
 /* Table Cell Styles */
@@ -146,31 +152,21 @@
     font-weight: 600;
     color: var(--text-color);
     font-size: 0.95em;
-    min-width: 150px;
+    width: 20%; /* Fixed percentage width */
+    min-width: 120px; /* Minimum width */
+    max-width: 200px; /* Maximum width */
+    word-wrap: break-word; /* Allow text to wrap */
+    white-space: normal; /* Allow text wrapping */
 }
 
 .value-cell {
     color: var(--text-color-light);
     font-size: 0.95em;
-    max-width: 400px;
-    overflow-x: auto;
-    white-space: nowrap;
-}
-
-.value-cell::-webkit-scrollbar {
-    height: 6px;
-}
-
-.value-cell::-webkit-scrollbar-track {
-    background: var(--background-color-lighter);
-}
-
-.value-cell::-webkit-scrollbar-thumb {
-    background: var(--border-color-light);
-}
-
-.value-cell::-webkit-scrollbar-thumb:hover {
-    background: var(--text-color-lighter);
+    width: 40%; /* Increased width to fill space from removed source column */
+    min-width: 200px; /* Minimum width */
+    max-width: 450px; /* Increased maximum width */
+    word-wrap: break-word; /* Allow text to wrap */
+    white-space: normal; /* Allow text wrapping */
 }
 
 .value-cell.value-not-found {
@@ -179,18 +175,16 @@
 }
 
 .status-cell {
+    width: 20%; /* Increased width to fill space from removed source column */
     min-width: 120px;
-}
-
-.source-cell {
-    color: var(--text-color-lighter);
-    font-size: 0.85em;
-    min-width: 150px;
+    max-width: 180px;
 }
 
 .actions-cell {
-    text-align: right;
+    text-align: center; /* Center the content horizontally */
+    width: 20%; /* Increased width to fill space from removed source column */
     min-width: 100px;
+    max-width: 150px;
     vertical-align: middle;
 }
 
@@ -204,7 +198,7 @@
     font-size: 0.8em;
     font-weight: 600;
     white-space: nowrap;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--box-shadow-sm);
 }
 
 .summary-table .status-badge svg {
@@ -240,13 +234,14 @@
     font-size: 0.85em;
     font-weight: 600;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(28, 44, 140, 0.2);
+    box-shadow: var(--box-shadow-sm);
     display: inline-block;
     vertical-align: middle;
+    margin: 0 auto; /* Center the button horizontally within the cell */
 }
 
 .review-btn:hover {
-    transform: translateY(-2px);
+    transform: scale(var(--scale-md));
     box-shadow: 0 4px 10px rgba(28, 44, 140, 0.3);
 }
 

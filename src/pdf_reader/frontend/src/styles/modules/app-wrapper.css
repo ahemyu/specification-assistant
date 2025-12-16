@@ -3,8 +3,8 @@
   flex-direction: row;
   gap: 10px;          /* space between sidebar and main content */
   width: 100%;
-  background-color: var(--background-color);
-  border-radius: 40px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  background-color: var(--background-color-light);
+  border-radius: var(--border-radius-bigger);
+  box-shadow: var(--box-shadow-2xl);
   padding: 5px;      /* inner padding */
 }

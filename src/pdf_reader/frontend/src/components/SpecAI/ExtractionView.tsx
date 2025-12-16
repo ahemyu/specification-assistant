@@ -9,6 +9,7 @@ import type { ExtractionResult } from '../../types'
 import { AllKeysModal } from '../AllKeysModal'
 import { ManualKeyInput } from '../ManualKeyInput'
 import { Spinner } from '@/components/ui/spinner'
+import { useTranslation } from '../../core/i18n/LanguageContext'
 
 // Backend extraction response format
 interface BackendExtractionResult {
@@ -80,7 +81,9 @@ export function ExtractionView() {
     setTemplateKeys,
     setDetectedCoreCount,
     setDetectedWindingCount,
+    setActiveSubMenuItem,
   } = useAppStore()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (detectedProductType && !selectedProductType) {
@@ -93,16 +96,18 @@ export function ExtractionView() {
     if (selectedProductType && uploadedFileIds.length > 0) {
       const baseKeys = getKeysForProductType(selectedProductType)
 
-      // Detect core/winding counts to optimize key list
-      setIsDetectingCounts(true)
-      fetch('/detect-core-winding-count', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          file_ids: uploadedFileIds,
-          product_type: selectedProductType,
-        }),
-      })
+      // Only detect core/winding counts if no extraction results exist
+      if (!extractionResultsData || extractionResultsData.length === 0) {
+        // Detect core/winding counts to optimize key list
+        setIsDetectingCounts(true)
+        fetch('/detect-core-winding-count', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            file_ids: uploadedFileIds,
+            product_type: selectedProductType,
+          }),
+        })
         .then(async (response) => {
           if (response.ok) {
             const data = await response.json()
@@ -135,6 +140,12 @@ export function ExtractionView() {
         .finally(() => {
           setIsDetectingCounts(false)
         })
+      } else {
+        // Skip count detection since extraction results already exist
+        console.log('Skipping core/winding count detection - extraction results already exist')
+        // Use all keys since we're not optimizing
+        setTemplateKeys(baseKeys)
+      }
     } else if (selectedProductType) {
       // No PDFs uploaded yet, just load base template
       const keys = getKeysForProductType(selectedProductType)
@@ -148,13 +159,13 @@ export function ExtractionView() {
 
   const handleExtractFromTemplate = async () => {
     if (!selectedProductType || templateKeys.length === 0 || uploadedFileIds.length === 0) {
-      showNotification('Please select a product type and upload PDFs first', 'error')
+      showNotification(t('selectProductAndUpload'), 'error')
       return
     }
 
     setIsExtracting(true)
     setExtractionComplete(false)
-    showNotification(`Extracting ${templateKeys.length} keys using AI...`, 'info')
+    showNotification(t('extractingKeysNotification').replace('{count}', String(templateKeys.length)), 'info')
 
     try {
       const response = await fetch('/extract-keys', {
@@ -168,7 +179,7 @@ export function ExtractionView() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to extract keys')
+        throw new Error(errorData.detail || t('failedToExtract'))
       }
 
       const backendData: ExtractionResponse = await response.json()
@@ -185,7 +196,7 @@ export function ExtractionView() {
       console.log('Setting extractionComplete to true...')
       setExtractionComplete(true)
 
-      showNotification('Keys extracted successfully!', 'success')
+      showNotification(t('keysExtractedSuccess'), 'success')
 
       // Force carousel to open with multiple attempts
       console.log('Attempting to open carousel in 200ms...')
@@ -219,7 +230,7 @@ export function ExtractionView() {
   const handleExtractManually = async () => {
     const keysText = manualKeys.trim()
     if (!keysText || uploadedFileIds.length === 0) {
-      showNotification('Please enter at least one key to extract', 'error')
+      showNotification(t('enterKeyError'), 'error')
       return
     }
 
@@ -229,13 +240,13 @@ export function ExtractionView() {
       .filter((k) => k.length > 0)
 
     if (keyNames.length === 0) {
-      showNotification('Please enter at least one key to extract', 'error')
+      showNotification(t('enterKeyError'), 'error')
       return
     }
 
     setIsExtracting(true)
     setExtractionComplete(false)
-    showNotification('Extracting keys using AI...', 'info')
+    showNotification(t('extractingManualNotification'), 'info')
 
     try {
       const response = await fetch('/extract-keys', {
@@ -249,7 +260,7 @@ export function ExtractionView() {
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to extract keys')
+        throw new Error(errorData.detail || t('failedToExtract'))
       }
 
       const backendData: ExtractionResponse = await response.json()
@@ -266,7 +277,7 @@ export function ExtractionView() {
       console.log('Setting extractionComplete to true...')
       setExtractionComplete(true)
 
-      showNotification('Keys extracted successfully!', 'success')
+      showNotification(t('keysExtractedSuccess'), 'success')
 
       // Force carousel to open with multiple attempts
       console.log('Attempting to open carousel in 200ms...')
@@ -334,7 +345,7 @@ export function ExtractionView() {
     if (!currentData || currentData.length === 0) {
       console.error('❌ CANNOT OPEN CAROUSEL: No extraction results available')
       console.error('extractionResultsData is:', currentData)
-      showNotification('No extraction results available', 'error')
+      showNotification(t('noResultsAvailable'), 'error')
       return
     }
 
@@ -344,7 +355,7 @@ export function ExtractionView() {
     } catch (error) {
       console.error('ERROR OPENING CAROUSEL:', error)
       console.error('Error stack:', error instanceof Error ? error.stack : 'No stack')
-      showNotification('Error opening results viewer. Please try again.', 'error')
+      showNotification(t('errorOpeningCarousel'), 'error')
     }
   }
 
@@ -356,11 +367,13 @@ export function ExtractionView() {
     setIsCarouselOpen(false)
     setShowSummary(true)
     setCurrentExtractionState('summary')
+    setActiveSubMenuItem('summary')
   }
 
   const handleReviewKey = () => {
     // Reopen carousel for reviewing
     setShowSummary(false)
+    setActiveSubMenuItem('extract')
     openCarousel()
   }
 
@@ -371,6 +384,7 @@ export function ExtractionView() {
     setShowDevInput(false)
     setExtractionComplete(false)
     setCurrentExtractionState('setup')
+    setActiveSubMenuItem('upload')
   }
 
   return (
@@ -383,13 +397,13 @@ export function ExtractionView() {
               <Spinner className="size-16 text-[#59BDB9]" />
             </div>
             <h2 className="loading-overlay-title">
-              Extracting the Keys...
+              {t('extractingTitle')}
             </h2>
             <p className="loading-overlay-description">
-              The AI is extracting <strong>{templateKeys.length} keys</strong> from your PDF files
+              {t('theAIIsExtracting')} <strong>{templateKeys.length} {t('keys')}</strong> {t('fromYourPDFs')}
             </p>
             <p className="loading-overlay-timing">
-              This could take several minutes to complete depending on document complexity and size
+              {t('extractingTiming')}
             </p>
           </div>
         </div>
@@ -403,17 +417,17 @@ export function ExtractionView() {
               <Spinner className="size-16 text-[#59BDB9]" />
             </div>
             <h2 className="loading-overlay-title" style={{ transition: 'opacity 0.3s ease' }}>
-              {isDetectingProductType ? 'Detecting Product Type...' : 'Optimizing Key List...'}
+              {isDetectingProductType ? t('detectingProductTypeTitle') : t('optimizingKeyListTitle')}
             </h2>
             <p className="loading-overlay-description" style={{ transition: 'opacity 0.3s ease' }}>
               {isDetectingProductType ? (
-                <>The AI is analyzing your PDF files to determine the product type</>
+                <>{t('detectDesc1')}</>
               ) : (
-                <>Detecting core and winding counts to customize the template for your <strong>{selectedProductType}</strong></>
+                <>{t('detectDesc2Template').replace('{productType}', t(('product_type_' + (selectedProductType?.toLowerCase() || '')) as any))}</>
               )}
             </p>
             <p className="loading-overlay-timing">
-              This should take just a few moments
+              {t('detectTiming')}
             </p>
           </div>
         </div>
@@ -427,10 +441,10 @@ export function ExtractionView() {
         />
       ) : (
         <div id="extractionSetupView">
-          <h1 className="page-title">Extract Keys from PDFs</h1>
-          <p className="subtitle">
-            Select the product type to extract relevant specifications
-          </p>
+          <div className="upload-header">
+            <h1>{t('extractHeader')}</h1>
+            <p className="subtitle">{t('extractSubtitle')}</p>
+          </div>
 
           {/* Product Type Selection - Hidden when in manual mode */}
           {!showDevInput && (
@@ -455,7 +469,7 @@ export function ExtractionView() {
                     {type === 'Kombiwandler' && <img src="/assets/combi-transformer.png" alt="Combi Transformer" style={{ height: '10em' }} />}
                   </div>
                   <div className="product-card-content">
-                    <h3 className="product-card-title">{type}</h3>
+                    <h4 className="product-card-title">{t(('product_type_' + type.toLowerCase()) as any)}</h4>
                     {isDetected && productTypeConfidence > 0 && (
                       <div className="confidence-bar-container">
                         <div className="confidence-bar-bg">
@@ -476,76 +490,139 @@ export function ExtractionView() {
           </div>
           )}
 
-          {/* Template Keys Preview and Extract Button - Hidden when in manual mode */}
-          {!showDevInput && selectedProductType && templateKeys.length > 0 && (
-            <div className="template-key-header-section">
-              <div className="key-input-area">
-                <div className="template-key-header">
-                  <div>
-                    <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
-                      Template: {selectedProductType}
-                      {(detectedCoreCount !== null || detectedWindingCount !== null) && (
-                        <div className="detected-counts-container">
-                          {detectedCoreCount !== null && (
-                            <div className="detected-count-badge">
-                              <span className="detected-count-number core">{detectedCoreCount}</span>
-                              <span className="detected-count-label">Kern{detectedCoreCount !== 1 ? 'e' : ''}</span>
+                    {/* Template Keys Preview and Extract Button - Hidden when in manual mode */}          {!showDevInput && selectedProductType && templateKeys.length > 0 && (
+
+                      <div className="template-key-header-section">
+
+                        <div className="key-input-area">
+
+                          <div className="template-key-header">
+
+                            <div>
+
+                              <h3 style={{ fontSize: '1.1rem', color: '#2d3748', margin: 0, marginBottom: '0.5rem', fontWeight: '600', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+
+                                {t('templateLabel').replace('{productType}', t(('product_type_' + (selectedProductType?.toLowerCase() || '')) as any))}
+
+                                {(detectedCoreCount !== null || detectedWindingCount !== null) && (
+
+                                  <div className="detected-counts-container">
+
+                                    {detectedCoreCount !== null && (
+
+                                      <div className="detected-count-badge">
+
+                                        <span className="detected-count-number core">{detectedCoreCount}</span>
+
+                                        <span className="detected-count-label">{detectedCoreCount !== 1 ? t('cores') : t('core')}</span>
+
+                                      </div>
+
+                                    )}
+
+                                    {detectedWindingCount !== null && (
+
+                                      <div className="detected-count-badge">
+
+                                        <span className="detected-count-number winding">{detectedWindingCount}</span>
+
+                                        <span className="detected-count-label">{detectedWindingCount !== 1 ? t('windings') : t('winding')}</span>
+
+                                      </div>
+
+                                    )}
+
+                                  </div>
+
+                                )}
+
+                              </h3>
+
+                              <p className="template-key-count-text">
+
+                                {t('keysWillBeExtracted').replace('{count}', String(templateKeys.length))}
+
+                              </p>
+
                             </div>
-                          )}
-                          {detectedWindingCount !== null && (
-                            <div className="detected-count-badge">
-                              <span className="detected-count-number winding">{detectedWindingCount}</span>
-                              <span className="detected-count-label">Wicklung{detectedWindingCount !== 1 ? 'en' : ''}</span>
-                            </div>
-                          )}
+
+                            <button
+
+                              onClick={() => setShowAllKeysModal(true)}
+
+                              className="view-all-keys-button"
+
+                            >
+
+                              {t('viewAllKeys')}
+
+                            </button>
+
+                          </div>
+
                         </div>
-                      )}
-                    </h3>
-                    <p className="template-key-count-text">
-                      {templateKeys.length} keys will be extracted
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setShowAllKeysModal(true)}
-                    className="view-all-keys-button"
-                  >
-                    View All Keys
-                  </button>
-                </div>
 
-                <Button
-                  id="extractTemplateBtn"
-                  className="extract-btn"
-                  onClick={handleExtractFromTemplate}
-                  disabled={uploadedFileIds.length === 0 || isExtracting || isDetectingCounts}
-                  isLoading={isExtracting}
-                  title={uploadedFileIds.length === 0 ? 'Please upload PDFs first' : isDetectingCounts ? 'Optimizing key list...' : ''}
-                  style={{ marginTop: '1rem', width: '100%' }}
-                >
-                  {isExtracting ? `Extracting ${templateKeys.length} keys...` : `Extract ${templateKeys.length} Keys`}
-                </Button>
+          
 
-                {uploadedFileIds.length === 0 && (
-                  <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em', textAlign: 'center' }}>
-                    Please upload PDF files in the Upload tab first
-                  </p>
-                )}
+                        <Button
 
-                {extractionComplete && extractionResultsData && extractionResultsData.length > 0 && (
-                  <Button
-                    onClick={() => {
-                      console.log('Show Results button clicked')
-                      console.log('extractionResultsData:', extractionResultsData)
-                      openCarousel()
-                    }}
-                    className="view-results-btn-inline"
-                    style={{ marginTop: '1rem', width: '100%' }}
-                  >
-                    View Results ({extractionResultsData.length} keys)
-                  </Button>
-                )}
-              </div>
-            </div>
+                          id="extractTemplateBtn"
+
+                          className="extract-btn"
+
+                          onClick={handleExtractFromTemplate}
+
+                          disabled={uploadedFileIds.length === 0 || isExtracting || isDetectingCounts}
+
+                          isLoading={isExtracting}
+
+                          title={uploadedFileIds.length === 0 ? t('pleaseUploadFirst') : isDetectingCounts ? t('optimizingKeyListTitle') : ''}
+
+                        >
+
+                          {isExtracting ? `${t('extracting')} ${templateKeys.length} ${t('keys')}...` : `${t('extractBtn')} ${templateKeys.length} ${t('keys')}`}
+
+                        </Button>
+
+          
+
+                        {uploadedFileIds.length === 0 && (
+
+                          <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em', textAlign: 'center' }}>
+
+                            {t('pleaseUploadFirst')}
+
+                          </p>
+
+                        )}
+
+          
+
+                        {extractionComplete && extractionResultsData && extractionResultsData.length > 0 && (
+
+                                                    <Button
+
+                                                      onClick={() => {
+
+                                                        console.log('Show Results button clicked')
+
+                                                        console.log('extractionResultsData:', extractionResultsData)
+
+                                                        openCarousel()
+
+                                                      }}
+
+                                                      className="view-results-btn-inline"
+
+                                                    >
+
+                                                      {t('viewResultsWithCount').replace('{count}', String(extractionResultsData.length))}
+
+                                                    </Button>
+
+                        )}
+
+                      </div>
           )}
 
           {/* Manual Input Toggle - Available for all users */}
@@ -555,7 +632,7 @@ export function ExtractionView() {
                 onClick={() => setShowDevInput(true)}
                 style={{
                   padding: '0.5rem 1rem',
-                  borderRadius: '6px',
+                  borderRadius: '20px',
                   border: '1px solid #6B7280',
                   backgroundColor: 'transparent',
                   color: '#9CA3AF',
@@ -573,7 +650,7 @@ export function ExtractionView() {
                   e.currentTarget.style.backgroundColor = 'transparent'
                 }}
               >
-                Or enter keys manually...
+                {t('manualInputToggle')}
               </button>
             </div>
           )}
