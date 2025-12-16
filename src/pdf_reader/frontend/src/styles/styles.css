@@ -48,6 +48,9 @@
 /* QA Popup */
 @import url('./modules/qapopup.css');
 
+/* Login Page */
+@import url('./modules/login.css');
+
 /* Compare */
 @import url('./modules/compare.css');
 

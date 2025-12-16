@@ -130,6 +130,7 @@ interface AppState {
   login: (email: string, password: string) => Promise<boolean>;
   register: (email: string, username: string, password: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  validateToken: () => Promise<boolean>;
 
   // Helper actions
   resetExtractionState: () => void
@@ -179,7 +180,7 @@ export const useAppStore = create<AppState>((set) => ({
   // Auth initial state
   user: null,
   token: localStorage.getItem('auth_token'),
-  isAuthenticated: !!localStorage.getItem('auth_token'),
+  isAuthenticated: false,
   isAuthLoading: false,
   authError: null,
   showAuthModal: false,
@@ -338,6 +339,45 @@ export const useAppStore = create<AppState>((set) => ({
     })),
 
   clearChat: () => set({ conversationHistory: [] }),
+  
+  // Auth validation function
+  validateToken: async () => {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      set({ isAuthenticated: false });
+      return false;
+    }
+    
+    try {
+      // Try to get user info to validate token
+      const response = await fetch('/auth/me', {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      if (response.ok) {
+        const user = await response.json();
+        set({ 
+          token,
+          user,
+          isAuthenticated: true,
+        });
+        return true;
+      } else {
+        // Token is invalid, clear it
+        localStorage.removeItem('auth_token');
+        set({ 
+          token: null,
+          user: null,
+          isAuthenticated: false,
+        });
+        return false;
+      }
+    } catch {
+      // Network error, assume not authenticated
+      set({ isAuthenticated: false });
+      return false;
+    }
+  },
 }))
 
 // Storage keys constants
