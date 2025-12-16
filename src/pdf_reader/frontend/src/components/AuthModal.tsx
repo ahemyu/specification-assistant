@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAppStore } from "../store/useAppStore";
 import { FaTimes } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 
 export const AuthModal: React.FC = () => {
   const showAuthModal = useAppStore((state) => state.showAuthModal);
@@ -16,6 +17,8 @@ export const AuthModal: React.FC = () => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
+  const navigate = useNavigate();
+
   if (!showAuthModal) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,6 +28,7 @@ export const AuthModal: React.FC = () => {
       if (success) {
         setEmail("");
         setPassword("");
+        navigate("/");
       }
     } else {
       const success = await register(email, username, password);

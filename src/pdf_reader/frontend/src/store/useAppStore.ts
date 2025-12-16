@@ -256,6 +256,7 @@ export const useAppStore = create<AppState>((set) => ({
         isAuthLoading: false,
         showAuthModal: false,
         authError: null,
+        activeView: 'home',
       });
       return true;
     } catch {
