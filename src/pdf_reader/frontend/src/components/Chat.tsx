@@ -11,7 +11,7 @@ interface ChatProps {
 }
 
 export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: ChatProps) {
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [selectedModel, setSelectedModel] = useState(defaultModel)
@@ -116,6 +116,7 @@ export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: C
           question: trimmedQuestion,
           conversation_history: historyToSend,
           model_name: selectedModel,
+          language: language,
         }),
       })
 

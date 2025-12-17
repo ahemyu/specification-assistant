@@ -105,6 +105,7 @@ class LLMKeyExtractor:
         self,
         key_names: list[str],
         pdf_data: list[dict],
+        language: str = "en",
     ) -> dict[str, KeyExtractionResult | None]:
         """Extract a batch of keys from the same PDF data in a single LLM call.
         """
@@ -126,10 +127,15 @@ class LLMKeyExtractor:
         if metadata_items:
             key_metadata_section = "KEY METADATA:\n" + "\n".join(metadata_items) + "\n"
 
+        # Set the "not found" text based on language
+        not_found_text = "Nicht gefunden" if language == "de" else "Not found"
+
         prompt = MULTI_KEY_EXTRACTION_PROMPT.format(
             keys_section=keys_section,
             key_metadata_section=key_metadata_section,
             full_context=full_context,
+            language=language,
+            not_found_text=not_found_text,
         )
 
         # Estimate tokens for logging purposes (rough estimate: ~4 chars per token)
@@ -166,6 +172,7 @@ class LLMKeyExtractor:
         key_names: list[str],
         pdf_data: list[dict],
         batch_size: int = DEFAULT_BATCH_SIZE,
+        language: str = "en",
     ) -> dict[str, KeyExtractionResult | None]:
         """Extract multiple keys from the same PDF data using batched LLM calls.
 
@@ -176,6 +183,7 @@ class LLMKeyExtractor:
             key_names: List of key names to extract
             pdf_data: List of PDF data dictionaries
             batch_size: Number of keys per batch
+            language: Language for extracted values and descriptions ("en" or "de")
         """
         if not key_names:
             return {}
@@ -199,7 +207,7 @@ class LLMKeyExtractor:
 
         async def run_batch(batch_index: int, batch: list[str]) -> dict[str, KeyExtractionResult | None]:
             async with semaphore:
-                return await self._extract_keys_batch(batch, pdf_data)
+                return await self._extract_keys_batch(batch, pdf_data, language)
 
         # Execute batches (with concurrency limit via semaphore)
         batch_results_list = await asyncio.gather(*(run_batch(i, batch) for i, batch in enumerate(batches)))
@@ -222,6 +230,7 @@ class LLMKeyExtractor:
         question: str,
         pdf_data: list[dict],
         conversation_history: list[dict[str, str]] | None = None,
+        language: str = "en",
     ):
         """
         Answer a general question about the PDF documents with streaming response.
@@ -232,6 +241,7 @@ class LLMKeyExtractor:
                       Each dict should have: {"filename": str, "total_pages": int, "pages": [...]}
             conversation_history: Optional list of previous messages in format
                                   [{"role": "system"|"user"|"assistant", "content": str}]
+            language: Language for the response ("en" or "de")
 
         Yields:
             Tuples of (chunk_content, system_message_content)
@@ -266,7 +276,7 @@ class LLMKeyExtractor:
             full_context = _build_pdf_context(pdf_data)
 
             # Build system message using the template
-            system_content = QA_SYSTEM_PROMPT.format(document_contents=full_context)
+            system_content = QA_SYSTEM_PROMPT.format(document_contents=full_context, language=language)
 
             messages.append(SystemMessage(content=system_content))
             system_message_to_return = system_content

@@ -44,7 +44,7 @@ async def extract_keys(
     # Extract all keys using LLM (always uses gpt-4.1 for accuracy)
     try:
         results = await llm_extractor.extract_keys(
-            key_names=request.key_names, pdf_data=pdf_data_list
+            key_names=request.key_names, pdf_data=pdf_data_list, language=request.language
         )
 
         # Transform matched_line_ids to bounding_box coordinates
@@ -141,6 +141,7 @@ async def ask_question_stream(
                 question=request.question,
                 pdf_data=pdf_data_list,
                 conversation_history=conversation_history,
+                language=request.language,
             ):
                 # Send system message if this is the first message
                 if system_message:

@@ -13,6 +13,7 @@ class KeyExtractionRequest(BaseModel):
 
     file_ids: list[str]
     key_names: list[str]
+    language: str = "en"
 
 
 class QuestionRequest(BaseModel):
@@ -24,6 +25,7 @@ class QuestionRequest(BaseModel):
     file_ids: list[str]
     question: str
     conversation_history: list[ChatMessage] | None = None
+    language: str = "en"
 
 
 class ExcelDownloadRequest(BaseModel):

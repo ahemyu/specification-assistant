@@ -83,7 +83,7 @@ export function ExtractionView() {
     setDetectedWindingCount,
     setActiveSubMenuItem,
   } = useAppStore()
-  const { t } = useTranslation()
+  const { t, language } = useTranslation()
 
   useEffect(() => {
     if (detectedProductType && !selectedProductType) {
@@ -174,6 +174,7 @@ export function ExtractionView() {
         body: JSON.stringify({
           file_ids: uploadedFileIds,
           key_names: templateKeys.map(k => k.name),
+          language: language,
         }),
       })
 
@@ -255,6 +256,7 @@ export function ExtractionView() {
         body: JSON.stringify({
           file_ids: uploadedFileIds,
           key_names: keyNames,
+          language: language,
         }),
       })
 
