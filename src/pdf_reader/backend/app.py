@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 
 from backend.config import PDF_READER_DIR
 from backend.database import close_db, init_db
-from backend.routers import auth, excel, llm, pdf
+from backend.routers import auth, excel, llm, pdf, pdf_download
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -42,6 +42,7 @@ app.include_router(auth.router)
 app.include_router(pdf.router)
 app.include_router(llm.router)
 app.include_router(excel.router)
+app.include_router(pdf_download.router)
 
 # Mount React production build
 frontend_dist = PDF_READER_DIR / "frontend" / "dist"

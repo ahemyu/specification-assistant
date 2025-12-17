@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useState, useRef, useEffect } from 'react'
 import { useAppStore } from '../../store/useAppStore'
 import { useTranslation } from '../../core/i18n/LanguageContext'
 
@@ -38,12 +38,45 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
     return reviewedData
   }, [extractionResultsBackendFormat, reviewedKeys])
 
+  // State for download format selection
+  const [downloadFormat, setDownloadFormat] = useState<'pdf' | 'excel'>('pdf')
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false)
+      }
+    }
+
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [isDropdownOpen])
+
   // Download results
   const handleDownload = useCallback(async () => {
     const reviewedResults = getReviewedResults()
 
     try {
-      const response = await fetch('/download-extraction-excel', {
+      let endpoint = ''
+      let filename = ''
+
+      if (downloadFormat === 'excel') {
+        endpoint = '/download-extraction-excel'
+        filename = 'reviewed_extraction_results.xlsx'
+      } else { // pdf
+        endpoint = '/download-extraction-pdf'
+        filename = 'reviewed_extraction_results.pdf'
+      }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ extraction_results: reviewedResults }),
@@ -51,14 +84,14 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.detail || 'Failed to download Excel file')
+        throw new Error(errorData.detail || `Failed to download ${downloadFormat} file`)
       }
 
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'reviewed_extraction_results.xlsx'
+      a.download = filename
       document.body.appendChild(a)
       a.click()
       window.URL.revokeObjectURL(url)
@@ -66,7 +99,17 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
     } catch (error) {
       alert(`Error downloading results: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
-  }, [getReviewedResults])
+  }, [getReviewedResults, downloadFormat])
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen)
+  }
+
+  const handleFormatSelect = async (format: 'pdf' | 'excel') => {
+    setDownloadFormat(format)
+    setIsDropdownOpen(false)
+    await handleDownload()
+  }
 
   // Sort results by key name
   const sortedResults = [...results].sort((a, b) => a.key.localeCompare(b.key))
@@ -87,9 +130,30 @@ export function SummaryView({ onReviewKey, onStartNewExtraction }: SummaryViewPr
           <button className="btn-secondary" onClick={onStartNewExtraction}>
             {t('startNewExtraction')}
           </button>
-          <button className="btn-primary" onClick={handleDownload}>
-            {t('downloadResults')}
-          </button>
+          <div className="download-dropdown" ref={dropdownRef}>
+            <button className="btn-primary" onClick={toggleDropdown}>
+              {t('downloadResults')}
+              <span className="dropdown-arrow">▼</span>
+            </button>
+            {isDropdownOpen && (
+              <div className="dropdown-menu">
+                <div
+                  className={`dropdown-item ${downloadFormat === 'pdf' ? 'selected' : ''}`}
+                  onClick={() => handleFormatSelect('pdf')}
+                >
+                  <span className="format-icon">📄</span>
+                  {t('downloadAsPDF')}
+                </div>
+                <div
+                  className={`dropdown-item ${downloadFormat === 'excel' ? 'selected' : ''}`}
+                  onClick={() => handleFormatSelect('excel')}
+                >
+                  <span className="format-icon">📊</span>
+                  {t('downloadAsExcel')}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
