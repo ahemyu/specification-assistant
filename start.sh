@@ -17,10 +17,10 @@ FRONTEND_DIR="${ROOT_DIR}/src/pdf_reader/frontend"
 BACKEND_DIR="${ROOT_DIR}/src/pdf_reader"
 ENV_FILE="${ROOT_DIR}/.env"
 
-# Cleanup function to stop database on exit
+# Cleanup function to stop database and adminer on exit
 cleanup() {
   echo ""
-  echo "Shutting down database..."
+  echo "Shutting down database and adminer..."
   (cd "${ROOT_DIR}" && docker compose down)
   echo "Cleanup complete"
 }
@@ -44,10 +44,10 @@ echo "Building frontend (npm run build)"
   npm run build
 )
 
-echo "Starting database (docker compose up -d db)"
+echo "Starting database and adminer (docker compose up -d db adminer)"
 (
   cd "${ROOT_DIR}" &&
-  docker compose up -d db
+  docker compose up -d db adminer
 )
 
 echo "Waiting for database to be ready..."
