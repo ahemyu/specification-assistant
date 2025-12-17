@@ -1,0 +1,49 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Runtime files
+src/pdf_reader/uploads/
+src/pdf_reader/output/
+
+# Data files
+data/
+
+# Environment files
+.env
+.env.local
+
+# Documentation
+*.md
+!README.md
+
+# Claude
+.claude/
+
+# Build artifacts
+*.egg-info/
+dist/
+build/
+
+# Logs
+*.log

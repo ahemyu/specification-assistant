@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Output files
+output/
+*.txt
+/src/pdf_reader/uploads
+/src/pdf_reader/uploaded_pdfs
+/src/pdf_reader/backend/uploaded_pdfs
+/uploaded_pdf
+
+# Environment variables
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+
+# Code CLI 
+CLAUDE.md
+.claude/
+
+# Library docs to feed into llms
+pdfplumber_docs
+pymupdf_docs
+
+# Deployment
+fly.toml
+
+# frontend
+/node_modules
+/package-lock.json
+src/pdf_reader/frontend/node_modules/
+.migration_planca
+
+# gemini
+GEMINI.md
+
+# random local stuff
+scribble.excalidraw

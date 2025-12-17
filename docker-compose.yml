@@ -1,0 +1,68 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: specification-assistant-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-specification_assistant}
+      MYSQL_USER: ${MYSQL_USER:-app_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-app_password}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: specification-assistant
+    ports:
+      - "8000:8000"
+    environment:
+      # Azure OpenAI configuration - GPT-4.1 (key extraction, PDF comparison)
+      - GPT41_API_KEY=${GPT41_API_KEY}
+      - GPT41_ENDPOINT=${GPT41_ENDPOINT:-https://westeurope.api.cognitive.microsoft.com/}
+      - GPT41_DEPLOYMENT=${GPT41_DEPLOYMENT:-gpt-4.1}
+      # Azure OpenAI configuration - GPT-4.1-mini (chat, detection)
+      - GPT41_MINI_API_KEY=${GPT41_MINI_API_KEY}
+      - GPT41_MINI_ENDPOINT=${GPT41_MINI_ENDPOINT:-https://mf-gwc-tg.cognitiveservices.azure.com/}
+      - GPT41_MINI_DEPLOYMENT=${GPT41_MINI_DEPLOYMENT:-gpt-4.1-mini-GWC-TG}
+      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2025-01-01-preview}
+      # MySQL Database configuration (connect to db service)
+      - MYSQL_HOST=db
+      - MYSQL_PORT=3306
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-specification_assistant}
+      - MYSQL_USER=${MYSQL_USER:-app_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-app_password}
+      # JWT Authentication
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-this-secret-key-in-production}
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-1440}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  adminer:
+    image: adminer
+    container_name: specification-assistant-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+volumes:
+  db_data:

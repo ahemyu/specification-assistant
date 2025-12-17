@@ -1,0 +1,22 @@
+.app-layout {
+    display: flex;
+    justify-content: center; /* center wrapper horizontally */
+    padding: 20px;
+    height: 100%; /* Fit to viewport */
+    width: 100%;
+    overflow: hidden; /* Prevent spillover */
+}
+
+.app-wrapper {
+    display: flex;
+    flex-direction: row;
+    gap: 20px; /* space between sidebar and main container */
+    max-width: 1400px;
+    width: 100%;
+    height: 100%; /* Fill available height */
+}
+
+/* Main content sizing */
+.main-content {
+    flex: 1;
+}

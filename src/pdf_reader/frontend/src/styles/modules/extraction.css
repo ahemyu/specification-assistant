@@ -1,0 +1,716 @@
+/* Key Extraction Styles */
+
+.key-extraction-section {
+    padding: 0;
+}
+
+/* Excel Upload Area */
+.excel-upload-area {
+    background: var(--background-color);
+    padding: 32px;
+    border-radius: var(--border-radius-standard);
+    margin-bottom: 24px;
+    border: 2px solid var(--border-color);
+    box-shadow: var(--box-shadow-sm);
+}
+
+.file-input-group {
+    margin-bottom: 24px;
+}
+
+.excel-upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 32px;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
+    border-radius: var(--border-radius-standard);
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
+}
+
+.excel-upload-label:hover {
+    transform: scale(var(--scale-md));
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
+}
+
+.upload-icon {
+    font-size: 1.2em;
+}
+
+.upload-text {
+    font-size: 1em;
+}
+
+.excel-filename {
+    margin-top: 12px;
+    color: var(--text-color);
+    font-size: 0.95em;
+    font-weight: 500;
+}
+
+/* Keys Preview */
+.keys-preview {
+    background: var(--background-color-light);
+    padding: 20px;
+    border-radius: var(--border-radius-standard);
+    margin-bottom: 24px;
+    border: 2px solid var(--border-color);
+}
+
+.keys-preview ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 8px;
+}
+
+.keys-preview li {
+    background: var(--background-color);
+    padding: 8px 12px;
+    border-radius: var(--border-radius-standard);
+    color: var(--text-color-light);
+    font-size: 0.9em;
+    border: 1px solid var(--border-color);
+}
+
+/* Manual Input Area */
+.key-input-area {
+    background: var(--background-color);
+    padding: 24px;
+    border-radius: var(--border-radius-standard);
+    margin-bottom: 24px;
+    box-shadow: var(--box-shadow-sm);
+}
+
+.key-input-group {
+    margin-bottom: 24px;
+}
+
+.key-input-group:last-of-type {
+    margin-bottom: 28px;
+}
+
+.key-input-group label {
+    display: block;
+    margin-bottom: 10px;
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.key-input-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-standard);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.95em;
+    resize: vertical;
+    transition: all 0.3s ease;
+    line-height: 1.6;
+}
+
+.key-input-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(28, 44, 140, 0.1);
+}
+
+.key-input-group textarea::placeholder {
+    color: var(--text-color-lighter);
+}
+
+.extract-btn {
+    padding: 14px 48px;
+    background: var(--secondary-color);
+    color: var(--text-color-inverted);
+    border: none;
+    border-radius: var(--border-radius-bigger);
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: block;
+    margin: 1rem auto; /* Added margin-top: 1rem and changed margin: 0 auto to margin: 1rem auto */
+    max-width: 300px; /* Added max-width */
+    box-shadow: 0 4px 12px rgba(89, 189, 185, 0.25);
+}
+
+.extract-btn:hover:not(:disabled) {
+    background: var(--button-secondary-bg);
+    transform: scale(var(--scale-md));
+    box-shadow: 0 6px 16px rgba(89, 189, 185, 0.35);
+}
+
+.extract-btn:disabled {
+    background: var(--border-color-light);
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.6;
+}
+
+/* Extraction Results */
+.extraction-results-container {
+    margin-top: 32px;
+}
+
+.extraction-result-item {
+    background: var(--background-color);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius-standard);
+    padding: 28px;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+    box-shadow: var(--box-shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.carousel-card .extraction-result-item {
+    flex: 1;
+    margin-bottom: 0;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+.extraction-result-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--box-shadow-lg);
+    transform: scale(var(--scale-sm));
+}
+
+.key-value {
+    padding: 16px;
+    background: var(--background-color-light);
+    border-radius: var(--border-radius-standard);
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.key-value strong {
+    color: var(--text-color);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.key-value .found {
+    color: var(--accent-color);
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+.key-value .not-found {
+    color: var(--error-color);
+    font-style: italic;
+}
+
+.key-description {
+    line-height: 1.7;
+    color: var(--text-color-light);
+    padding: 16px;
+    background: var(--background-color-light);
+    border-radius: var(--border-radius-standard);
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.key-description strong {
+    color: var(--text-color);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.source-locations {
+    background: var(--background-color-light);
+    border-left: 4px solid var(--primary-color);
+    padding: 18px 20px;
+    border-radius: 8px;
+    flex-shrink: 0;
+}
+
+.source-locations strong {
+    color: var(--text-color);
+    display: block;
+    margin-bottom: 12px;
+    font-weight: 600;
+}
+
+.source-locations ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.source-locations li {
+    padding: 10px 12px;
+    color: var(--primary-color);
+    font-weight: 500;
+    background: var(--background-color);
+    margin-bottom: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--secondary-color);
+}
+
+.source-locations li:last-child {
+    margin-bottom: 0;
+}
+
+/* Reference Buttons */
+.reference-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.reference-btn {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
+    border: 2px solid var(--border-color-light);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--text-color-light);
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.reference-btn:hover {
+    background: var(--button-secondary-bg);
+    border-color: var(--secondary-color);
+    color: var(--text-color-inverted);
+    transform: scale(var(--scale-md));
+    box-shadow: 0 4px 12px rgba(89, 189, 185, 0.3);
+}
+
+.reference-btn.active {
+    background: var(--button-primary-bg);
+    border-color: transparent;
+    color: var(--text-color-inverted);
+    box-shadow: 0 4px 15px rgba(28, 44, 140, 0.3);
+}
+
+.reference-btn:active {
+    transform: scale(1);
+}
+
+/* Extraction action buttons container - appears centered below Extract Keys button */
+.extraction-action-buttons {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 0;
+}
+
+/* View Results Button - Primary Action */
+.view-results-btn-inline {
+    padding: 12px 28px;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
+    border: none;
+    border-radius: var(--border-radius-bigger);
+    cursor: pointer;
+    font-size: 1em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
+    white-space: nowrap;
+    display: block; /* Ensure it's a block element for margin auto to work */
+    margin: 1rem auto; /* Center horizontally with margin auto */
+    max-width: 300px; /* Control its width */
+}
+
+.view-results-btn-inline:hover {
+    transform: scale(var(--scale-md));
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
+}
+
+.view-results-btn-inline:active {
+    transform: scale(1);
+    box-shadow: 0 3px 10px rgba(28, 44, 140, 0.3);
+}
+
+/* Download Excel Button - Secondary Action (green but smaller) */
+.download-excel-btn-inline {
+    padding: 10px 22px;
+    background: var(--accent-color);
+    color: var(--text-color-inverted);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 8px rgba(135, 189, 37, 0.25);
+    white-space: nowrap;
+}
+
+.download-excel-btn-inline:hover {
+    background: var(--accent-color);
+    transform: scale(var(--scale-md));
+    box-shadow: 0 4px 10px rgba(135, 189, 37, 0.35);
+}
+
+.download-excel-btn-inline:active {
+    transform: scale(1);
+    box-shadow: 0 2px 6px rgba(135, 189, 37, 0.25);
+}
+
+/* Review/Edit Workflow Styles */
+
+/* Key Header with Status Badge */
+.key-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 16px;
+    border-bottom: 3px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.key-header .key-name {
+    padding-bottom: 0;
+    border-bottom: none;
+    margin: 0;
+    flex: 1;
+}
+
+/* Review Status Badges */
+.review-status-badge {
+    padding: 8px 20px;
+    border-radius: var(--border-radius-standard);
+    font-size: 0.85em;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: var(--box-shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.status-pending {
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
+    color: var(--text-color-light);
+    border: 2px solid var(--border-color-light);
+}
+
+.status-accepted {
+    background: var(--button-accent-bg);
+    color: var(--text-color-inverted);
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.3);
+}
+
+.status-edited {
+    background: var(--button-secondary-bg);
+    color: var(--text-color-inverted);
+    box-shadow: 0 4px 12px rgba(89, 189, 185, 0.3);
+}
+
+/* View Mode Container */
+.view-mode-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Review Actions */
+.review-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    justify-content: flex-end;
+}
+
+.accept-btn {
+    padding: 12px 24px;
+    background: var(--button-accent-bg);
+    color: var(--text-color-inverted);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(135, 189, 37, 0.3);
+    white-space: nowrap;
+}
+
+.accept-btn:hover:not(:disabled) {
+    transform: scale(var(--scale-md));
+}
+
+.accept-btn:active:not(:disabled) {
+    transform: scale(1);
+}
+
+.accept-btn:disabled {
+    background: var(--border-color-light);
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.5;
+}
+
+.edit-value-btn {
+    padding: 12px 24px;
+    background: var(--button-secondary-bg);
+    color: var(--text-color-inverted);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(89, 189, 185, 0.3);
+    white-space: nowrap;
+}
+
+.edit-value-btn:hover {
+    transform: scale(var(--scale-md));
+    box-shadow: 0 6px 16px rgba(89, 189, 185, 0.4);
+    background: var(--button-secondary-bg);
+}
+
+.edit-value-btn:active {
+    transform: scale(1);
+}
+
+/* Edit Mode Container */
+.edit-mode-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+    background: var(--background-color-light);
+    border-radius: var(--border-radius-standard);
+    border: 2px solid var(--secondary-color);
+    box-shadow: var(--box-shadow-lg);
+}
+
+.edit-value-input-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.edit-value-input-container label {
+    color: var(--text-color);
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.edit-value-input {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-size: 0.95em;
+    resize: vertical;
+    transition: all 0.3s ease;
+    line-height: 1.6;
+    background: var(--background-color);
+    min-height: 80px;
+}
+
+.edit-value-input:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(89, 189, 185, 0.1);
+}
+
+/* Edit Actions */
+.edit-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+.save-edit-btn {
+    padding: 12px 28px;
+    background: var(--button-primary-bg);
+    color: var(--text-color-inverted);
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(28, 44, 140, 0.3);
+    white-space: nowrap;
+}
+
+.save-edit-btn:hover {
+    transform: scale(var(--scale-md));
+    box-shadow: 0 6px 16px rgba(28, 44, 140, 0.4);
+}
+
+.save-edit-btn:active {
+    transform: scale(1);
+}
+
+.cancel-edit-btn {
+    padding: 12px 28px;
+    background: linear-gradient(135deg, var(--background-color-light) 0%, var(--background-color-lighter) 100%);
+    color: var(--text-color-light);
+    border: 2px solid var(--border-color-light);
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 0.95em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.cancel-edit-btn:hover {
+    background: linear-gradient(135deg, var(--background-color-lighter) 0%, var(--border-color-light) 100%);
+    transform: scale(var(--scale-md));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.cancel-edit-btn:active {
+    transform: scale(1);
+}
+
+/* Detected Counts Display */
+.detected-counts-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: 0.75rem;
+}
+
+.detected-count-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.7rem;
+    background-color: var(--background-color-light);
+    border-radius: var(--border-radius-standard);
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.detected-count-number {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    border-radius: var(--border-radius-standard);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-color-inverted);
+    padding: 0 0.3rem;
+}
+
+.detected-count-number.core {
+    background-color: var(--primary-color);
+}
+
+.detected-count-number.winding {
+    background-color: var(--accent-color);
+}
+
+.detected-count-label {
+    color: var(--text-color-light);
+    font-weight: 500;
+}
+
+/* New styles for ExtractionView.tsx */
+
+/* General utility margin-bottom */
+.mb-8 {
+    margin-bottom: 2rem;
+}
+
+/* Template Key Header Section */
+.template-key-header-section {
+    margin-bottom: 2rem; /* Matches existing inline style */
+}
+
+.template-key-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+/* Template Product Type Heading */
+.template-product-type-heading {
+    font-size: 1.1rem;
+    color: var(--text-color);
+    margin: 0;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+/* Loading Status Badge */
+.loading-status-badge {
+    font-size: 0.75rem;
+    color: #F59E0B; /* Specific orange */
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    background-color: #FEF3C7; /* Light yellow background */
+    border-radius: var(--border-radius-standard);
+    border: 2px solid #FCD34D; /* Yellow border */
+    font-weight: 600;
+    margin-left: 0.75rem;
+}
+
+[data-theme='dark'] .loading-status-badge {
+    color: #FBBF24; /* Dark mode yellow/orange */
+    background-color: #4A3C1A; /* Dark mode background */
+    border-color: #D97706; /* Dark mode border */
+}
+
+/* Small Spinner for Loading Badge */
+.loading-spinner-small {
+    width: 10px;
+    height: 10px;
+    border-width: 2px;
+    border-top-color: #F59E0B; /* Match badge color */
+}
+
+[data-theme='dark'] .loading-spinner-small {
+    border-top-color: #FBBF24; /* Dark mode spinner color */
+}
+
+/* Template Key Count Text */
+.template-key-count-text {
+    font-size: 0.9rem;
+    color: var(--text-color-light);
+    margin: 0;
+}
+
+/* View All Keys Button */
+.view-all-keys-button {
+    padding: 0.4rem 0.9rem;
+    background-color: var(--background-color-light);
+    color: var(--text-color-light);
+    border-radius: var(--border-radius-standard);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.view-all-keys-button:hover {
+    background-color: var(--background-color-lighter);
+}

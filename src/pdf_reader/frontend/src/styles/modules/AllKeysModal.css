@@ -1,0 +1,155 @@
+.all-keys-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1.5rem;
+  backdrop-filter: blur(5px); /* Add a blur effect to the background */
+}
+
+.all-keys-modal-content {
+  background-color: var(--background-color);
+  border-radius: var(--border-radius-standard);
+  max-width: 900px; /* Increased max-width */
+  max-height: 90vh; /* Increased max-height */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  box-shadow: var(--box-shadow-2xl); /* Softer, larger shadow */
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  /* Add animation */
+  animation: slideDown 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.all-keys-modal-header {
+  padding: 1.25rem 2rem; /* Adjusted padding */
+  padding-right: 20px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--background-color-light);
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.all-keys-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-color-lighter);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius-standard);
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.all-keys-modal-close-btn:hover {
+  background: var(--background-color-lighter); /* Lighter hover background */
+  color: var(--text-color);
+  transform: scale(var(--scale-lg)); /* Match chat close button */
+}
+
+.all-keys-modal-body {
+  padding: 1.5rem 2rem 2rem; /* Adjusted padding */
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Modern Scrollbar for modal body */
+.all-keys-modal-body::-webkit-scrollbar {
+    width: 10px;
+}
+.all-keys-modal-body::-webkit-scrollbar-track {
+    background: transparent;
+    margin-top: 20px;
+    margin-bottom: 20px;
+}
+.all-keys-modal-body::-webkit-scrollbar-thumb {
+    background: var(--border-color-light);
+    border-radius: 10px;
+    border: 2px solid var(--background-color);
+}
+.all-keys-modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--text-color-lighter);
+}
+
+
+.category-section {
+  margin-bottom: 2.5rem;
+}
+.category-section:last-of-type {
+  margin-bottom: 1rem; /* Less margin on the last section */
+}
+
+.category-header {
+  padding-bottom: 0.75rem; /* More space */
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.keys-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+}
+
+.key-item {
+  padding: 0.85rem 1.1rem;
+  background-color: var(--background-color);
+  border: 1px solid var(--border-color); /* Slightly different border color */
+  border-radius: 30px; /* More rounded */
+  font-size: 0.9rem;
+  color: var(--text-color);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  display: flex; /* use flex to align content */
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.key-item:hover {
+  box-shadow: var(--box-shadow-md); /* Softer, larger hover shadow */
+  border-color: var(--secondary-color);
+}
+
+.key-item-content {
+  /* This container is now part of the .key-item flex layout */
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1; /* Take up available space */
+}
+
+.key-item-index {
+  color: var(--text-color-lighter);
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.key-item-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-color); /* Darker text for better readability */
+}

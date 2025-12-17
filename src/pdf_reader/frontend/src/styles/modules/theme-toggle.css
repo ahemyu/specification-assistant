@@ -1,0 +1,28 @@
+.theme-toggle-container {
+    margin-top: auto;
+}
+
+.theme-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-color-lighter);
+    font-size: 1em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    width: 100%;
+    border-radius: 8px;
+}
+
+.theme-toggle-btn:hover {
+    background: var(--background-color-light);
+    color: var(--text-color);
+}
+
+.theme-toggle-btn .icon {
+    font-size: 1.2em;
+}

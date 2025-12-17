@@ -1,22 +1,171 @@
-# Specification Assistant
+# PDF Text Extraction Service
 
-This Repo will be used to develop the Specification Assistant to automatically extract keys out of multiple given specification PDFs of clients that will be used to create a data sheet. 
+FastAPI web service for extracting and analyzing PDF documents with LLM-powered intelligence.
 
-## Plan
+## Features
 
-The initial idea is to have a webapp with a simple interface where we could upload the specification pdfs of a project, let the AI do it's job and then present the extracted keys. 
+- Extract text and tables from PDFs (pdfplumber) with parallel processing
+- Preview extracted content in browser
+- LLM-powered key extraction (e.g., "voltage rating", "manufacturer name")
+- Upload Excel templates with keys and auto-fill values using LLM
+- Chat with PDFs using natural language questions
+- Export extracted key-value pairs to Excel
 
-For this we will need to write a service that can extract the text out of pdfs reliably (including tables, images, etc) which could then later be chunked and uploaded to a vector Database, to be able to do RAG on them later (basically have a LLM(Large Language Model) search for the relevant information in the vector Database to extract the information needed for a key). 
+## Prerequisites
 
-After we are satisfied with the performance of extracting text out of the PDFs we will need to :
-- decide how to chunk the pdfs (easiest one is per page, more sophisticated approaches like Document or semantic chunking could be tried)
-- choose an embedding model/s to create the embeddings out of the created chunks 
-- choose a Vector Database to store the chunk embeddings in (Pinecone, Qdrant)
-- choose a LLM  orchestration framwork to handle the llm calls (either LLamaIndex or Langchain)
-- write a complete end-to-end service as REST APIs that allows: 
-    - uploading multiple PDFs
-    - chunking the pdfs
-    - creating embeddings out of the chunks
-    - uploading the chunks to the vector Database
-    - calls a LLM-Endpoint which for each needed key performs semantic/hybrid search (RAG) to retrieve relevant chunks out of the PDFs, and either outputs the required key OR states that it could not find relevant information to do that. 
-    - returns the keys in JSON which then can be used in the frontend to display the results. 
+- **Python 3.11+** with `uv` (`pip install uv`)
+- **Node.js 18+** with npm
+- **Docker** (for the MySQL database)
+- **Git**
+
+## Environment Variables
+
+Create `.env` in the project root and set required values:
+export OPENAI_API_KEY="Your key here"
+
+## Docker Compose
+
+Start the complete application (backend, database, and Adminer for DB administration) from the project root:
+
+```bash
+docker-compose up -d
+```
+
+- App: http://localhost:8000
+- Adminer (DB UI): http://localhost:8080 (Server: `db`, credentials from `.env` or defaults)
+
+See `DOCKER.md` for configuration and details.
+
+## Linux/macOS Quick Start
+
+1. Run `uv sync` from the repo root the first time to install Python deps.
+2. Run `npm install` once inside `src/pdf_reader/frontend/`.
+3. Execute the startup script from the root:
+   ```bash
+   ./start.sh        # dev mode, port 8000 (default)
+   sudo ./start.sh prod   # prod mode, port 80 (requires root)
+   ```
+   - Starts the MySQL database container via Docker Compose.
+   - Builds the frontend via `npm run build`.
+   - Loads `.env` (prompts for `GPT41_API_KEY` and `GPT41_MINI_API_KEY` if missing).
+   - Starts the FastAPI server with `uv run main.py`.
+   - On shutdown (Ctrl+C), the script stops the MySQL container automatically.
+
+## Linux/macOS Manual Workflow
+
+### Install dependencies
+```bash
+# Python deps
+uv sync
+
+# Frontend deps
+cd src/pdf_reader/frontend
+npm install
+```
+
+### Run the backend
+```bash
+# From project root
+uv run src/pdf_reader/main.py
+
+# Or inside backend folder
+cd src/pdf_reader
+uv run main.py
+```
+
+Alternative (FastAPI + Uvicorn):
+```bash
+uv run uvicorn src.pdf_reader.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### Frontend development server
+```bash
+cd src/pdf_reader/frontend
+VITE_DEV_MODE=true npm run dev
+```
+- Dev server: http://localhost:5173
+
+### Production build
+```bash
+cd src/pdf_reader/frontend
+npm run build
+```
+Serve the built assets via the FastAPI app (already handled when running the backend from `src/pdf_reader`).
+
+### Access points
+- Backend / docs: http://localhost:8000 (Swagger at `/docs`, ReDoc at `/redoc`).
+- Frontend dev server: http://localhost:5173.
+
+## Windows Setup
+
+### 1. Clone the repository
+```powershell
+git clone git@code.trench-group.net:operational-excellence-trench-germany/specification-assistant.git
+cd specification-assistant
+```
+
+### 2. Run the setup script
+```powershell
+./setup-windows.ps1
+```
+The script validates prerequisites, prompts for `OPENAI_API_KEY`, installs Python + frontend dependencies, and builds the frontend. If PowerShell blocks the script, run:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+### 3. Start the backend
+```powershell
+cd src\pdf_reader
+uv run main.py
+```
+Access http://localhost:8000.
+
+### Manual fallback (if the script fails)
+1. `uv sync`
+2. Set `OPENAI_API_KEY` for the current user:
+   ```powershell
+   [System.Environment]::SetEnvironmentVariable('OPENAI_API_KEY', 'your-api-key-here', 'User')
+   ```
+3. `cd src\pdf_reader\frontend` and run `npm install`
+4. `npm run build`
+5. `cd ..` and run `uv run main.py`
+
+### Windows troubleshooting
+- **"python/uv not recognized"**: reopen PowerShell or reinstall with PATH enabled.
+- **Script execution errors**: adjust execution policy (see above).
+- **Port conflicts**: `uv run uvicorn src.pdf_reader.main:app --port 8001`.
+- **Module not found**: ensure `uv sync` completed successfully.
+
+## Usage
+
+1. Register or log in via the web UI.
+2. Upload PDFs via the web UI.
+3. Ask questions about uploaded PDFs via the Chat Button.
+4. Preview extracted text and tables.
+5. Extract keys appropriate for selected product type using LLM
+6. Review and accept/edit keys extracted from the LLM.
+7. Download results as Excel.
+
+User accounts, uploaded PDFs + metdata, and extraction results (coming soon) are stored in the MySQL database.
+
+## Project Structure
+
+```
+pdf_reader/
+├── backend/              # FastAPI routers, services, schemas
+├── frontend/             # React + Vite app (src/, dist/)
+├── main.py               # Entry point used by uv/uvicorn
+```
+
+## Tech Stack
+
+- **FastAPI** for REST + docs
+- **pdfplumber** for PDF extraction
+- **LangChain + Azure OpenAI** for LLM-driven key extraction + Q&A
+- **pandas + openpyxl** for Excel export
+- **React + TypeScript + Vite** for the frontend
+
+## API Docs
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
