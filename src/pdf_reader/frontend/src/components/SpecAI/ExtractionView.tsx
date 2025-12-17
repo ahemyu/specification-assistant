@@ -82,6 +82,7 @@ export function ExtractionView() {
     setDetectedCoreCount,
     setDetectedWindingCount,
     setActiveSubMenuItem,
+    token,
   } = useAppStore()
   const { t, language } = useTranslation()
 
@@ -168,9 +169,14 @@ export function ExtractionView() {
     showNotification(t('extractingKeysNotification').replace('{count}', String(templateKeys.length)), 'info')
 
     try {
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/extract-keys', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           file_ids: uploadedFileIds,
           key_names: templateKeys.map(k => k.name),
@@ -250,9 +256,14 @@ export function ExtractionView() {
     showNotification(t('extractingManualNotification'), 'info')
 
     try {
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch('/extract-keys', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({
           file_ids: uploadedFileIds,
           key_names: keyNames,
