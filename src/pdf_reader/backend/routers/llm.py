@@ -4,7 +4,8 @@ import json
 import logging
 
 from backend.database import get_db
-from backend.dependencies import get_llm_extractor, get_pdf_data_for_file_ids_async
+from backend.dependencies import get_current_user, get_llm_extractor, get_pdf_data_for_file_ids_async
+from backend.models.user import User
 from backend.schemas.domain import SourceLocation
 from backend.schemas.requests import (
     CoreWindingCountRequest,
@@ -13,6 +14,7 @@ from backend.schemas.requests import (
     ProductTypeDetectionRequest,
     QuestionRequest,
 )
+from backend.services.extraction_result import create_extraction_result
 from backend.services.llm_key_extractor import LLMKeyExtractor
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
@@ -28,6 +30,7 @@ async def extract_keys(
     request: KeyExtractionRequest,
     db: AsyncSession = Depends(get_db),
     llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
+    current_user: User = Depends(get_current_user),
 ) -> dict:
     """
     Extract keys from one or more previously uploaded PDFs using LLM.
@@ -36,6 +39,7 @@ async def extract_keys(
     - request: KeyExtractionRequest containing file_ids and key_names
     - db: AsyncSession database session
     - llm_extractor: LLMKeyExtractor service for key extraction
+    - current_user: Authenticated user
 
     Returns:
     - Dictionary mapping each key name to its KeyExtractionResult
@@ -106,7 +110,29 @@ async def extract_keys(
                 result.matched_line_ids = None
 
         # Convert results to dict with serializable values
-        return {key: result.model_dump() if result else None for key, result in results.items()}
+        results_dict = {key: result.model_dump() if result else None for key, result in results.items()}
+
+        # Extract simple key-value pairs for database storage
+        simple_results = {}
+        for key, result_data in results_dict.items():
+            if result_data:
+                simple_results[key] = result_data.get("key_value")
+            else:
+                simple_results[key] = None
+
+        try:
+            await create_extraction_result(
+                db=db,
+                user_id=current_user.id,
+                file_ids=request.file_ids,
+                extraction_results=simple_results,
+                language=request.language,
+            )
+            logger.info(f"Successfully saved extraction results for user {current_user.id}")
+        except Exception as e:
+            logger.error(f"Error saving extraction results to database: {str(e)}")
+
+        return results_dict
     except Exception as e:
         logger.error(f"Error during LLM multiple key extraction: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during key extraction: {str(e)}")
