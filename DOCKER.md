@@ -20,7 +20,7 @@ This guide explains how to run the Specification Assistant application using Doc
 
 3. Build and run the application:
    ```bash
-   docker-compose up -d
+   docker compose up -d
    ```
 
    This starts three services:
@@ -105,3 +105,28 @@ docker-compose up -d --build
 ## Health Checks
 
 Both the application and database containers include health checks that run every 10-30 seconds to ensure services are responding correctly.
+
+## Migrating from docker-compose to docker compose (on WSL)
+
+   The project now uses Docker Compose V2 (docker compose) instead of the legacy docker-compose.
+
+   Steps:
+
+   - Remove old docker-compose:  sudo apt remove docker-compose
+   - Add Docker's official repo and install the plugin:  
+       sudo apt-get install ca-certificates curl
+       sudo install -m 0755 -d /etc/apt/keyrings
+       sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+       sudo chmod a+r /etc/apt/keyrings/docker.asc
+       
+       echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+       sudo apt-get update
+       sudo apt-get install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+   - Either do sudo service docker start each time you open wsl or: 
+      - Auto-start Docker on WSL boot - add to ~/.bashrc or ~/.zshrc:  if ! pgrep -x "dockerd" > /dev/null; then
+           sudo service docker start > /dev/null 2>&1
+       fi
+      - (Optional) Skip sudo password for docker service - run sudo visudo and add:  %docker ALL=(ALL) NOPASSWD: /usr/sbin/service docker *
+      - Add yourself to docker group and restart WSL:  sudo usermod -aG docker $USER
+   - Verify installation:  docker compose version
