@@ -21,7 +21,7 @@ ENV_FILE="${ROOT_DIR}/.env"
 cleanup() {
   echo ""
   echo "Shutting down database..."
-  (cd "${ROOT_DIR}" && docker-compose down)
+  (cd "${ROOT_DIR}" && docker compose down)
   echo "Cleanup complete"
 }
 
@@ -44,10 +44,10 @@ echo "Building frontend (npm run build)"
   npm run build
 )
 
-echo "Starting database (docker-compose up -d db)"
+echo "Starting database (docker compose up -d db)"
 (
   cd "${ROOT_DIR}" &&
-  docker-compose up -d db
+  docker compose up -d db
 )
 
 echo "Waiting for database to be ready..."
