@@ -1,3 +1,7 @@
+I wrote the backend of this app mainly myself during my 3 months as a working student at [Trench](https://trench-group.com/) and vibe coded the frontend together with the other working students.
+
+Below is a LLM-SLop Description of the app which should cover what it does and how to use it.
+
 # PDF Text Extraction Service
 
 FastAPI web service for extracting and analyzing PDF documents with LLM-powered intelligence.
