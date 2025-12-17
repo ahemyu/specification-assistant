@@ -101,6 +101,8 @@ export const de = {
   extractionSummarySubtitle: "Erfolgreich {count} Schlüssel aus Ihren Dokumenten extrahiert",
   startNewExtraction: "Neue Extraktion starten",
   downloadResults: "Ergebnisse herunterladen",
+  downloadAsPDF: "Als PDF herunterladen",
+  downloadAsExcel: "Als Excel herunterladen",
   keyNameHeader: "Schlüsselname",
   extractedValueHeader: "Extrahierter Wert",
   statusHeader: "Status",

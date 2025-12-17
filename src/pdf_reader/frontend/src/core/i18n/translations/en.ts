@@ -101,6 +101,8 @@ export const en = {
   extractionSummarySubtitle: "Successfully extracted {count} key{countPlural} from your documents",
   startNewExtraction: "Start New Extraction",
   downloadResults: "Download Results",
+  downloadAsPDF: "Download as PDF",
+  downloadAsExcel: "Download as Excel",
   keyNameHeader: "Key Name",
   extractedValueHeader: "Extracted Value",
   statusHeader: "Status",
