@@ -17,11 +17,11 @@ async def download_extraction_excel(request: ExcelDownloadRequest):
     """
     Download extraction results as an Excel file with four columns: Key, Value, Description, and Reference.
 
-    Requires:
-    - extraction_results: Dictionary mapping key names to their extraction results
+    Args:
+    - request: ExcelDownloadRequest containing extraction_results dictionary
 
     Returns:
-    - Excel file (.xlsx) with extracted key-value pairs, descriptions, and references
+    - StreamingResponse with Excel file (.xlsx) containing extracted key-value pairs, descriptions, and references
     """
     try:
         # Prepare data for Excel

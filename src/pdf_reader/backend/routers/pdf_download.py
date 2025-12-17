@@ -22,11 +22,11 @@ async def download_extraction_pdf(request: ExcelDownloadRequest):
     """
     Download extraction results as a PDF file with key-value pairs in table format.
 
-    Requires:
-    - extraction_results: Dictionary mapping key names to their extraction results
+    Args:
+    - request: ExcelDownloadRequest containing extraction_results dictionary
 
     Returns:
-    - PDF file with extracted key-value pairs in a clean table format
+    - StreamingResponse with PDF file containing extracted key-value pairs in a clean table format
     """
     try:
         # Prepare data for PDF table

@@ -32,9 +32,10 @@ async def extract_keys(
     """
     Extract keys from one or more previously uploaded PDFs using LLM.
 
-    Requires:
-    - file_ids: List of file IDs from previous /upload requests
-    - key_names: List of keys to extract
+    Args:
+    - request: KeyExtractionRequest containing file_ids and key_names
+    - db: AsyncSession database session
+    - llm_extractor: LLMKeyExtractor service for key extraction
 
     Returns:
     - Dictionary mapping each key name to its KeyExtractionResult
@@ -120,9 +121,10 @@ async def ask_question_stream(
     """
     Ask a general question about one or more previously uploaded PDFs using LLM with streaming.
 
-    Requires:
-    - file_ids: List of file IDs from previous /upload requests
-    - question: The question to ask about the documents
+    Args:
+    - request: QuestionRequest containing file_ids and question
+    - db: AsyncSession database session
+    - llm_extractor: LLMKeyExtractor service for question answering
 
     Returns:
     - Streaming response with Server-Sent Events (SSE) format
@@ -177,10 +179,10 @@ async def compare_pdfs(
     """
     Compare two versions of a PDF to identify changes in specifications.
 
-    Requires:
-    - base_file_id: File ID of the original/old version
-    - new_file_id: File ID of the new/updated version
-    - additional_context (optional): Context about what types of changes to focus on
+    Args:
+    - request: PDFComparisonRequest containing base_file_id, new_file_id, and additional_context
+    - db: AsyncSession database session
+    - llm_extractor: LLMKeyExtractor service for PDF comparison
 
     Returns:
     - PDFComparisonResult with summary and list of changes
@@ -216,8 +218,10 @@ async def detect_product_type(
     - Spannungswandler (Voltage Instrument Transformer)
     - Kombiwandler (Combined Instrument Transformer)
 
-    Requires:
-    - file_ids: List of file IDs from previous /upload requests
+    Args:
+    - request: ProductTypeDetectionRequest containing file_ids
+    - db: AsyncSession database session
+    - llm_extractor: LLMKeyExtractor service for product type detection
 
     Returns:
     - ProductTypeDetectionResult with detected type, confidence, and evidence
@@ -245,9 +249,10 @@ async def detect_core_winding_count(
     This endpoint analyzes PDF content to determine how many cores (Kern)
     or windings (Wicklung) are specified, based on the product type.
 
-    Requires:
-    - file_ids: List of file IDs from previous /upload requests
-    - product_type: Product type ('Stromwandler', 'Spannungswandler', 'Kombiwandler')
+    Args:
+    - request: CoreWindingCountRequest containing file_ids and product_type
+    - db: AsyncSession database session
+    - llm_extractor: LLMKeyExtractor service for core/winding count detection
 
     Returns:
     - CoreWindingCountResult with max_core_number and max_winding_number
