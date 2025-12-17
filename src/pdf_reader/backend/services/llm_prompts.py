@@ -43,7 +43,7 @@ For each key, you MUST return:
 - key_name: the exact key string as provided in the list above
 - key_value: the extracted value or null if not found
 - source_locations: all PDF filenames and page numbers where the information was found
-- description: explanation of where and how you found it
+- description: explanation of where and how you found it (DO NOT mention line_id, cell_id, or other internal markers)
 - matched_line_ids: list of [line_id] or [cell_id] markers that contain the value (REQUIRED)
 
 {key_metadata_section}
@@ -57,15 +57,16 @@ IMPORTANT INSTRUCTIONS:
 4. CRITICAL: When you find a key's value, you MUST identify and return the line_id(s)
    or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.
    Put these IDs in the matched_line_ids field as a list of strings. DO NOT skip this field.
-5. TRANSLATION REQUIREMENT: ALWAYS translate each extracted value to German if it is not already in German.
-   For example, if you find "Voltage Transformer", translate it to "Spannungswandler".
-   If the value is already in German or is a number/code, keep it as is.
-6. LANGUAGE REQUIREMENT: ALWAYS write the description in German, regardless of the document language.
-   Provide a clear description of where and how you found the information, written in German.
+5. TRANSLATION REQUIREMENT: ALWAYS translate each extracted value to the target language ({language}).
+   For example, if {language} is "de" and you find "Voltage Transformer", translate it to "Spannungswandler".
+   If the value is already in the target language or is a number/code, keep it as is.
+6. LANGUAGE REQUIREMENT: ALWAYS write the description in the target language ({language}).
+   Provide a clear description of where and how you found the information, written in {language}.
+   DO NOT mention line_id, cell_id, or other internal markers in the description.
 7. If a key is not found in any document:
    - Set key_value to null
    - Set source_locations to an empty list []
-   - Set description to exactly "Nicht gefunden"
+   - Set description to exactly "{not_found_text}"
    - Set matched_line_ids to null
 8. Be precise about page numbers - always reference the specific pages where
    information was found.
@@ -93,7 +94,7 @@ why in the description."""
 QA_SYSTEM_PROMPT = """You are a technical document assistant helping users understand specifications.
 
 INSTRUCTIONS:
-- Answer in the SAME LANGUAGE as the question
+- ALWAYS answer in the specified language: {language}
 - Base answers on the document contents provided below
 - Cite specific documents and page numbers when referencing information
 - State clearly if information cannot be found in the documents
