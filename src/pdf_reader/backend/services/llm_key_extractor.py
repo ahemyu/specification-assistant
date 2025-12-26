@@ -1,19 +1,14 @@
-"""LLM-based key extraction service using LangChain and Azure OpenAI."""
+"""LLM-based key extraction service using LangChain and Google Gemini."""
 
 import asyncio
 import logging
 import time
 
 from backend.config import (
-    AZURE_OPENAI_API_VERSION,
     DEFAULT_BATCH_SIZE,
-    GPT41_API_KEY,
-    GPT41_DEPLOYMENT,
-    GPT41_ENDPOINT,
-    GPT41_MINI_API_KEY,
-    GPT41_MINI_DEPLOYMENT,
-    GPT41_MINI_ENDPOINT,
-    MAX_CONCURRENT_BATCHES_GPT41,
+    GEMINI_MODEL,
+    GOOGLE_API_KEY,
+    MAX_CONCURRENT_BATCHES,
 )
 from backend.schemas.domain import (
     CoreWindingCountResult,
@@ -31,29 +26,19 @@ from backend.services.llm_prompts import (
     QA_SYSTEM_PROMPT,
 )
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
-from langchain_openai import AzureChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 logger = logging.getLogger(__name__)
 
 
-def _create_gpt41_llm(temperature: float = 0) -> AzureChatOpenAI:
-    """Create an AzureChatOpenAI instance for gpt-4.1."""
-    return AzureChatOpenAI(
-        azure_deployment=GPT41_DEPLOYMENT,
-        api_key=GPT41_API_KEY,
-        azure_endpoint=GPT41_ENDPOINT,
-        api_version=AZURE_OPENAI_API_VERSION,
-        temperature=temperature,
-    )
-
-
-def _create_gpt41_mini_llm(temperature: float = 0) -> AzureChatOpenAI:
-    """Create an AzureChatOpenAI instance for gpt-4.1-mini."""
-    return AzureChatOpenAI(
-        azure_deployment=GPT41_MINI_DEPLOYMENT,
-        api_key=GPT41_MINI_API_KEY,
-        azure_endpoint=GPT41_MINI_ENDPOINT,
-        api_version=AZURE_OPENAI_API_VERSION,
+def _create_gemini_llm(temperature: float = 0) -> ChatGoogleGenerativeAI:
+    """Create a ChatGoogleGenerativeAI instance for Google Gemini models."""
+    if not GOOGLE_API_KEY:
+        logger.warning("GOOGLE_API_KEY is not set. LLM features will fail.")
+    
+    return ChatGoogleGenerativeAI(
+        model=GEMINI_MODEL,
+        google_api_key=GOOGLE_API_KEY,
         temperature=temperature,
     )
 
@@ -76,30 +61,25 @@ class LLMKeyExtractor:
     """Service class for extracting specific keys from PDF text using LLM.
 
     Model usage:
-    - gpt-4.1: Key extraction, PDF comparison (accuracy-critical)
-    - gpt-4.1-mini: Chat, product type detection, core/winding count (speed-critical)
+    - gemini-2.5-flash: Used for all operations (extraction, chat, detection).
     """
 
     def __init__(self):
-        """
-        Initialize the LLM key extractor.
+        """Initialize the LLM key extractor."""
+        # Initialize Gemini LLM
+        self.llm = _create_gemini_llm(temperature=0)
+        
+        # Structured output models
+        self.multi_structured_llm = self.llm.with_structured_output(MultiKeyExtractionResult)
+        self.comparison_llm = self.llm.with_structured_output(PDFComparisonResult)
+        self.product_type_llm = self.llm.with_structured_output(ProductTypeDetectionResult)
+        self.core_winding_llm = self.llm.with_structured_output(CoreWindingCountResult)
+        
+        # Chat LLM (slightly higher temperature for creativity/naturalness if desired, 
+        # but kept low for factual consistency)
+        self.qa_llm = _create_gemini_llm(temperature=0.3)
 
-        Args:
-            api_key: Deprecated, kept for backward compatibility.
-        """
-        # Pre-initialize LLMs for gpt-4.1 (extraction/comparison)
-        self.gpt41_llm = _create_gpt41_llm(temperature=0)
-        self.multi_structured_llm = self.gpt41_llm.with_structured_output(MultiKeyExtractionResult)
-        self.comparison_llm = self.gpt41_llm.with_structured_output(PDFComparisonResult)
-
-        # Pre-initialize LLMs for gpt-4.1-mini (detection/chat)
-        self.gpt41_mini_llm = _create_gpt41_mini_llm(temperature=0)
-        self.product_type_llm = self.gpt41_mini_llm.with_structured_output(ProductTypeDetectionResult)
-        self.core_winding_llm = self.gpt41_mini_llm.with_structured_output(CoreWindingCountResult)
-        self.qa_llm = _create_gpt41_mini_llm(temperature=0.3)
-
-        logger.info("Initialized LLM key extractor (gpt-4.1 for extraction, gpt-4.1-mini for detection)")
-
+        logger.info(f"Initialized LLM key extractor using {GEMINI_MODEL}")
 
     async def _extract_keys_batch(
         self,
@@ -107,9 +87,18 @@ class LLMKeyExtractor:
         pdf_data: list[dict],
         language: str = "en",
     ) -> dict[str, KeyExtractionResult | None]:
-        """Extract a batch of keys from the same PDF data in a single LLM call.
         """
-        logger.info("Extracting batch of %s keys from %s PDF(s) using gpt-4.1", len(key_names), len(pdf_data))
+        Extract a batch of keys from the same PDF data in a single LLM call.
+
+        Args:
+            key_names: List of key names to extract in this batch
+            pdf_data: List of PDF data dictionaries
+            language: Language for extracted values and descriptions ("en" or "de")
+
+        Returns:
+            Dictionary mapping key names to KeyExtractionResult objects (or None if failed)
+        """
+        logger.info("Extracting batch of %s keys from %s PDF(s) using Gemini", len(key_names), len(pdf_data))
 
         full_context = _build_pdf_context(pdf_data)
 
@@ -166,7 +155,6 @@ class LLMKeyExtractor:
             logger.error(f"Error extracting batch of keys {key_names} after {llm_call_time:.1f}s: {str(e)}")
             return {name: None for name in key_names}
 
-
     async def extract_keys(
         self,
         key_names: list[str],
@@ -174,25 +162,30 @@ class LLMKeyExtractor:
         batch_size: int = DEFAULT_BATCH_SIZE,
         language: str = "en",
     ) -> dict[str, KeyExtractionResult | None]:
-        """Extract multiple keys from the same PDF data using batched LLM calls.
+        """
+        Extract multiple keys from the same PDF data using batched LLM calls.
 
-        Keys are grouped into batches to reduce
-        the number of requests.
+        Keys are grouped into batches to reduce the number of requests while respecting
+        context limits and optimizing for latency.
 
         Args:
             key_names: List of key names to extract
             pdf_data: List of PDF data dictionaries
             batch_size: Number of keys per batch
             language: Language for extracted values and descriptions ("en" or "de")
+
+        Returns:
+            Dictionary mapping key names to KeyExtractionResult objects (or None)
         """
         if not key_names:
             return {}
 
-        max_concurrent = MAX_CONCURRENT_BATCHES_GPT41
+        # Use the configured max concurrent batches (default 5 for Gemini)
+        max_concurrent = MAX_CONCURRENT_BATCHES
         start_time = time.time()
 
         logger.info(
-            "Starting batched extraction of %s keys (batch_size=%s, max_concurrent=%s, model=gpt-4.1)",
+            "Starting batched extraction of %s keys (batch_size=%s, max_concurrent=%s, model=Gemini)",
             len(key_names),
             batch_size,
             max_concurrent,
@@ -200,7 +193,7 @@ class LLMKeyExtractor:
 
         # Split keys into batches
         batches: list[list[str]] = [key_names[i : i + batch_size] for i in range(0, len(key_names), batch_size)]
-
+        
         logger.info(f"Split {len(key_names)} keys into {len(batches)} batches")
 
         semaphore = asyncio.Semaphore(max_concurrent)
@@ -249,7 +242,7 @@ class LLMKeyExtractor:
             - system_message_content: The system message content (only on first chunk for first
                                       message, None otherwise)
         """
-        logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s) using gpt-4.1-mini")
+        logger.info(f"Answering question with streaming about {len(pdf_data)} PDF(s) using Gemini")
 
         # Check if we have a system message in conversation history
         has_system_message = (
@@ -257,14 +250,14 @@ class LLMKeyExtractor:
         )
 
         system_message_to_return = None
-
+        
         # Build message list
         messages = []
 
         if has_system_message:
             # Use existing system message from history
             messages.append(SystemMessage(content=conversation_history[0]["content"]))
-
+            
             # Add rest of conversation history (skip first system message)
             for msg in conversation_history[1:]:
                 if msg["role"] == "user":
@@ -274,10 +267,10 @@ class LLMKeyExtractor:
         else:
             # No system message in history - create new one and add conversation history
             full_context = _build_pdf_context(pdf_data)
-
+            
             # Build system message using the template
             system_content = QA_SYSTEM_PROMPT.format(document_contents=full_context, language=language)
-
+            
             messages.append(SystemMessage(content=system_content))
             system_message_to_return = system_content
 
@@ -318,7 +311,7 @@ class LLMKeyExtractor:
         Returns:
             ProductTypeDetectionResult with detected type, confidence, and evidence
         """
-        logger.info(f"Detecting product type from {len(pdf_data)} PDF(s) using gpt-4.1-mini")
+        logger.info(f"Detecting product type from {len(pdf_data)} PDF(s) using Gemini")
 
         full_context = _build_pdf_context(pdf_data)
         prompt = PRODUCT_TYPE_DETECTION_PROMPT.format(full_context=full_context)
@@ -342,7 +335,7 @@ class LLMKeyExtractor:
         Returns:
             CoreWindingCountResult with max core and winding numbers
         """
-        logger.info(f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s) using gpt-4.1-mini")
+        logger.info(f"Detecting core/winding count for {product_type} from {len(pdf_data)} PDF(s) using Gemini")
 
         full_context = _build_pdf_context(pdf_data)
 
@@ -359,7 +352,7 @@ class LLMKeyExtractor:
             search_target = "windings (Wicklung)"
             search_instructions = """**Looking for Windings (Wicklung):**
 - Search for "Wicklung 1", "Wicklung 2", up to "Wicklung 5"
-- Check for parameters like "Genauigkeitsklasse Wicklung X", \
+- Check for parameters like "Genauigkeitsklasse Wicklung X", \ 
 "Nennspannung primär (V) Wicklung X"
 - Look in tables for winding-specific specifications
 - Set max_winding_number to the highest Wicklung number found
@@ -378,7 +371,6 @@ For Windings (Wicklung):
 
 Return both max_core_number and max_winding_number."""
 
-        # Build the prompt using the template
         prompt = CORE_WINDING_COUNT_PROMPT.format(
             product_type=product_type,
             search_target=search_target,
@@ -412,7 +404,7 @@ Return both max_core_number and max_winding_number."""
         Returns:
             PDFComparisonResult with summary and list of changes
         """
-        logger.info(f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}' using gpt-4.1")
+        logger.info(f"Comparing PDFs: '{base_pdf_data['filename']}' vs '{new_pdf_data['filename']}' using Gemini")
 
         base_context = _build_pdf_context([base_pdf_data])
         new_context = _build_pdf_context([new_pdf_data])
