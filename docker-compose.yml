@@ -26,15 +26,6 @@ services:
     ports:
       - "8000:8000"
     environment:
-      # Azure OpenAI configuration - GPT-4.1 (key extraction, PDF comparison)
-      - GPT41_API_KEY=${GPT41_API_KEY}
-      - GPT41_ENDPOINT=${GPT41_ENDPOINT:-https://westeurope.api.cognitive.microsoft.com/}
-      - GPT41_DEPLOYMENT=${GPT41_DEPLOYMENT:-gpt-4.1}
-      # Azure OpenAI configuration - GPT-4.1-mini (chat, detection)
-      - GPT41_MINI_API_KEY=${GPT41_MINI_API_KEY}
-      - GPT41_MINI_ENDPOINT=${GPT41_MINI_ENDPOINT:-https://mf-gwc-tg.cognitiveservices.azure.com/}
-      - GPT41_MINI_DEPLOYMENT=${GPT41_MINI_DEPLOYMENT:-gpt-4.1-mini-GWC-TG}
-      - AZURE_OPENAI_API_VERSION=${AZURE_OPENAI_API_VERSION:-2025-01-01-preview}
       # MySQL Database configuration (connect to db service)
       - MYSQL_HOST=db
       - MYSQL_PORT=3306

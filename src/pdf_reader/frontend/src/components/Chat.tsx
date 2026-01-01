@@ -10,7 +10,7 @@ interface ChatProps {
   defaultModel?: string
 }
 
-export function Chat({ modelOptions = ['gpt-4.1'], defaultModel = 'gpt-4.1' }: ChatProps) {
+export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3-Flash' }: ChatProps) {
   const { t, language } = useTranslation()
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)

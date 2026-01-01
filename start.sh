@@ -38,6 +38,29 @@ if [ ! -d "${BACKEND_DIR}" ]; then
   exit 1
 fi
 
+echo "Loading environment variables"
+if [ -f "${ENV_FILE}" ]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "${ENV_FILE}"
+  set +a
+  echo ".env loaded from ${ENV_FILE}"
+else
+  echo ".env not found. Please copy .env.example to .env and configure it."
+  echo "You can do this by running: cp .env.example .env"
+fi
+
+if [ -z "${GOOGLE_API_KEY:-}" ]; then
+  # Only prompt if not in non-interactive mode
+  if [ -t 0 ]; then
+      read -r -s -p "Enter GOOGLE_API_KEY: " GOOGLE_API_KEY
+      echo
+      export GOOGLE_API_KEY
+  else
+      echo "Warning: GOOGLE_API_KEY not set in environment."
+  fi
+fi
+
 echo "Building frontend (npm run build)"
 (
   cd "${FRONTEND_DIR}" &&
@@ -55,29 +78,6 @@ until docker exec specification-assistant-db mysqladmin ping -h localhost --sile
   sleep 1
 done
 echo "Database is ready"
-
-echo "Loading environment variables"
-if [ -f "${ENV_FILE}" ]; then
-  set -a
-  # shellcheck disable=SC1090
-  source "${ENV_FILE}"
-  set +a
-  echo ".env loaded from ${ENV_FILE}"
-else
-  echo ".env not found. You'll be prompted for required values."
-fi
-
-if [ -z "${GPT41_API_KEY:-}" ]; then
-  read -r -s -p "Enter GPT41_API_KEY: " GPT41_API_KEY
-  echo
-  export GPT41_API_KEY
-fi
-
-if [ -z "${GPT41_MINI_API_KEY:-}" ]; then
-  read -r -s -p "Enter GPT41_MINI_API_KEY: " GPT41_MINI_API_KEY
-  echo
-  export GPT41_MINI_API_KEY
-fi
 
 echo "Starting FastAPI server on port ${APP_PORT} (uv run main.py)"
 cd "${BACKEND_DIR}"

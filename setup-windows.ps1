@@ -213,10 +213,10 @@ if (Test-Path $ENV_FILE) {
 }
 
 # Check and set API key if not already set
-if (-not $env:OPENAI_API_KEY) {
-    $apiKey = Read-Host "Enter OPENAI_API_KEY" -AsSecureString
+if (-not $env:GOOGLE_API_KEY) {
+    $apiKey = Read-Host "Enter GOOGLE_API_KEY" -AsSecureString
     $BSTR = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($apiKey)
-    $env:OPENAI_API_KEY = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
+    $env:GOOGLE_API_KEY = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($BSTR)
     [System.Runtime.InteropServices.Marshal]::ZeroFreeBSTR($BSTR)
 }
 

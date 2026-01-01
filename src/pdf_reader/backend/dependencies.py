@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import logging
 
-from backend.config import GPT41_API_KEY
 from backend.database import get_db
 from backend.models.user import User
 from backend.services.auth import decode_access_token, get_user_by_id
@@ -41,14 +40,11 @@ def get_llm_extractor() -> LLMKeyExtractor:
     if not _llm_extractor_initialized:
         _llm_extractor_initialized = True
 
-        if not GPT41_API_KEY:
-            logger.warning("GPT41_API_KEY not found. LLM key extraction endpoints will not be available.")
-        else:
-            try:
-                _llm_extractor = LLMKeyExtractor()
-                logger.info("LLM key extractor initialized successfully")
-            except Exception as e:
-                logger.warning(f"Failed to initialize LLM key extractor: {str(e)}")
+        try:
+            _llm_extractor = LLMKeyExtractor()
+            logger.info("LLM key extractor initialized successfully")
+        except Exception as e:
+            logger.warning(f"Failed to initialize LLM key extractor: {str(e)}")
 
     if _llm_extractor is None:
         raise HTTPException(

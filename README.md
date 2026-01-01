@@ -25,7 +25,7 @@ FastAPI web service for extracting and analyzing PDF documents with LLM-powered 
 ## Environment Variables
 
 Create `.env` in the project root and set required values:
-export OPENAI_API_KEY="Your key here"
+export GOOGLE_API_KEY="Your key here"
 
 ## Docker Compose
 
@@ -51,7 +51,7 @@ See `DOCKER.md` for configuration and details.
    ```
    - Starts the MySQL database container via Docker Compose.
    - Builds the frontend via `npm run build`.
-   - Loads `.env` (prompts for `GPT41_API_KEY` and `GPT41_MINI_API_KEY` if missing).
+   - Loads `.env` (prompts for `GOOGLE_API_KEY` if missing).
    - Starts the FastAPI server with `uv run main.py`.
    - On shutdown (Ctrl+C), the script stops the MySQL container automatically.
 
@@ -112,7 +112,7 @@ cd specification-assistant
 ```powershell
 ./setup-windows.ps1
 ```
-The script validates prerequisites, prompts for `OPENAI_API_KEY`, installs Python + frontend dependencies, and builds the frontend. If PowerShell blocks the script, run:
+The script validates prerequisites, prompts for `GOOGLE_API_KEY`, installs Python + frontend dependencies, and builds the frontend. If PowerShell blocks the script, run:
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
@@ -126,9 +126,9 @@ Access http://localhost:8000.
 
 ### Manual fallback (if the script fails)
 1. `uv sync`
-2. Set `OPENAI_API_KEY` for the current user:
+2. Set `GOOGLE_API_KEY` for the current user:
    ```powershell
-   [System.Environment]::SetEnvironmentVariable('OPENAI_API_KEY', 'your-api-key-here', 'User')
+   [System.Environment]::SetEnvironmentVariable('GOOGLE_API_KEY', 'your-api-key-here', 'User')
    ```
 3. `cd src\pdf_reader\frontend` and run `npm install`
 4. `npm run build`
@@ -165,7 +165,7 @@ pdf_reader/
 
 - **FastAPI** for REST + docs
 - **pdfplumber** for PDF extraction
-- **LangChain + Azure OpenAI** for LLM-driven key extraction + Q&A
+- **LangChain + Google Gemini** for LLM-driven key extraction + Q&A
 - **pandas + openpyxl** for Excel export
 - **React + TypeScript + Vite** for the frontend
 
