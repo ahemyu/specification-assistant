@@ -50,24 +50,14 @@ else
   echo "You can do this by running: cp .env.example .env"
 fi
 
-if [ -z "${GPT41_API_KEY:-}" ]; then
-  # Only prompt if not in non-interactive mode (optional improvement)
+if [ -z "${GOOGLE_API_KEY:-}" ]; then
+  # Only prompt if not in non-interactive mode
   if [ -t 0 ]; then
-      read -r -s -p "Enter GPT41_API_KEY: " GPT41_API_KEY
+      read -r -s -p "Enter GOOGLE_API_KEY: " GOOGLE_API_KEY
       echo
-      export GPT41_API_KEY
+      export GOOGLE_API_KEY
   else
-      echo "Warning: GPT41_API_KEY not set in environment."
-  fi
-fi
-
-if [ -z "${GPT41_MINI_API_KEY:-}" ]; then
-  if [ -t 0 ]; then
-      read -r -s -p "Enter GPT41_MINI_API_KEY: " GPT41_MINI_API_KEY
-      echo
-      export GPT41_MINI_API_KEY
-  else
-      echo "Warning: GPT41_MINI_API_KEY not set in environment."
+      echo "Warning: GOOGLE_API_KEY not set in environment."
   fi
 fi
 

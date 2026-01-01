@@ -31,11 +31,10 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 logger = logging.getLogger(__name__)
 
 
-def _create_gemini_llm(temperature: float = 0) -> ChatGoogleGenerativeAI:
+def _create_gemini_llm(temperature: float = 1.0) -> ChatGoogleGenerativeAI:
     """Create a ChatGoogleGenerativeAI instance for Google Gemini models."""
     if not GOOGLE_API_KEY:
         logger.warning("GOOGLE_API_KEY is not set. LLM features will fail.")
-    
     return ChatGoogleGenerativeAI(
         model=GEMINI_MODEL,
         google_api_key=GOOGLE_API_KEY,
@@ -61,23 +60,22 @@ class LLMKeyExtractor:
     """Service class for extracting specific keys from PDF text using LLM.
 
     Model usage:
-    - gemini-2.5-flash: Used for all operations (extraction, chat, detection).
+    - gemini-3.0-flash: Used for all operations (extraction, chat, detection).
     """
 
     def __init__(self):
         """Initialize the LLM key extractor."""
         # Initialize Gemini LLM
-        self.llm = _create_gemini_llm(temperature=0)
-        
+        self.llm = _create_gemini_llm() #default temp of gemini3+ models is 1.0
+
         # Structured output models
         self.multi_structured_llm = self.llm.with_structured_output(MultiKeyExtractionResult)
         self.comparison_llm = self.llm.with_structured_output(PDFComparisonResult)
         self.product_type_llm = self.llm.with_structured_output(ProductTypeDetectionResult)
         self.core_winding_llm = self.llm.with_structured_output(CoreWindingCountResult)
-        
-        # Chat LLM (slightly higher temperature for creativity/naturalness if desired, 
-        # but kept low for factual consistency)
-        self.qa_llm = _create_gemini_llm(temperature=0.3)
+
+        # Chat LLM
+        self.qa_llm = _create_gemini_llm()
 
         logger.info(f"Initialized LLM key extractor using {GEMINI_MODEL}")
 
@@ -193,7 +191,7 @@ class LLMKeyExtractor:
 
         # Split keys into batches
         batches: list[list[str]] = [key_names[i : i + batch_size] for i in range(0, len(key_names), batch_size)]
-        
+
         logger.info(f"Split {len(key_names)} keys into {len(batches)} batches")
 
         semaphore = asyncio.Semaphore(max_concurrent)
@@ -250,14 +248,14 @@ class LLMKeyExtractor:
         )
 
         system_message_to_return = None
-        
+
         # Build message list
         messages = []
 
         if has_system_message:
             # Use existing system message from history
             messages.append(SystemMessage(content=conversation_history[0]["content"]))
-            
+
             # Add rest of conversation history (skip first system message)
             for msg in conversation_history[1:]:
                 if msg["role"] == "user":
@@ -267,10 +265,10 @@ class LLMKeyExtractor:
         else:
             # No system message in history - create new one and add conversation history
             full_context = _build_pdf_context(pdf_data)
-            
+
             # Build system message using the template
             system_content = QA_SYSTEM_PROMPT.format(document_contents=full_context, language=language)
-            
+
             messages.append(SystemMessage(content=system_content))
             system_message_to_return = system_content
 
@@ -352,7 +350,7 @@ class LLMKeyExtractor:
             search_target = "windings (Wicklung)"
             search_instructions = """**Looking for Windings (Wicklung):**
 - Search for "Wicklung 1", "Wicklung 2", up to "Wicklung 5"
-- Check for parameters like "Genauigkeitsklasse Wicklung X", \ 
+- Check for parameters like "Genauigkeitsklasse Wicklung X",
 "Nennspannung primär (V) Wicklung X"
 - Look in tables for winding-specific specifications
 - Set max_winding_number to the highest Wicklung number found
