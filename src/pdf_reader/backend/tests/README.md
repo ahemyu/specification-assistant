@@ -88,7 +88,7 @@ The following components require live LLM API access and are not unit tested:
 
 - **LLM Key Extractor** (`services/llm_key_extractor.py`):
   - All LLM-based extraction methods
-  - OpenAI API integration
+  - Google Gemini API integration
   - Structured output parsing
 
 These would require integration tests with mocked LLM responses or actual API keys.

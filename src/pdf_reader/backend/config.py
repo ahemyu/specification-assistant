@@ -11,11 +11,11 @@ PDF_READER_DIR = BACKEND_DIR.parent
 
 # Google Gemini Configuration
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 
 # LLM batch processing configuration
 DEFAULT_BATCH_SIZE = 20  # number of keys sent per LLM request
-MAX_CONCURRENT_BATCHES = 5  # Gemini has higher rate limits
+MAX_CONCURRENT_BATCHES = 1 # free tier rate limits
 
 # MySQL Database configuration
 MYSQL_USER = os.getenv("MYSQL_USER", "app_user")

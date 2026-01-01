@@ -6,10 +6,7 @@ from .domain import ChatMessage
 
 
 class KeyExtractionRequest(BaseModel):
-    """Request model for key extraction endpoint.
-
-    Note: Always uses gpt-4.1 for accuracy.
-    """
+    """Request model for key extraction endpoint."""
 
     file_ids: list[str]
     key_names: list[str]
@@ -17,10 +14,7 @@ class KeyExtractionRequest(BaseModel):
 
 
 class QuestionRequest(BaseModel):
-    """Request model for asking questions about PDFs.
-
-    Note: Always uses gpt-4.1-mini for speed.
-    """
+    """Request model for asking questions about PDFs."""
 
     file_ids: list[str]
     question: str
@@ -35,10 +29,7 @@ class ExcelDownloadRequest(BaseModel):
 
 
 class PDFComparisonRequest(BaseModel):
-    """Request model for comparing two PDF versions.
-
-    Note: Always uses gpt-4.1 for accuracy.
-    """
+    """Request model for comparing two PDF versions"""
 
     base_file_id: str  # The original/old version
     new_file_id: str  # The updated/new version
@@ -46,19 +37,13 @@ class PDFComparisonRequest(BaseModel):
 
 
 class ProductTypeDetectionRequest(BaseModel):
-    """Request model for detecting product type from PDFs.
-
-    Note: Always uses gpt-4.1-mini for speed.
-    """
+    """Request model for detecting product type from PDFs"""
 
     file_ids: list[str]
 
 
 class CoreWindingCountRequest(BaseModel):
-    """Request model for detecting core/winding count from PDFs.
-
-    Note: Always uses gpt-4.1-mini for speed.
-    """
+    """Request model for detecting core/winding count from PDFs"""
 
     file_ids: list[str]
     product_type: str

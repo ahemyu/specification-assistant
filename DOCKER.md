@@ -6,7 +6,7 @@ This guide explains how to run the Specification Assistant application using Doc
 
 - Docker installed on your system
 - Docker Compose
-- OpenAI API Key (for LLM features like key extraction and Q&A)
+- Google API Key (for LLM features like key extraction and Q&A)
 
 ## Quick Start with Docker Compose
 
@@ -45,10 +45,9 @@ This guide explains how to run the Specification Assistant application using Doc
 ## Environment Variables
 
 Required:
-- `OPENAI_API_KEY`: Required for LLM-based features (key extraction, Q&A)
+- `GOOGLE_API_KEY`: Required for LLM-based features (key extraction, Q&A)
 
 Optional (with defaults):
-- `OPENAI_BASE_URL`: OpenAI API base URL (default: Azure OpenAI endpoint)
 - `MYSQL_DATABASE`: Database name (default: specification_assistant)
 - `MYSQL_USER`: Database user (default: app_user)
 - `MYSQL_PASSWORD`: Database password (default: app_password)

@@ -60,13 +60,13 @@ class LLMKeyExtractor:
     """Service class for extracting specific keys from PDF text using LLM.
 
     Model usage:
-    - gemini-3.0-flash: Used for all operations (extraction, chat, detection).
+    - gemini-2.5-flash: Used for all operations (extraction, chat, detection).
     """
 
     def __init__(self):
         """Initialize the LLM key extractor."""
         # Initialize Gemini LLM
-        self.llm = _create_gemini_llm() #default temp of gemini3+ models is 1.0
+        self.llm = _create_gemini_llm()
 
         # Structured output models
         self.multi_structured_llm = self.llm.with_structured_output(MultiKeyExtractionResult)
