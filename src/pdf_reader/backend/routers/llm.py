@@ -52,61 +52,50 @@ async def extract_keys(
             key_names=request.key_names, pdf_data=pdf_data_list, language=request.language
         )
 
-        # Transform matched_line_ids to bounding_box coordinates
-        # Split multi-page source_locations into one per page with page-specific bounding boxes
+        # Transform matched_line_ids to individual highlight boxes.
         for key, result in results.items():
             if result and result.matched_line_ids:
                 new_source_locations = []
 
-                # Process each source location
                 for source_loc in result.source_locations:
                     pdf_filename = source_loc.pdf_filename
 
-                    # Find the corresponding pdf_data for this filename
                     matching_pdf = next((pdf for pdf in pdf_data_list if pdf.get("filename") == pdf_filename), None)
 
                     if not matching_pdf or "line_id_map" not in matching_pdf:
-                        # Cannot calculate bounding box, keep original source_loc as-is
                         new_source_locations.append(source_loc)
                         continue
 
                     line_id_map = matching_pdf["line_id_map"]
+                    has_highlight = False
 
-                    # Split source_loc into one entry per page with page-specific bounding boxes
-                    for page_num in source_loc.page_numbers:
-                        # Collect bounding boxes for line_ids that belong to this specific page
-                        bboxes = []
-                        for line_id in result.matched_line_ids:
-                            if line_id in line_id_map:
-                                # Extract page number from line_id
-                                try:
-                                    line_page_num = int(line_id.split("_")[0])
-                                    # Only include this line_id if it belongs to this specific page
-                                    if line_page_num == page_num:
-                                        bboxes.append(line_id_map[line_id])
-                                except (ValueError, IndexError):
-                                    # Skip malformed line_ids
-                                    continue
+                    for line_id in result.matched_line_ids:
+                        bbox = line_id_map.get(line_id)
+                        if bbox is None:
+                            continue
 
-                        # Create a new source_location for this page
-                        new_loc = SourceLocation(pdf_filename=pdf_filename, page_numbers=[page_num], bounding_box=None)
+                        try:
+                            line_page_num = int(line_id.split("_")[0])
+                        except (ValueError, IndexError):
+                            continue
 
-                        # Calculate merged bounding box for this page if we found any line_ids
-                        # Note: This merges all bboxes into one encompassing box. For scattered
-                        # references, consider returning multiple separate bounding boxes instead.
-                        if bboxes:
-                            min_x0 = min(bbox[0] for bbox in bboxes)
-                            min_top = min(bbox[1] for bbox in bboxes)
-                            max_x1 = max(bbox[2] for bbox in bboxes)
-                            max_bottom = max(bbox[3] for bbox in bboxes)
-                            new_loc.bounding_box = [min_x0, min_top, max_x1, max_bottom]
+                        if line_page_num not in source_loc.page_numbers:
+                            continue
 
-                        new_source_locations.append(new_loc)
+                        new_source_locations.append(
+                            SourceLocation(
+                                pdf_filename=pdf_filename,
+                                page_numbers=[line_page_num],
+                                bounding_box=bbox,
+                            )
+                        )
+                        has_highlight = True
 
-                # Replace source_locations with the split version
+                    if not has_highlight:
+                        new_source_locations.append(source_loc)
+
                 result.source_locations = new_source_locations
 
-                # Clear matched_line_ids before sending to frontend (internal only)
                 result.matched_line_ids = None
 
         # Convert results to dict with serializable values

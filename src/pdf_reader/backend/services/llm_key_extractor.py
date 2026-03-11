@@ -185,6 +185,7 @@ class LLMKeyExtractor:
             logger.error(f"Error extracting batch of keys {key_names} after {llm_call_time:.1f}s: {str(e)}")
             return {name: None for name in key_names}
 
+
     async def extract_keys(
         self,
         key_names: list[str],
@@ -248,6 +249,7 @@ class LLMKeyExtractor:
 
         return merged_results
 
+
     async def answer_question_stream(
         self,
         question: str,
@@ -288,7 +290,7 @@ class LLMKeyExtractor:
             # Use existing system message from history
             messages.append(SystemMessage(content=conversation_history[0]["content"]))
 
-            # Add rest of conversation history (skip first system message)
+            # Add rest of conversation history
             for msg in conversation_history[1:]:
                 if msg["role"] == "user":
                     messages.append(HumanMessage(content=msg["content"]))
@@ -304,7 +306,7 @@ class LLMKeyExtractor:
             messages.append(SystemMessage(content=system_content))
             system_message_to_return = system_content
 
-            # Add all conversation history (system messages were filtered out by frontend)
+            # Add all conversation history
             for msg in conversation_history or []:
                 if msg["role"] == "user":
                     messages.append(HumanMessage(content=msg["content"]))
@@ -331,6 +333,7 @@ class LLMKeyExtractor:
             logger.error(f"Error answering question with streaming: {str(e)}")
             raise
 
+
     async def detect_product_type(self, pdf_data: list[dict]) -> ProductTypeDetectionResult:
         """
         Detect the product type from PDF specifications.
@@ -355,6 +358,7 @@ class LLMKeyExtractor:
             logger.error(f"Error detecting product type: {str(e)}")
             raise
 
+
     async def detect_core_winding_count(self, pdf_data: list[dict], product_type: str) -> CoreWindingCountResult:
         """
         Detect the maximum number of cores and/or windings based on product type.
@@ -374,33 +378,32 @@ class LLMKeyExtractor:
         if product_type == "Stromwandler":
             search_target = "cores (Kern)"
             search_instructions = """**Looking for Cores (Kern):**
-- Search for "Kern 1", "Kern 2", up to "Kern 7"
-- Check for parameters like "Genauigkeitsklasse Kern X", "Nennstrom primär (A) Kern X"
-- Look in tables for core-specific specifications
-- Set max_core_number to the highest Kern number found
-- Set max_winding_number to 0 (not applicable for Stromwandler)"""
+            - Search for "Kern 1", "Kern 2", up to "Kern 7"
+            - Check for parameters like "Genauigkeitsklasse Kern X", "Nennstrom primär (A) Kern X"
+            - Look in tables for core-specific specifications
+            - Set max_core_number to the highest Kern number found
+            - Set max_winding_number to 0 (not applicable for Stromwandler)"""
         elif product_type == "Spannungswandler":
             search_target = "windings (Wicklung)"
             search_instructions = """**Looking for Windings (Wicklung):**
-- Search for "Wicklung 1", "Wicklung 2", up to "Wicklung 5"
-- Check for parameters like "Genauigkeitsklasse Wicklung X",
-"Nennspannung primär (V) Wicklung X"
-- Look in tables for winding-specific specifications
-- Set max_winding_number to the highest Wicklung number found
-- Set max_core_number to 0 (not applicable for Spannungswandler)"""
+            - Search for "Wicklung 1", "Wicklung 2", up to "Wicklung 5"
+            - Check for parameters like "Genauigkeitsklasse Wicklung X",
+            "Nennspannung primär (V) Wicklung X"
+            - Look in tables for winding-specific specifications
+            - Set max_winding_number to the highest Wicklung number found
+            - Set max_core_number to 0 (not applicable for Spannungswandler)"""
         else:  # Kombiwandler
             search_target = "cores (Kern) and windings (Wicklung)"
             search_instructions = """**Looking for both Cores AND Windings:**
+            For Cores (Kern):
+            - Search for "Kern 1" through "Kern 7"
+            - Check parameters like "Genauigkeitsklasse Kern X", "Nennstrom primär (A) Kern X"
 
-For Cores (Kern):
-- Search for "Kern 1" through "Kern 7"
-- Check parameters like "Genauigkeitsklasse Kern X", "Nennstrom primär (A) Kern X"
+            For Windings (Wicklung):
+            - Search for "Wicklung 1" through "Wicklung 5"
+            - Check parameters like "Genauigkeitsklasse Wicklung X", "Nennspannung primär (V) Wicklung X"
 
-For Windings (Wicklung):
-- Search for "Wicklung 1" through "Wicklung 5"
-- Check parameters like "Genauigkeitsklasse Wicklung X", "Nennspannung primär (V) Wicklung X"
-
-Return both max_core_number and max_winding_number."""
+            Return both max_core_number and max_winding_number."""
 
         prompt = CORE_WINDING_COUNT_PROMPT.format(
             product_type=product_type,
@@ -419,6 +422,7 @@ Return both max_core_number and max_winding_number."""
         except Exception as e:
             logger.error(f"Error detecting core/winding count: {str(e)}")
             raise
+
 
     async def compare_pdfs(
         self, base_pdf_data: dict, new_pdf_data: dict, additional_context: str = ""
