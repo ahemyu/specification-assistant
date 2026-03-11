@@ -142,9 +142,14 @@ export function UploadView() {
         fileInputRef.current.value = ''
       }
 
-      // Navigate immediately to Extract Keys view for faster UX
-      setActiveView('spec_ai');
-      setActiveSubMenuItem('extract');
+      if (data.auto_detection_enabled) {
+        // Navigate immediately to Extract Keys view for faster UX
+        setActiveView('spec_ai');
+        setActiveSubMenuItem('extract');
+      } else {
+        setActiveView('spec_ai');
+        setActiveSubMenuItem('upload');
+      }
 
       // Detect product type from uploaded PDFs in background (only if no existing extraction results)
       if (data.auto_detection_enabled && (!extractionResultsData || extractionResultsData.length === 0)) {
