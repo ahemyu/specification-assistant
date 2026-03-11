@@ -16,7 +16,7 @@ from backend.services.document import (
     get_document_by_file_id,
 )
 from backend.services.process_pdfs import process_single_pdf
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -65,6 +65,7 @@ def _process_single_file(file_contents: bytes, filename: str) -> dict:
 @router.post("/upload")
 async def upload_pdfs(
     files: list[UploadFile] = File(...),
+    disable_auto_detection: bool = Form(False),
     db: AsyncSession = Depends(get_db),
     current_user: User | None = Depends(get_current_user_optional),
 ):
@@ -90,7 +91,11 @@ async def upload_pdfs(
         valid_files.append((contents, file.filename))
 
     if not valid_files:
-        return {"processed": processed, "failed": failed}
+        return {
+            "processed": processed,
+            "failed": failed,
+            "auto_detection_enabled": not disable_auto_detection,
+        }
 
     # Process PDFs in parallel using ProcessPoolExecutor
     loop = asyncio.get_event_loop()
@@ -144,7 +149,11 @@ async def upload_pdfs(
         else:
             failed.append(f"{result['filename']} ({result['error']})")
 
-    return {"processed": processed, "failed": failed}
+    return {
+        "processed": processed,
+        "failed": failed,
+        "auto_detection_enabled": not disable_auto_detection,
+    }
 
 
 @router.get("/download/{file_id}")

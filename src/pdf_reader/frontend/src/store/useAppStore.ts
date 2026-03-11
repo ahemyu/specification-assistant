@@ -53,6 +53,7 @@ interface AppState {
   currentExtractionState: ExtractionState
 
   // Product type detection state
+  autoDetectionEnabled: boolean
   detectedProductType: string | null
   productTypeConfidence: number
   selectedProductType: string | null
@@ -100,6 +101,7 @@ interface AppState {
   setReviewedKeys: (keys: Record<string, ReviewedKey>) => void
   setIsEditMode: (mode: boolean) => void
   setCurrentExtractionState: (state: ExtractionState) => void
+  setAutoDetectionEnabled: (enabled: boolean) => void
   setDetectedProductType: (type: string | null) => void
   setProductTypeConfidence: (confidence: number) => void
   setSelectedProductType: (type: string | null) => void
@@ -155,6 +157,7 @@ export const useAppStore = create<AppState>((set) => ({
 
   currentExtractionState: 'setup',
 
+  autoDetectionEnabled: true,
   detectedProductType: null,
   productTypeConfidence: 0,
   selectedProductType: null,
@@ -199,6 +202,7 @@ export const useAppStore = create<AppState>((set) => ({
   setReviewedKeys: (keys) => set({ reviewedKeys: keys }),
   setIsEditMode: (mode) => set({ isEditMode: mode }),
   setCurrentExtractionState: (state) => set({ currentExtractionState: state }),
+  setAutoDetectionEnabled: (enabled) => set({ autoDetectionEnabled: enabled }),
   setDetectedProductType: (type) => set({ detectedProductType: type }),
   setProductTypeConfidence: (confidence) => set({ productTypeConfidence: confidence }),
   setSelectedProductType: (type) => set({ selectedProductType: type }),

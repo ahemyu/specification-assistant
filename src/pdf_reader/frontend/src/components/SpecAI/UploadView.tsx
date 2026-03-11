@@ -10,6 +10,7 @@ import { useTranslation } from '../../core/i18n/LanguageContext'
 interface UploadResponse {
   processed: ProcessedFile[]
   failed: string[]
+  auto_detection_enabled: boolean
 }
 
 export function UploadView() {
@@ -35,6 +36,8 @@ export function UploadView() {
     setDetectedProductType,
     setProductTypeConfidence,
     setIsDetectingProductType,
+    autoDetectionEnabled,
+    setAutoDetectionEnabled,
     setActiveSubMenuItem,
     setActiveView,
     token,
@@ -79,6 +82,7 @@ export function UploadView() {
     selectedFiles.forEach((file) => {
       formData.append('files', file)
     })
+    formData.append('disable_auto_detection', String(!autoDetectionEnabled))
 
     setIsUploading(true)
     showNotification(t('processingNotification'), 'info')
@@ -113,6 +117,7 @@ export function UploadView() {
 
       // Reset extraction state
       resetExtractionState()
+      setAutoDetectionEnabled(data.auto_detection_enabled)
 
       // Update state
       const newFileIds = [...uploadedFileIds, ...data.processed.map((p) => p.file_id)]
@@ -142,7 +147,7 @@ export function UploadView() {
       setActiveSubMenuItem('extract');
 
       // Detect product type from uploaded PDFs in background (only if no existing extraction results)
-      if (!extractionResultsData || extractionResultsData.length === 0) {
+      if (data.auto_detection_enabled && (!extractionResultsData || extractionResultsData.length === 0)) {
         setIsDetectingProductType(true)
         fetch('/detect-product-type', {
           method: 'POST',
@@ -168,6 +173,9 @@ export function UploadView() {
         .finally(() => {
           setIsDetectingProductType(false)
         })
+      } else if (!data.auto_detection_enabled) {
+        setDetectedProductType(null)
+        setProductTypeConfidence(0)
       } else {
         // Skip product type detection since extraction results already exist
         console.log('Skipping product type detection - extraction results already exist')
@@ -314,14 +322,25 @@ export function UploadView() {
           </div>
         )}
 
-        <Button
-          className="upload-btn"
-          onClick={handleUpload}
-          disabled={selectedFiles.length === 0 || isUploading}
-          isLoading={isUploading}
-        >
-          {t('uploadButton')}
-        </Button>
+        <div className="upload-actions">
+          <Button
+            className="upload-btn"
+            onClick={handleUpload}
+            disabled={selectedFiles.length === 0 || isUploading}
+            isLoading={isUploading}
+          >
+            {t('uploadButton')}
+          </Button>
+          <button
+            type="button"
+            className={`auto-detection-toggle ${!autoDetectionEnabled ? 'disabled' : ''}`}
+            onClick={() => setAutoDetectionEnabled(!autoDetectionEnabled)}
+            aria-pressed={!autoDetectionEnabled}
+            title={t('autoDetectionToggleTitle')}
+          >
+            {autoDetectionEnabled ? t('disableAutoDetection') : t('enableAutoDetection')}
+          </button>
+        </div>
       </section>
 
       {allUploadedFiles.length > 0 && (

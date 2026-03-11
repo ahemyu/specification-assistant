@@ -73,8 +73,15 @@
     font-size: 1em;
     font-weight: 600;
     transition: all 0.3s ease;
-    margin-top: 60px;
+    margin-top: 0;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.upload-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 60px;
 }
 
 .upload-btn:hover:not(:disabled) {
@@ -101,6 +108,30 @@
     cursor: not-allowed;
     box-shadow: none;
     opacity: 0.6;
+}
+
+.auto-detection-toggle {
+    border: none;
+    background: transparent;
+    color: var(--text-color-lighter);
+    cursor: pointer;
+    font-size: 0.76rem;
+    line-height: 1.2;
+    opacity: 0.55;
+    padding: 4px 0;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: opacity 0.2s ease, color 0.2s ease;
+}
+
+.auto-detection-toggle:hover {
+    opacity: 0.82;
+    color: var(--text-color-light);
+}
+
+.auto-detection-toggle.disabled {
+    opacity: 0.82;
+    color: var(--text-color-light);
 }
 
 .selected-files {

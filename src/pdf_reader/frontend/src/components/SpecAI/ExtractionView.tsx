@@ -65,6 +65,7 @@ export function ExtractionView() {
   const {
     uploadedFileIds,
     extractionResultsData,
+    autoDetectionEnabled,
     detectedProductType,
     productTypeConfidence,
     selectedProductType,
@@ -101,6 +102,13 @@ export function ExtractionView() {
   useEffect(() => {
     if (selectedProductType && uploadedFileIds.length > 0) {
       const baseKeys = getKeysForProductType(selectedProductType)
+
+      if (!autoDetectionEnabled) {
+        setTemplateKeys(baseKeys)
+        setDetectedCoreCount(null)
+        setDetectedWindingCount(null)
+        return
+      }
 
       // Only detect core/winding counts if no extraction results exist
       if (!extractionResultsData || extractionResultsData.length === 0) {
@@ -157,7 +165,15 @@ export function ExtractionView() {
       const keys = getKeysForProductType(selectedProductType)
       setTemplateKeys(keys)
     }
-  }, [selectedProductType, uploadedFileIds, setTemplateKeys])
+  }, [
+    autoDetectionEnabled,
+    extractionResultsData,
+    selectedProductType,
+    setDetectedCoreCount,
+    setDetectedWindingCount,
+    setTemplateKeys,
+    uploadedFileIds,
+  ])
 
   const handleProductTypeSelect = (productType: ProductType) => {
     setSelectedProductType(productType)
