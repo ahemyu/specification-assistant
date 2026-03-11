@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    """Handle application lifespan events (startup and shutdown)."""
+    """Handle application lifespan events """
     # Startup: Initialize database
     logger.info("Application starting up...")
     try:
@@ -35,9 +35,9 @@ async def lifespan(_app: FastAPI):
         logger.warning("Error closing database: %s", str(e))
 
 
-app = FastAPI(title="PDF Text Extraction API", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Spec-Assistant API", version="1.0.0", lifespan=lifespan)
 
-# Include routers (must be before catch-all static mount)
+# Include routers
 app.include_router(auth.router)
 app.include_router(pdf.router)
 app.include_router(llm.router)
@@ -46,7 +46,7 @@ app.include_router(pdf_download.router)
 
 # Mount React production build
 frontend_dist = PDF_READER_DIR / "frontend" / "dist"
-app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="react-frontend")
+app.mount("/", StaticFiles(directory=str(frontend_dist), html=True), name="react-frontend") #
 
 if __name__ == "__main__":
     import uvicorn

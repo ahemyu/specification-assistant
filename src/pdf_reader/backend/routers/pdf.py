@@ -27,9 +27,7 @@ router = APIRouter(prefix="", tags=["pdf"])
 
 def _process_single_file(file_contents: bytes, filename: str) -> dict:
     """
-    Process a single PDF file synchronously.
-
-    This function is designed to be run in parallel via ProcessPoolExecutor.
+    Process a single PDF file.
 
     Args:
         file_contents: The PDF file contents as bytes
@@ -118,13 +116,13 @@ async def upload_pdfs(
             file_size_bytes = result["file_size_bytes"]
             pdf_binary = result["pdf_binary"]
 
-            # Check if document already exists (re-upload case)
+            # Check if document already exists
             existing_doc = await get_document_by_file_id(db, file_id)
             if existing_doc:
                 # Delete old record to replace with new one
                 await delete_document(db, file_id)
 
-            # Store document in database (including PDF binary)
+            # Store document in database
             await create_document(
                 db=db,
                 file_id=file_id,
@@ -234,8 +232,7 @@ async def list_documents(db: AsyncSession = Depends(get_db)):
     """
     List all uploaded documents.
 
-    Returns list of documents with metadata (no full text content).
-    This is useful for the frontend to display available documents on load.
+    Returns list of documents with metadata.
     """
     documents = await get_all_documents(db)
     return {

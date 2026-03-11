@@ -18,7 +18,7 @@ class Document(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
 
-    # Foreign key to user (nullable for shared/anonymous documents)
+    # Foreign key to user
     user_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
     )
@@ -36,10 +36,10 @@ class Document(Base):
     # PDF binary data stored directly in database
     pdf_binary: Mapped[bytes | None] = mapped_column(LargeBinary(length=2**32 - 1), nullable=True)
 
-    # Extracted content - LONGTEXT for MySQL to handle large PDFs
+    # Extracted content
     formatted_text: Mapped[str | None] = mapped_column(LONGTEXT, nullable=True)
 
-    # Line ID map for reference lookups (stored as JSON)
+    # Line ID map for reference lookups
     line_id_map: Mapped[dict | None] = mapped_column(JSON, nullable=True)
 
     # Timestamps
@@ -65,5 +65,4 @@ class Document(Base):
             "total_pages": self.total_pages,
             "formatted_text": self.formatted_text or "",
             "line_id_map": self.line_id_map or {},
-            # Note: 'pages' data is not stored - it's only needed during initial processing
         }

@@ -35,7 +35,7 @@ class TokenData(BaseModel):
 
 
 class UserResponse(BaseModel):
-    """Response model for user data (excludes password)."""
+    """Response model for user data."""
 
     id: int
     email: str
@@ -49,7 +49,7 @@ class UserResponse(BaseModel):
 
 
 class UserInDB(UserResponse):
-    """User model as stored in database (includes hashed password)."""
+    """User model as stored in database."""
 
     hashed_password: str
 

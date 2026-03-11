@@ -9,7 +9,7 @@ from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 logger = logging.getLogger(__name__)
 
-# Build database URL for async MySQL connection
+# Build database URL for MySQL connection
 DATABASE_URL = f"mysql+aiomysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
 
 
@@ -52,19 +52,13 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def init_db() -> None:
-    """Initialize database by creating all tables.
-
-    This should be called on application startup.
-    """
+    """Initialize database by creating all tables."""
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables created successfully")
 
 
 async def close_db() -> None:
-    """Close database connections.
-
-    This should be called on application shutdown.
-    """
+    """Close database connections."""
     await async_engine.dispose()
     logger.info("Database connections closed")

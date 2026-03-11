@@ -104,10 +104,8 @@ async def login(
         )
 
     # Create access token
-    access_token_expires = timedelta(minutes=JWT_ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email},
-        expires_delta=access_token_expires,
+        data={"sub": str(user.id), "email": user.email}
     )
 
     logger.info("User logged in successfully: %s", user.email)

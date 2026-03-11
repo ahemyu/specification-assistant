@@ -105,47 +105,6 @@ DOCUMENT CONTENTS:
 {document_contents}"""
 
 
-# PDF comparison prompt template
-PDF_COMPARISON_PROMPT = """You are a technical specification analyst comparing document versions.
-
-GOAL: Identify technical specification changes between versions that matter for product datasheets.
-
-{additional_context_section}
-
-WHAT TO ANALYZE:
-- Numerical values and ratings (voltage, current, power, dimensions)
-- Technical parameters and specifications
-- Model/part numbers and identifiers
-- Features, capabilities, and functions
-- Safety ratings, regulatory compliance, and operating limits
-
-CHANGE CATEGORIES:
-- added: Present only in new version
-- removed: Present only in old version
-- modified: Value or description changed between versions
-
-OUTPUT FOR EACH CHANGE:
-- Specification name/identifier
-- Old value (if applicable)
-- New value (if applicable)
-- Page numbers in both documents
-- Brief explanation of the change and its significance
-
-SCOPE:
-Include: Substantive technical changes relevant to datasheets
-Exclude: Formatting differences, minor wording variations, cosmetic changes
-
-BASE VERSION (ORIGINAL):
-Filename: {base_filename}
-{base_context}
-
-NEW VERSION (UPDATED):
-Filename: {new_filename}
-{new_context}
-
-Provide a structured comparison with a summary and detailed list of changes."""
-
-
 # Product type detection prompt template
 PRODUCT_TYPE_DETECTION_PROMPT = """You are an expert at identifying electrical transformer types \
 from technical specifications.
@@ -200,3 +159,43 @@ DOCUMENT CONTENTS:
 {full_context}
 
 Analyze the document and determine the maximum {search_target} number."""
+
+# PDF comparison prompt template
+PDF_COMPARISON_PROMPT = """You are a technical specification analyst comparing document versions.
+
+GOAL: Identify technical specification changes between versions that matter for product datasheets.
+
+{additional_context_section}
+
+WHAT TO ANALYZE:
+- Numerical values and ratings (voltage, current, power, dimensions)
+- Technical parameters and specifications
+- Model/part numbers and identifiers
+- Features, capabilities, and functions
+- Safety ratings, regulatory compliance, and operating limits
+
+CHANGE CATEGORIES:
+- added: Present only in new version
+- removed: Present only in old version
+- modified: Value or description changed between versions
+
+OUTPUT FOR EACH CHANGE:
+- Specification name/identifier
+- Old value (if applicable)
+- New value (if applicable)
+- Page numbers in both documents
+- Brief explanation of the change and its significance
+
+SCOPE:
+Include: Substantive technical changes relevant to datasheets
+Exclude: Formatting differences, minor wording variations, cosmetic changes
+
+BASE VERSION (ORIGINAL):
+Filename: {base_filename}
+{base_context}
+
+NEW VERSION (UPDATED):
+Filename: {new_filename}
+{new_context}
+
+Provide a structured comparison with a summary and detailed list of changes."""

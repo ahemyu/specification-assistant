@@ -196,40 +196,6 @@ async def ask_question_stream(
     )
 
 
-@router.post("/compare-pdfs")
-async def compare_pdfs(
-    request: PDFComparisonRequest,
-    db: AsyncSession = Depends(get_db),
-    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
-) -> dict:
-    """
-    Compare two versions of a PDF to identify changes in specifications.
-
-    Args:
-    - request: PDFComparisonRequest containing base_file_id, new_file_id, and additional_context
-    - db: AsyncSession database session
-    - llm_extractor: LLMKeyExtractor service for PDF comparison
-
-    Returns:
-    - PDFComparisonResult with summary and list of changes
-    """
-    # Get both PDFs - helper will raise HTTPException if not found
-    pdf_data_list = await get_pdf_data_for_file_ids_async(db, [request.base_file_id, request.new_file_id])
-    base_pdf_data, new_pdf_data = pdf_data_list[0], pdf_data_list[1]
-
-    # Compare the PDFs using LLM 
-    try:
-        result = await llm_extractor.compare_pdfs(
-            base_pdf_data=base_pdf_data,
-            new_pdf_data=new_pdf_data,
-            additional_context=request.additional_context or "",
-        )
-        return result.model_dump()
-    except Exception as e:
-        logger.error(f"Error during PDF comparison: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error during PDF comparison: {str(e)}")
-
-
 @router.post("/detect-product-type")
 async def detect_product_type(
     request: ProductTypeDetectionRequest,
@@ -294,3 +260,37 @@ async def detect_core_winding_count(
     except Exception as e:
         logger.error(f"Error during core/winding count detection: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error during core/winding count detection: {str(e)}")
+
+
+@router.post("/compare-pdfs")
+async def compare_pdfs(
+    request: PDFComparisonRequest,
+    db: AsyncSession = Depends(get_db),
+    llm_extractor: LLMKeyExtractor = Depends(get_llm_extractor),
+) -> dict:
+    """
+    Compare two versions of a PDF to identify changes in specifications.
+
+    Args:
+    - request: PDFComparisonRequest containing base_file_id, new_file_id, and additional_context
+    - db: AsyncSession database session
+    - llm_extractor: LLMKeyExtractor service for PDF comparison
+
+    Returns:
+    - PDFComparisonResult with summary and list of changes
+    """
+    # Get both PDFs - helper will raise HTTPException if not found
+    pdf_data_list = await get_pdf_data_for_file_ids_async(db, [request.base_file_id, request.new_file_id])
+    base_pdf_data, new_pdf_data = pdf_data_list[0], pdf_data_list[1]
+
+    # Compare the PDFs using LLM
+    try:
+        result = await llm_extractor.compare_pdfs(
+            base_pdf_data=base_pdf_data,
+            new_pdf_data=new_pdf_data,
+            additional_context=request.additional_context or "",
+        )
+        return result.model_dump()
+    except Exception as e:
+        logger.error(f"Error during PDF comparison: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error during PDF comparison: {str(e)}")
