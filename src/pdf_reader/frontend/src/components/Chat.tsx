@@ -10,6 +10,30 @@ interface ChatProps {
   defaultModel?: string
 }
 
+function normalizeChunkContent(content: unknown): string {
+  if (typeof content === 'string') {
+    return content
+  }
+
+  if (Array.isArray(content)) {
+    return content.map((item) => normalizeChunkContent(item)).join('')
+  }
+
+  if (content && typeof content === 'object') {
+    if ('text' in content && typeof content.text === 'string') {
+      return content.text
+    }
+
+    if ('content' in content) {
+      return normalizeChunkContent(content.content)
+    }
+
+    return ''
+  }
+
+  return content == null ? '' : String(content)
+}
+
 export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3-Flash' }: ChatProps) {
   const { t, language } = useTranslation()
   const [question, setQuestion] = useState('')
@@ -146,13 +170,17 @@ export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3
             if (data.type === 'system_message') {
               systemMessage = data.content
             } else if (data.type === 'chunk') {
+              const chunkText = normalizeChunkContent(data.content)
+              if (!chunkText) {
+                continue
+              }
               // First chunk - hide loading indicator and start streaming
                             if (isFirstChunk) {
                 setIsLoading(false)
                 setIsStreaming(true)
                 isFirstChunk = false
               }
-              fullAnswer += data.content
+              fullAnswer += chunkText
               // Throttled update
               const now = Date.now()
               if (now - lastRenderTime >= RENDER_THROTTLE_MS) {

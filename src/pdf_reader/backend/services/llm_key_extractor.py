@@ -3,6 +3,7 @@
 import asyncio
 import logging
 import time
+from typing import Any
 
 from backend.config import (
     DEFAULT_BATCH_SIZE,
@@ -54,6 +55,37 @@ def _build_pdf_context(pdf_data: list[dict]) -> str:
         Combined formatted text from all PDFs as a single string.
     """
     return "".join(pdf.get("formatted_text", "") for pdf in pdf_data)
+
+
+def _stream_chunk_to_text(content: Any) -> str:
+    """Normalize gemini stream chunk payloads to plain text."""
+    if content is None:
+        return ""
+
+    if isinstance(content, str):
+        return content
+
+    if isinstance(content, list):
+        return "".join(_stream_chunk_to_text(item) for item in content)
+
+    if isinstance(content, dict):
+        text_value = content.get("text")
+        if isinstance(text_value, str):
+            return text_value
+        nested_content = content.get("content")
+        if nested_content is not None:
+            return _stream_chunk_to_text(nested_content)
+        return ""
+
+    text_attr = getattr(content, "text", None)
+    if isinstance(text_attr, str):
+        return text_attr
+
+    nested_content_attr = getattr(content, "content", None)
+    if nested_content_attr is not None and nested_content_attr is not content:
+        return _stream_chunk_to_text(nested_content_attr)
+
+    return str(content)
 
 
 class LLMKeyExtractor:
@@ -285,7 +317,8 @@ class LLMKeyExtractor:
         try:
             first_chunk = True
             async for chunk in self.qa_llm.astream(messages):
-                content = chunk.content if hasattr(chunk, "content") else str(chunk)
+                raw_content = chunk.content if hasattr(chunk, "content") else chunk
+                content = _stream_chunk_to_text(raw_content)
                 if content:
                     # Yield system message only with the first chunk
                     if first_chunk:
