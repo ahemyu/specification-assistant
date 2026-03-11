@@ -85,6 +85,11 @@ export function ExtractionView() {
     token,
   } = useAppStore()
   const { t, language } = useTranslation()
+  const manualKeyNames = manualKeys
+    .split('\n')
+    .map((keyName) => keyName.trim())
+    .filter((keyName) => keyName.length > 0)
+  const activeExtractionKeyCount = showDevInput ? manualKeyNames.length : templateKeys.length
 
   useEffect(() => {
     if (detectedProductType && !selectedProductType) {
@@ -241,10 +246,7 @@ export function ExtractionView() {
       return
     }
 
-    const keyNames = keysText
-      .split('\n')
-      .map((k) => k.trim())
-      .filter((k) => k.length > 0)
+    const keyNames = manualKeyNames
 
     if (keyNames.length === 0) {
       showNotification(t('enterKeyError'), 'error')
@@ -413,7 +415,7 @@ export function ExtractionView() {
               {t('extractingTitle')}
             </h2>
             <p className="loading-overlay-description">
-              {t('theAIIsExtracting')} <strong>{templateKeys.length} {t('keys')}</strong> {t('fromYourPDFs')}
+              {t('theAIIsExtracting')} <strong>{activeExtractionKeyCount} {t('keys')}</strong> {t('fromYourPDFs')}
             </p>
             <p className="loading-overlay-timing">
               {t('extractingTiming')}
