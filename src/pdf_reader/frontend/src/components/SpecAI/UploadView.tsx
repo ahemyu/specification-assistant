@@ -20,15 +20,15 @@ export function UploadView() {
   const [isDragging, setIsDragging] = useState(false)
   const [previewModal, setPreviewModal] = useState<{
     isOpen: boolean
-    fileId: string | null
+    documentId: number | null
     filename: string | null
-  }>({ isOpen: false, fileId: null, filename: null })
+  }>({ isOpen: false, documentId: null, filename: null })
 
   const {
-    uploadedFileIds,
+    uploadedDocumentIds,
     allUploadedFiles,
     extractionResultsData,
-    setUploadedFileIds,
+    setUploadedDocumentIds,
     setProcessedFiles,
     setAllUploadedFiles,
     setConversationHistory,
@@ -120,15 +120,17 @@ export function UploadView() {
       setAutoDetectionEnabled(data.auto_detection_enabled)
 
       // Update state
-      const newFileIds = [...uploadedFileIds, ...data.processed.map((p) => p.file_id)]
+      const newDocumentIds = [...uploadedDocumentIds, ...data.processed.map((file) => file.id)]
       const newFiles = [...allUploadedFiles, ...data.processed]
 
-      setUploadedFileIds(newFileIds)
+      setUploadedDocumentIds(newDocumentIds)
       setProcessedFiles(newFiles)
       setAllUploadedFiles(newFiles)
 
       showNotification(
-        t('successProcessedNotification').replace('{count}', String(data.processed.length)).replace('{total}', String(newFileIds.length)),
+        t('successProcessedNotification')
+          .replace('{count}', String(data.processed.length))
+          .replace('{total}', String(newDocumentIds.length)),
         'success'
       )
 
@@ -158,7 +160,7 @@ export function UploadView() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            file_ids: newFileIds,
+            document_ids: newDocumentIds,
           }),
         })
         .then(async (detectionResponse) => {
@@ -195,21 +197,21 @@ export function UploadView() {
     }
   }
 
-  const handleDeleteFile = async (fileId: string) => {
+  const handleDeleteFile = async (documentId: number) => {
     if (!confirm(t('confirmDeleteFile'))) {
       return
     }
 
     try {
-      const response = await fetch(`/delete-pdf/${fileId}`, { method: 'DELETE' })
+      const response = await fetch(`/delete-pdf/${documentId}`, { method: 'DELETE' })
       if (!response.ok) {
         throw new Error(`Failed to delete file: ${response.status}`)
       }
 
-      const newFileIds = uploadedFileIds.filter((id) => id !== fileId)
-      const newFiles = allUploadedFiles.filter((f) => f.file_id !== fileId)
+      const newDocumentIds = uploadedDocumentIds.filter((id) => id !== documentId)
+      const newFiles = allUploadedFiles.filter((file) => file.id !== documentId)
 
-      setUploadedFileIds(newFileIds)
+      setUploadedDocumentIds(newDocumentIds)
       setProcessedFiles(newFiles)
       setAllUploadedFiles(newFiles)
 
@@ -243,11 +245,11 @@ export function UploadView() {
     }
 
     const fileCount = allUploadedFiles.length
-    const fileIds = [...uploadedFileIds]
+    const documentIds = [...uploadedDocumentIds]
 
     try {
-      const deletePromises = fileIds.map((fileId) =>
-        fetch(`/delete-pdf/${fileId}`, { method: 'DELETE' })
+      const deletePromises = documentIds.map((documentId) =>
+        fetch(`/delete-pdf/${documentId}`, { method: 'DELETE' })
       )
       const results = await Promise.all(deletePromises)
       const failedDeletions = results.filter((r) => !r.ok)
@@ -256,7 +258,7 @@ export function UploadView() {
         throw new Error(`Failed to delete ${failedDeletions.length} file(s)`)
       }
 
-      setUploadedFileIds([])
+      setUploadedDocumentIds([])
       setProcessedFiles([])
       setAllUploadedFiles([])
       setConversationHistory([])
@@ -273,8 +275,8 @@ export function UploadView() {
     }
   }
 
-  const openPreview = (fileId: string, filename: string) => {
-    setPreviewModal({ isOpen: true, fileId, filename })
+  const openPreview = (documentId: number, filename: string) => {
+    setPreviewModal({ isOpen: true, documentId, filename })
   }
 
   return (
@@ -359,12 +361,12 @@ export function UploadView() {
           <div className="results" id="results">
             <div className="file-grid">
               {allUploadedFiles.map((file) => (
-                <div key={file.file_id} className="file-card" data-file-id={file.file_id}>
+                <div key={file.id} className="file-card" data-document-id={file.id}>
                   <div className="file-card-icon-container">
                     <FaFilePdf size={24} />
                   </div>
                   <div className="file-card-content">
-                    <h4 className="file-card-name">{file.original_filename}</h4>
+                    <h4 className="file-card-name">{file.file_name}</h4>
                     <p className="file-card-details">
                       {t('pagesLabel')} {(file as any).total_pages || 'N/A'}
                     </p>
@@ -372,13 +374,13 @@ export function UploadView() {
                   <div className="file-card-actions">
                     <button
                       className="action-btn preview"
-                      onClick={() => openPreview(file.file_id, file.original_filename)}
+                      onClick={() => openPreview(file.id, file.file_name)}
                       title={t('previewTitle')}
                     >
                       <FaEye />
                     </button>
                     <a
-                      href={`/download/${file.file_id}`}
+                      href={`/download/${file.id}`}
                       className="action-btn download"
                       download
                       title={t('downloadTitle')}
@@ -387,7 +389,7 @@ export function UploadView() {
                     </a>
                     <button
                       className="action-btn delete"
-                      onClick={() => handleDeleteFile(file.file_id)}
+                      onClick={() => handleDeleteFile(file.id)}
                       title={t('deleteTitle')}
                     >
                       <FaTrash />
@@ -402,8 +404,8 @@ export function UploadView() {
 
       <PreviewModal
         isOpen={previewModal.isOpen}
-        onClose={() => setPreviewModal({ isOpen: false, fileId: null, filename: null })}
-        fileId={previewModal.fileId}
+        onClose={() => setPreviewModal({ isOpen: false, documentId: null, filename: null })}
+        documentId={previewModal.documentId}
         filename={previewModal.filename}
       />
     </div>

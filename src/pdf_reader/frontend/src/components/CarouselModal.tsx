@@ -11,6 +11,7 @@ interface CarouselModalProps {
 }
 
 interface SourceLocation {
+  document_id: number
   pdf_filename: string
   page_numbers: number[]
 }
@@ -278,13 +279,15 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
     console.log('[HIGHLIGHT DEBUG] Raw currentResult.references:', currentResult.references)
 
     const sourceLocations = currentResult.references.map((ref) => ({
-      pdf_filename: ref.file_id,
+      document_id: ref.document_id,
+      pdf_filename: ref.file_name,
       page_numbers: [ref.page_number],
       bounding_box: ref.bounding_box,
     }))
 
     const pdfRefs = sourceLocations.map((loc) => ({
-      filename: loc.pdf_filename,
+      documentId: loc.document_id,
+      fileName: loc.pdf_filename,
       pages: loc.page_numbers,
       bounding_box: loc.bounding_box,
     }))
@@ -294,7 +297,8 @@ export function CarouselModal({ isOpen, onClose, onComplete }: CarouselModalProp
   }, [currentKey])
 
   const sourceLocations = pdfReferences.map((ref) => ({
-    pdf_filename: ref.filename,
+    document_id: ref.documentId,
+    pdf_filename: ref.fileName,
     page_numbers: ref.pages,
   }))
 

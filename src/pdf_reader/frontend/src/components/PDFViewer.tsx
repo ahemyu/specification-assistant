@@ -7,7 +7,8 @@ import { IoAdd, IoRemove, IoChevronBack, IoChevronForward } from "react-icons/io
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
 
 interface PDFReference {
-  filename: string
+  documentId: number
+  fileName: string
   pages: number[]
   bounding_box?: [number, number, number, number]
 }
@@ -55,15 +56,15 @@ export function PDFViewer({ references, className = '', selectedRefIndex = 0 }: 
       setError(null)
 
       try {
-        const fileId = ref.filename
+        const documentId = ref.documentId
 
         // Check cache first
-        let doc = cacheRef.current[fileId]
+        let doc = cacheRef.current[documentId]
         if (!doc) {
-          const pdfUrl = `/view-pdf/${fileId}`
+          const pdfUrl = `/view-pdf/${documentId}`
           const loadingTask = pdfjsLib.getDocument(pdfUrl)
           doc = await loadingTask.promise
-          cacheRef.current[fileId] = doc
+          cacheRef.current[documentId] = doc
         }
 
         setCurrentPdfDoc(doc)

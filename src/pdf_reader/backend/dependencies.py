@@ -65,29 +65,29 @@ def reset_llm_extractor() -> None:
     _llm_extractor_initialized = False
 
 
-async def get_pdf_data_for_file_ids_async(db: AsyncSession, file_ids: list[str]) -> list[dict]:
+async def get_pdf_data_for_document_ids_async(db: AsyncSession, document_ids: list[int]) -> list[dict]:
     """
-    Retrieve PDF data for a list of file IDs from database.
+    Retrieve PDF data for a list of document IDs from database.
 
     Args:
         db: Database session.
-        file_ids: List of file IDs to look up.
+        document_ids: List of document IDs to look up.
 
     Returns:
         List of PDF data dictionaries in the format expected by LLM extractors.
 
     Raises:
-        HTTPException: If any file_id is not found in database.
+        HTTPException: If any document ID is not found in database.
     """
-    from backend.services.document import get_document_by_file_id
+    from backend.services.document import get_document_by_id
     from fastapi import HTTPException
 
     pdf_data_list = []
-    for file_id in file_ids:
-        document = await get_document_by_file_id(db, file_id)
+    for document_id in document_ids:
+        document = await get_document_by_id(db, document_id)
         if document is None:
             raise HTTPException(
-                status_code=404, detail=f"File with ID {file_id} not found. Please upload the file first."
+                status_code=404, detail=f"Document with ID {document_id} not found. Please upload the file first."
             )
         pdf_data_list.append(document.to_pdf_data_dict())
     return pdf_data_list

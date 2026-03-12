@@ -54,7 +54,14 @@ def _build_pdf_context(pdf_data: list[dict]) -> str:
     Returns:
         Combined formatted text from all PDFs as a single string.
     """
-    return "".join(pdf.get("formatted_text", "") for pdf in pdf_data)
+    context_parts: list[str] = []
+    for pdf in pdf_data:
+        document_id = pdf.get("document_id")
+        filename = pdf.get("filename", "document.pdf")
+        if document_id is not None:
+            context_parts.append(f"{'#' * 80}\nDOCUMENT ID: {document_id}\nFILENAME: {filename}\n{'#' * 80}\n")
+        context_parts.append(pdf.get("formatted_text", ""))
+    return "".join(context_parts)
 
 
 def _stream_chunk_to_text(content: Any) -> str:

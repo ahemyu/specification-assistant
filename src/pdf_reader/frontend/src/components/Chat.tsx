@@ -46,7 +46,7 @@ export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3
   const messagesContainerRef = useRef<HTMLDivElement>(null)
 
   const {
-    uploadedFileIds,
+    uploadedDocumentIds,
     conversationHistory,
     addChatMessage,
     clearChat,
@@ -108,7 +108,7 @@ export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3
 
   const submitQuestion = useCallback(async () => {
     const trimmedQuestion = question.trim()
-    if (!trimmedQuestion || uploadedFileIds.length === 0) {
+    if (!trimmedQuestion || uploadedDocumentIds.length === 0) {
       alert(t('enterQuestionError'))
       return
     }
@@ -136,7 +136,7 @@ export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          file_ids: uploadedFileIds,
+          document_ids: uploadedDocumentIds,
           question: trimmedQuestion,
           conversation_history: historyToSend,
           model_name: selectedModel,
@@ -226,7 +226,7 @@ export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3
       setStreamingContent('')
       textareaRef.current?.focus()
     }
-  }, [question, uploadedFileIds, conversationHistory, selectedModel, addChatMessage, setConversationHistory, t])
+  }, [question, uploadedDocumentIds, conversationHistory, selectedModel, addChatMessage, setConversationHistory, t])
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -307,7 +307,7 @@ export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3
             onChange={(e) => setQuestion(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={t('chatPlaceholder')}
-            disabled={isLoading || uploadedFileIds.length === 0}
+            disabled={isLoading || uploadedDocumentIds.length === 0}
             rows={1}
             aria-label="Enter your question"
           />
@@ -315,7 +315,7 @@ export function Chat({ modelOptions = ['Gemini3-Flash'], defaultModel = 'Gemini3
             className="send-btn"
             id="askBtn"
             onClick={submitQuestion}
-            disabled={isLoading || !question.trim() || uploadedFileIds.length === 0}
+            disabled={isLoading || !question.trim() || uploadedDocumentIds.length === 0}
             title={t('sendMessageTitle')}
           >
             <IoSend />

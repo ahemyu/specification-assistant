@@ -17,10 +17,10 @@ class ExtractionResult(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    file_ids: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    document_ids: Mapped[list[int]] = mapped_column(JSON, nullable=False)
     extraction_results: Mapped[dict[str, str | None]] = mapped_column(JSON, nullable=False)
     language: Mapped[str] = mapped_column(String(10), nullable=False, default="en")
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(), nullable=False)
 
     def __repr__(self) -> str:
-        return f"<ExtractionResult(id={self.id}, user_id={self.user_id}, files={len(self.file_ids)})>"
+        return f"<ExtractionResult(id={self.id}, user_id={self.user_id}, files={len(self.document_ids)})>"

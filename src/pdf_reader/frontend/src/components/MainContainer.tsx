@@ -11,8 +11,8 @@ import { LanguageToggle } from './LanguageToggle';
 
 export const MainContainer: React.FC = () => {
   const activeSubMenuItem = useAppStore((state) => state.activeSubMenuItem);
-  const uploadedFileIds = useAppStore((state) => state.uploadedFileIds);
-  const hasUploadedFiles = uploadedFileIds.length > 0;
+  const uploadedDocumentIds = useAppStore((state) => state.uploadedDocumentIds);
+  const hasUploadedFiles = uploadedDocumentIds.length > 0;
   const extractionResultsData = useAppStore((state) => state.extractionResultsData);
 
   return (

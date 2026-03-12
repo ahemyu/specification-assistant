@@ -13,6 +13,10 @@ class ChatMessage(BaseModel):
 class SourceLocation(BaseModel):
     """Location information for where a key was found."""
 
+    document_id: int | None = Field(
+        default=None,
+        description="Database ID of the PDF document where the information was found",
+    )
     pdf_filename: str = Field(description="Name of the PDF file where the information was found")
     page_numbers: list[int] = Field(description="List of page numbers where the information was found")
     bounding_box: list[float] | None = Field(

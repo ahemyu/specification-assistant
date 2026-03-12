@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 async def create_extraction_result(
     db: AsyncSession,
     user_id: int,
-    file_ids: list[str],
+    document_ids: list[int],
     extraction_results: dict[str, str | None],
     language: str = "en",
 ) -> ExtractionResult:
@@ -21,7 +21,7 @@ async def create_extraction_result(
     Args:
         db: Database session.
         user_id: user ID who performed the extraction.
-        file_ids: List of document file names included in this extraction.
+        document_ids: List of document IDs included in this extraction.
         extraction_results: Simple dict mapping key names to extracted values.
         language: Language used for extraction.
 
@@ -30,7 +30,7 @@ async def create_extraction_result(
     """
     extraction_result = ExtractionResult(
         user_id=user_id,
-        file_ids=file_ids,
+        document_ids=document_ids,
         extraction_results=extraction_results,
         language=language,
     )
@@ -39,7 +39,7 @@ async def create_extraction_result(
     await db.refresh(extraction_result)
     logger.info(
         f"Created extraction result: {extraction_result.id} "
-        f"(user_id={user_id}, files={len(file_ids)})"
+        f"(user_id={user_id}, files={len(document_ids)})"
     )
     return extraction_result
 

@@ -7,8 +7,8 @@ import "../../styles/modules/home.css";
 
 const STORAGE_KEY_PREFIX = 'pdf_compare_'
 const STORAGE_KEYS = {
-  baseFileId: STORAGE_KEY_PREFIX + 'base_file_id',
-  newFileId: STORAGE_KEY_PREFIX + 'new_file_id',
+  baseDocumentId: STORAGE_KEY_PREFIX + 'base_document_id',
+  newDocumentId: STORAGE_KEY_PREFIX + 'new_document_id',
   baseFileName: STORAGE_KEY_PREFIX + 'base_file_name',
   newFileName: STORAGE_KEY_PREFIX + 'new_file_name',
   comparisonResult: STORAGE_KEY_PREFIX + 'comparison_result',
@@ -21,8 +21,8 @@ const StandardCompareView = () => {
   // State
   const [baseFile, setBaseFile] = useState<File | null>(null)
   const [newFile, setNewFile] = useState<File | null>(null)
-  const [baseFileId, setBaseFileId] = useState<string | null>(null)
-  const [newFileId, setNewFileId] = useState<string | null>(null)
+  const [baseDocumentId, setBaseDocumentId] = useState<number | null>(null)
+  const [newDocumentId, setNewDocumentId] = useState<number | null>(null)
   const [context, setContext] = useState<string>('')
   const [uploadStatus, setUploadStatus] = useState<string>('')
   const [isUploading, setIsUploading] = useState(false)
@@ -57,7 +57,7 @@ const StandardCompareView = () => {
     }
 
     setBaseFile(file)
-    setBaseFileId(null)
+    setBaseDocumentId(null)
     setComparisonResult(null)
     clearState()
   }
@@ -73,7 +73,7 @@ const StandardCompareView = () => {
     }
 
     setNewFile(file)
-    setNewFileId(null)
+    setNewDocumentId(null)
     setComparisonResult(null)
     clearState()
   }
@@ -82,23 +82,23 @@ const StandardCompareView = () => {
     if (!baseFile || !newFile) return
 
     const tempFile = baseFile
-    const tempFileId = baseFileId
+    const tempDocumentId = baseDocumentId
 
     setBaseFile(newFile)
-    setBaseFileId(newFileId)
+    setBaseDocumentId(newDocumentId)
     setNewFile(tempFile)
-    setNewFileId(tempFileId)
+    setNewDocumentId(tempDocumentId)
 
     setUploadStatus('Files swapped! Please upload again.')
-    setBaseFileId(null)
-    setNewFileId(null)
+    setBaseDocumentId(null)
+    setNewDocumentId(null)
   }
 
   const handleClearFiles = () => {
     setBaseFile(null)
     setNewFile(null)
-    setBaseFileId(null)
-    setNewFileId(null)
+    setBaseDocumentId(null)
+    setNewDocumentId(null)
     setComparisonResult(null)
     setUploadStatus('')
     setShowPreviewModal(false)
@@ -106,7 +106,7 @@ const StandardCompareView = () => {
     clearState()
   }
 
-  const uploadPDF = async (file: File): Promise<string> => {
+  const uploadPDF = async (file: File): Promise<number> => {
     const formData = new FormData()
     formData.append('files', file)
 
@@ -134,7 +134,7 @@ const StandardCompareView = () => {
     const data = await response.json()
 
     if (data.processed && data.processed.length > 0) {
-      return data.processed[0].file_id
+      return data.processed[0].id
     } else if (data.failed && data.failed.length > 0) {
       throw new Error(`Upload failed: ${data.failed[0]}`)
     } else {
@@ -155,11 +155,11 @@ const StandardCompareView = () => {
     try {
       setUploadStatus('Uploading base PDF...')
       const baseId = await uploadPDF(baseFile)
-      setBaseFileId(baseId)
+      setBaseDocumentId(baseId)
 
       setUploadStatus('Uploading new PDF...')
       const newId = await uploadPDF(newFile)
-      setNewFileId(newId)
+      setNewDocumentId(newId)
 
       setUploadStatus('✓ Both PDFs uploaded and processed successfully!')
       showNotification('PDFs uploaded successfully', 'success')
@@ -169,15 +169,15 @@ const StandardCompareView = () => {
       console.error('Upload error:', error)
       setUploadStatus(`✗ Upload failed: ${error.message}`)
       showNotification(`Failed to upload PDFs: ${error.message}`, 'error')
-      setBaseFileId(null)
-      setNewFileId(null)
+      setBaseDocumentId(null)
+      setNewDocumentId(null)
     } finally {
       setIsUploading(false)
     }
   }
 
   const handleCompare = async () => {
-    if (!baseFileId || !newFileId) {
+    if (!baseDocumentId || !newDocumentId) {
       showNotification('Please upload both PDF files before comparing', 'error')
       return
     }
@@ -192,8 +192,8 @@ const StandardCompareView = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          base_file_id: baseFileId,
-          new_file_id: newFileId,
+          base_document_id: baseDocumentId,
+          new_document_id: newDocumentId,
           additional_context: context.trim() || null,
         }),
       })
@@ -242,10 +242,10 @@ const StandardCompareView = () => {
     setSelectedChangeIndex(newIndex)
   }
 
-  const saveState = (baseId: string, newId: string, baseName: string, newName: string) => {
+  const saveState = (baseId: number, newId: number, baseName: string, newName: string) => {
     try {
-      localStorage.setItem(STORAGE_KEYS.baseFileId, baseId)
-      localStorage.setItem(STORAGE_KEYS.newFileId, newId)
+      localStorage.setItem(STORAGE_KEYS.baseDocumentId, String(baseId))
+      localStorage.setItem(STORAGE_KEYS.newDocumentId, String(newId))
       localStorage.setItem(STORAGE_KEYS.baseFileName, baseName)
       localStorage.setItem(STORAGE_KEYS.newFileName, newName)
     } catch (error) {
@@ -255,15 +255,15 @@ const StandardCompareView = () => {
 
   const restoreState = () => {
     try {
-      const savedBaseFileId = localStorage.getItem(STORAGE_KEYS.baseFileId)
-      const savedNewFileId = localStorage.getItem(STORAGE_KEYS.newFileId)
+      const savedBaseDocumentId = localStorage.getItem(STORAGE_KEYS.baseDocumentId)
+      const savedNewDocumentId = localStorage.getItem(STORAGE_KEYS.newDocumentId)
       const savedBaseFileName = localStorage.getItem(STORAGE_KEYS.baseFileName)
       const savedNewFileName = localStorage.getItem(STORAGE_KEYS.newFileName)
       const savedComparisonResult = localStorage.getItem(STORAGE_KEYS.comparisonResult)
 
-      if (savedBaseFileId && savedNewFileId && savedBaseFileName && savedNewFileName) {
-        setBaseFileId(savedBaseFileId)
-        setNewFileId(savedNewFileId)
+      if (savedBaseDocumentId && savedNewDocumentId && savedBaseFileName && savedNewFileName) {
+        setBaseDocumentId(Number(savedBaseDocumentId))
+        setNewDocumentId(Number(savedNewDocumentId))
         setUploadStatus('✓ Files restored from previous session')
       }
 
@@ -336,7 +336,7 @@ const StandardCompareView = () => {
                 </span>
               </div>
             )}
-            {baseFileId && !baseFile && (
+            {baseDocumentId && !baseFile && (
               <div className="selected-file-info">
                 <strong>📄 {localStorage.getItem(STORAGE_KEYS.baseFileName)}</strong>
                 <br />
@@ -386,7 +386,7 @@ const StandardCompareView = () => {
                 </span>
               </div>
             )}
-            {newFileId && !newFile && (
+            {newDocumentId && !newFile && (
               <div className="selected-file-info">
                 <strong>📄 {localStorage.getItem(STORAGE_KEYS.newFileName)}</strong>
                 <br />
@@ -424,7 +424,7 @@ const StandardCompareView = () => {
         )}
 
         {/* Preview Button */}
-        {baseFileId && newFileId && (
+        {baseDocumentId && newDocumentId && (
           <div className="preview-button-container">
             <button className="preview-both-btn" onClick={() => setShowPreviewModal(true)}>
               👁 Preview Both PDFs
@@ -448,7 +448,7 @@ const StandardCompareView = () => {
         <button
           className="compare-btn"
           onClick={handleCompare}
-          disabled={!baseFileId || !newFileId || isComparing}
+          disabled={!baseDocumentId || !newDocumentId || isComparing}
         >
           {isComparing ? 'Comparing...' : 'Compare PDFs'}
         </button>
@@ -558,7 +558,7 @@ const StandardCompareView = () => {
       )}
 
       {/* Preview Modal */}
-      {showPreviewModal && baseFileId && newFileId && (
+      {showPreviewModal && baseDocumentId && newDocumentId && (
         <div className="preview-modal" onClick={() => setShowPreviewModal(false)}>
           <div className="preview-modal-container" onClick={(e) => e.stopPropagation()}>
             <button className="close-preview-btn" onClick={() => setShowPreviewModal(false)}>
@@ -571,7 +571,7 @@ const StandardCompareView = () => {
                 </div>
                 <div className="preview-content">
                   <iframe
-                    src={`/view-pdf/${baseFileId}`}
+                    src={`/view-pdf/${baseDocumentId}`}
                     className="pdf-iframe"
                     title="Base PDF Preview"
                   />
@@ -583,7 +583,7 @@ const StandardCompareView = () => {
                 </div>
                 <div className="preview-content">
                   <iframe
-                    src={`/view-pdf/${newFileId}`}
+                    src={`/view-pdf/${newDocumentId}`}
                     className="pdf-iframe"
                     title="New PDF Preview"
                   />
@@ -595,7 +595,7 @@ const StandardCompareView = () => {
       )}
 
       {/* Change Detail Modal */}
-      {showChangeModal && selectedChange && baseFileId && newFileId && (
+      {showChangeModal && selectedChange && baseDocumentId && newDocumentId && (
         <div className="change-modal" onClick={closeChangeModal}>
           <div className="change-modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="change-modal-header">
@@ -656,7 +656,7 @@ const StandardCompareView = () => {
                   </div>
                   {selectedChange.pages_old.length > 0 ? (
                     <iframe
-                      src={`/view-pdf/${baseFileId}#page=${selectedChange.pages_old[0]}`}
+                      src={`/view-pdf/${baseDocumentId}#page=${selectedChange.pages_old[0]}`}
                       className="modal-pdf-viewer"
                       title="Old Version PDF"
                     />
@@ -687,7 +687,7 @@ const StandardCompareView = () => {
                   </div>
                   {selectedChange.pages_new.length > 0 ? (
                     <iframe
-                      src={`/view-pdf/${newFileId}#page=${selectedChange.pages_new[0]}`}
+                      src={`/view-pdf/${newDocumentId}#page=${selectedChange.pages_new[0]}`}
                       className="modal-pdf-viewer"
                       title="New Version PDF"
                     />

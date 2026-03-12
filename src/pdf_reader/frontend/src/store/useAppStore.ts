@@ -35,7 +35,7 @@ export interface AuthState {
 
 interface AppState {
   // File management state
-  uploadedFileIds: string[]
+  uploadedDocumentIds: number[]
   processedFiles: ProcessedFile[]
   allUploadedFiles: ProcessedFile[]
   extractionResultsData: ExtractionResult[] | null
@@ -89,7 +89,7 @@ interface AppState {
   authModalMode: 'login' | 'register';
 
   // Actions
-  setUploadedFileIds: (ids: string[]) => void
+  setUploadedDocumentIds: (ids: number[]) => void
   setProcessedFiles: (files: ProcessedFile[]) => void
   setAllUploadedFiles: (files: ProcessedFile[]) => void
   setExtractionResultsData: (data: ExtractionResult[] | null) => void
@@ -142,7 +142,7 @@ interface AppState {
 
 export const useAppStore = create<AppState>((set) => ({
   // Initial state
-  uploadedFileIds: [],
+  uploadedDocumentIds: [],
   processedFiles: [],
   allUploadedFiles: [],
   extractionResultsData: null,
@@ -190,7 +190,7 @@ export const useAppStore = create<AppState>((set) => ({
   authModalMode: 'login',
 
   // Setters
-  setUploadedFileIds: (ids) => set({ uploadedFileIds: ids }),
+  setUploadedDocumentIds: (ids) => set({ uploadedDocumentIds: ids }),
   setProcessedFiles: (files) => set({ processedFiles: files }),
   setAllUploadedFiles: (files) => set({ allUploadedFiles: files }),
   setExtractionResultsData: (data) => set({ extractionResultsData: data }),
@@ -310,7 +310,7 @@ export const useAppStore = create<AppState>((set) => ({
       isAuthenticated: false,
       authError: null,
       // Clear uploaded files state
-      uploadedFileIds: [],
+      uploadedDocumentIds: [],
       processedFiles: [],
       allUploadedFiles: [],
       conversationHistory: [],

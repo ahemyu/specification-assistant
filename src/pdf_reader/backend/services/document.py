@@ -11,8 +11,7 @@ logger = logging.getLogger(__name__)
 
 async def create_document(
     db: AsyncSession,
-    file_id: str,
-    original_filename: str,
+    file_name: str,
     total_pages: int,
     file_size_bytes: int,
     formatted_text: str,
@@ -24,8 +23,7 @@ async def create_document(
 
     Args:
         db: Database session.
-        file_id: Unique identifier for the document.
-        original_filename: Original filename as uploaded.
+        file_name: Original filename as uploaded.
         total_pages: Number of pages in the PDF.
         file_size_bytes: Size of the PDF file in bytes.
         formatted_text: Extracted and formatted text content.
@@ -37,8 +35,7 @@ async def create_document(
         The created Document instance.
     """
     document = Document(
-        file_id=file_id,
-        original_filename=original_filename,
+        file_name=file_name,
         total_pages=total_pages,
         file_size_bytes=file_size_bytes,
         formatted_text=formatted_text,
@@ -49,22 +46,21 @@ async def create_document(
     db.add(document)
     await db.commit()
     await db.refresh(document)
-    logger.info(f"Created document: {file_id} ({original_filename})")
+    logger.info("Created document: %s (%s)", document.id, file_name)
     return document
 
 
-async def get_document_by_file_id(db: AsyncSession, file_id: str) -> Document | None:
-    """Get a document by its file_id.
+async def get_document_by_id(db: AsyncSession, document_id: int) -> Document | None:
+    """Get a document by its primary key.
 
     Args:
         db: Database session.
-        file_id: The unique file identifier.
+        document_id: The document ID.
 
     Returns:
         Document if found, None otherwise.
     """
-    result = await db.execute(select(Document).where(Document.file_id == file_id))
-    return result.scalar_one_or_none()
+    return await db.get(Document, document_id)
 
 
 async def get_documents_by_user(db: AsyncSession, user_id: int | None = None) -> list[Document]:
@@ -99,23 +95,23 @@ async def get_all_documents(db: AsyncSession) -> list[Document]:
     return list(result.scalars().all())
 
 
-async def delete_document(db: AsyncSession, file_id: str) -> bool:
-    """Delete a document by file_id.
+async def delete_document(db: AsyncSession, document_id: int) -> bool:
+    """Delete a document by document ID.
 
     Args:
         db: Database session.
-        file_id: The unique file identifier.
+        document_id: The document ID.
 
     Returns:
         True if document was deleted, False if not found.
     """
-    document = await get_document_by_file_id(db, file_id)
+    document = await get_document_by_id(db, document_id)
     if document is None:
         return False
 
     await db.delete(document)
     await db.commit()
-    logger.info(f"Deleted document from database: {file_id}")
+    logger.info("Deleted document from database: %s", document_id)
     return True
 
 
@@ -138,8 +134,8 @@ async def delete_documents_by_user(db: AsyncSession, user_id: int) -> int:
     return deleted_count
 
 
-def build_pdf_data_from_documents(documents: list[Document]) -> dict[str, dict]:
-    """Build a dict mapping file_id to pdf_data from a list of documents.
+def build_pdf_data_from_documents(documents: list[Document]) -> dict[int, dict]:
+    """Build a dict mapping document_id to pdf_data from a list of documents.
 
     This creates a structure suitable for batch operations on multiple PDFs.
 
@@ -147,6 +143,6 @@ def build_pdf_data_from_documents(documents: list[Document]) -> dict[str, dict]:
         documents: List of Document instances.
 
     Returns:
-        Dict mapping file_id to pdf_data dict.
+        Dict mapping document_id to pdf_data dict.
     """
-    return {doc.file_id: doc.to_pdf_data_dict() for doc in documents}
+    return {doc.id: doc.to_pdf_data_dict() for doc in documents}

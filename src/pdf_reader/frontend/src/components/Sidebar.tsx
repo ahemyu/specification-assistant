@@ -13,7 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   const { t } = useTranslation();
   const activeView = useAppStore((state) => state.activeView);
   const setActiveView = useAppStore((state) => state.setActiveView);
-  const uploadedFileIds = useAppStore((state) => state.uploadedFileIds);
+  const uploadedDocumentIds = useAppStore((state) => state.uploadedDocumentIds);
   const extractionResultsData = useAppStore((state) => state.extractionResultsData);
   const activeSubMenuItem = useAppStore((state) => state.activeSubMenuItem);
   const setActiveSubMenuItem = useAppStore((state) => state.setActiveSubMenuItem);
@@ -30,7 +30,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
     setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  const hasUploadedFiles = uploadedFileIds.length > 0;
+  const hasUploadedFiles = uploadedDocumentIds.length > 0;
   const isSpecAIExpanded = activeView === "spec_ai";
 
   const handleSpecAIClick = () => {

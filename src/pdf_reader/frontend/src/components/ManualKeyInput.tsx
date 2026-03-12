@@ -10,7 +10,7 @@ interface ManualKeyInputProps {
   onManualKeysChange: (value: string) => void;
   onExtract: () => void;
   isExtracting: boolean;
-  uploadedFileIds: string[];
+  uploadedDocumentIds: number[];
   extractionComplete: boolean;
   extractionResultsData: ExtractionResult[] | null;
   onViewResults: () => void;
@@ -22,7 +22,7 @@ export function ManualKeyInput({
   onManualKeysChange,
   onExtract,
   isExtracting,
-  uploadedFileIds,
+  uploadedDocumentIds,
   extractionComplete,
   extractionResultsData,
   onViewResults,
@@ -56,14 +56,14 @@ export function ManualKeyInput({
           id="extractBtn"
           className="extract-btn"
           onClick={onExtract}
-          disabled={uploadedFileIds.length === 0 || isExtracting}
+          disabled={uploadedDocumentIds.length === 0 || isExtracting}
           isLoading={isExtracting}
-          title={uploadedFileIds.length === 0 ? t('pleaseUploadFirst') : ''}
+          title={uploadedDocumentIds.length === 0 ? t('pleaseUploadFirst') : ''}
         >
           {isExtracting ? t('extractingKeysLoading') : t('extractKeysButton')}
         </Button>
 
-        {uploadedFileIds.length === 0 && (
+        {uploadedDocumentIds.length === 0 && (
           <p className="upload-notice">
             {t('pleaseUploadFirstNotice')}
           </p>

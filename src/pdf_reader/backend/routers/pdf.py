@@ -13,7 +13,7 @@ from backend.services.document import (
     create_document,
     delete_document,
     get_all_documents,
-    get_document_by_file_id,
+    get_document_by_id,
 )
 from backend.services.process_pdfs import process_single_pdf
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -42,14 +42,11 @@ def _process_single_file(file_contents: bytes, filename: str) -> dict:
         # Process PDF from memory
         pdf_data = process_single_pdf(BytesIO(file_contents), filename=filename)
 
-        file_id = filename.replace(".pdf", "")
-
         logger.info(f"Successfully processed {filename}")
 
         return {
             "success": True,
             "filename": filename,
-            "file_id": file_id,
             "pdf_data": pdf_data,
             "file_size_bytes": len(file_contents),
             "pdf_binary": file_contents,
@@ -111,22 +108,14 @@ async def upload_pdfs(
     # Process results and save to database
     for result in results:
         if result["success"]:
-            file_id = result["file_id"]
             pdf_data = result["pdf_data"]
             file_size_bytes = result["file_size_bytes"]
             pdf_binary = result["pdf_binary"]
 
-            # Check if document already exists
-            existing_doc = await get_document_by_file_id(db, file_id)
-            if existing_doc:
-                # Delete old record to replace with new one
-                await delete_document(db, file_id)
-
             # Store document in database
-            await create_document(
+            document = await create_document(
                 db=db,
-                file_id=file_id,
-                original_filename=result["filename"],
+                file_name=result["filename"],
                 total_pages=pdf_data["total_pages"],
                 file_size_bytes=file_size_bytes,
                 formatted_text=pdf_data["formatted_text"],
@@ -137,9 +126,8 @@ async def upload_pdfs(
 
             processed.append(
                 {
-                    "filename": result["filename"],
-                    "original_filename": result["filename"],
-                    "file_id": file_id,
+                    "id": document.id,
+                    "file_name": result["filename"],
                     "total_pages": pdf_data["total_pages"],
                     "data": pdf_data,
                 }
@@ -154,50 +142,51 @@ async def upload_pdfs(
     }
 
 
-@router.get("/download/{file_id}")
-async def download_file(file_id: str, db: AsyncSession = Depends(get_db)):
+@router.get("/download/{document_id}")
+async def download_file(document_id: int, db: AsyncSession = Depends(get_db)):
     """Download the extracted text file from database."""
-    document = await get_document_by_file_id(db, file_id)
+    document = await get_document_by_id(db, document_id)
 
     if not document or not document.formatted_text:
         raise HTTPException(status_code=404, detail="File not found")
 
+    txt_filename = os.path.splitext(document.file_name)[0]
     return Response(
         content=document.formatted_text,
         media_type="text/plain",
-        headers={"Content-Disposition": f"attachment; filename=extracted_{file_id}.txt"},
+        headers={"Content-Disposition": f'attachment; filename="extracted_{txt_filename}.txt"'},
     )
 
 
-@router.get("/preview/{file_id}")
-async def preview_file(file_id: str, db: AsyncSession = Depends(get_db)):
+@router.get("/preview/{document_id}")
+async def preview_file(document_id: int, db: AsyncSession = Depends(get_db)):
     """
     Get the text content of an extracted file for preview.
 
     Returns JSON with the text content and metadata.
     """
-    document = await get_document_by_file_id(db, file_id)
+    document = await get_document_by_id(db, document_id)
 
     if not document:
         raise HTTPException(status_code=404, detail="File not found")
 
     content = document.formatted_text or ""
     return {
-        "file_id": file_id,
-        "filename": f"{file_id}.txt",
+        "id": document.id,
+        "filename": f"{os.path.splitext(document.file_name)[0]}.txt",
         "content": content,
         "size": len(content),
     }
 
 
-@router.get("/view-pdf/{file_id}")
-async def view_pdf(file_id: str, db: AsyncSession = Depends(get_db)):
+@router.get("/view-pdf/{document_id}")
+async def view_pdf(document_id: int, db: AsyncSession = Depends(get_db)):
     """
     Serve the original uploaded PDF file for viewing in browser.
 
     Returns the PDF file with inline content disposition for browser viewing.
     """
-    document = await get_document_by_file_id(db, file_id)
+    document = await get_document_by_id(db, document_id)
 
     if not document or not document.pdf_binary:
         raise HTTPException(status_code=404, detail="PDF file not found")
@@ -205,26 +194,26 @@ async def view_pdf(file_id: str, db: AsyncSession = Depends(get_db)):
     return Response(
         content=document.pdf_binary,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"inline; filename={file_id}.pdf"},
+        headers={"Content-Disposition": f'inline; filename="{document.file_name}"'},
     )
 
 
-@router.delete("/delete-pdf/{file_id}")
-async def delete_pdf(file_id: str, db: AsyncSession = Depends(get_db)):
+@router.delete("/delete-pdf/{document_id}")
+async def delete_pdf(document_id: int, db: AsyncSession = Depends(get_db)):
     """
     Delete a PDF from database.
 
     Args:
-        file_id: The ID of the file to delete
+        document_id: The ID of the document to delete
 
     Returns:
         Success message
     """
-    deleted = await delete_document(db, file_id)
+    deleted = await delete_document(db, document_id)
     if not deleted:
-        raise HTTPException(status_code=404, detail=f"Document {file_id} not found")
+        raise HTTPException(status_code=404, detail=f"Document {document_id} not found")
 
-    return {"message": f"File {file_id} deleted successfully"}
+    return {"message": f"Document {document_id} deleted successfully"}
 
 
 @router.get("/documents")
@@ -238,8 +227,8 @@ async def list_documents(db: AsyncSession = Depends(get_db)):
     return {
         "documents": [
             {
-                "file_id": doc.file_id,
-                "original_filename": doc.original_filename,
+                "id": doc.id,
+                "file_name": doc.file_name,
                 "total_pages": doc.total_pages,
                 "file_size_bytes": doc.file_size_bytes,
                 "created_at": doc.created_at.isoformat(),

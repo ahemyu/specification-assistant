@@ -5,7 +5,7 @@ import { IoClose } from 'react-icons/io5'
 interface PreviewModalProps {
   isOpen: boolean
   onClose: () => void
-  fileId: string | null
+  documentId: number | null
   filename: string | null
 }
 
@@ -14,13 +14,13 @@ interface PreviewData {
   size: number
 }
 
-export function PreviewModal({ isOpen, onClose, fileId, filename }: PreviewModalProps) {
+export function PreviewModal({ isOpen, onClose, documentId, filename }: PreviewModalProps) {
   const [previewData, setPreviewData] = useState<PreviewData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!isOpen || !fileId) {
+    if (!isOpen || documentId === null) {
       setPreviewData(null)
       setError(null)
       return
@@ -31,7 +31,7 @@ export function PreviewModal({ isOpen, onClose, fileId, filename }: PreviewModal
       setError(null)
 
       try {
-        const response = await fetch(`/preview/${fileId}`)
+        const response = await fetch(`/preview/${documentId}`)
         if (!response.ok) {
           throw new Error(`Failed to load preview: ${response.status}`)
         }
@@ -46,7 +46,7 @@ export function PreviewModal({ isOpen, onClose, fileId, filename }: PreviewModal
     }
 
     loadPreview()
-  }, [isOpen, fileId])
+  }, [isOpen, documentId])
 
 
   return (

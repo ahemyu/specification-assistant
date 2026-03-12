@@ -8,7 +8,7 @@ from .domain import ChatMessage
 class KeyExtractionRequest(BaseModel):
     """Request model for key extraction endpoint."""
 
-    file_ids: list[str]
+    document_ids: list[int]
     key_names: list[str]
     language: str = "en"
 
@@ -16,7 +16,7 @@ class KeyExtractionRequest(BaseModel):
 class QuestionRequest(BaseModel):
     """Request model for asking questions about PDFs."""
 
-    file_ids: list[str]
+    document_ids: list[int]
     question: str
     conversation_history: list[ChatMessage] | None = None
     language: str = "en"
@@ -31,19 +31,19 @@ class ExcelDownloadRequest(BaseModel):
 class PDFComparisonRequest(BaseModel):
     """Request model for comparing two PDF versions"""
 
-    base_file_id: str  # The original/old version
-    new_file_id: str  # The updated/new version
+    base_document_id: int
+    new_document_id: int
     additional_context: str | None = None
 
 
 class ProductTypeDetectionRequest(BaseModel):
     """Request model for detecting product type from PDFs"""
 
-    file_ids: list[str]
+    document_ids: list[int]
 
 
 class CoreWindingCountRequest(BaseModel):
     """Request model for detecting core/winding count from PDFs"""
 
-    file_ids: list[str]
+    document_ids: list[int]
     product_type: str

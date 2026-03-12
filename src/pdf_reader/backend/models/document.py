@@ -23,11 +23,8 @@ class Document(Base):
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
     )
 
-    # Unique identifier used for file paths and API references
-    file_id: Mapped[str] = mapped_column(String(255), unique=True, nullable=False, index=True)
-
     # Original filename as uploaded by user
-    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_name: Mapped[str] = mapped_column(String(255), nullable=False)
 
     # PDF metadata
     total_pages: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -52,16 +49,13 @@ class Document(Base):
     user = relationship("User", backref="documents")
 
     def __repr__(self) -> str:
-        return f"<Document(id={self.id}, file_id={self.file_id}, filename={self.original_filename})>"
+        return f"<Document(id={self.id}, filename={self.file_name})>"
 
     def to_pdf_data_dict(self) -> dict:
-        """Convert to the pdf_data dict format used by the application.
-
-        This matches the structure returned by process_single_pdf() so it can
-        be used interchangeably with in-memory processed data.
-        """
+        """Convert to the pdf_data dict format used by the application."""
         return {
-            "filename": self.original_filename,
+            "document_id": self.id,
+            "filename": self.file_name,
             "total_pages": self.total_pages,
             "formatted_text": self.formatted_text or "",
             "line_id_map": self.line_id_map or {},

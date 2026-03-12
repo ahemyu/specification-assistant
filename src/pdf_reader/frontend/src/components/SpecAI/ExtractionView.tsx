@@ -15,6 +15,7 @@ import { useTranslation } from '../../core/i18n/LanguageContext'
 interface BackendExtractionResult {
   key_value: string | null
   source_locations: Array<{
+    document_id: number | null
     pdf_filename: string
     page_numbers: number[]
     bounding_box?: [number, number, number, number]
@@ -30,14 +31,20 @@ interface ExtractionResponse {
 function transformExtractionResponse(backendData: ExtractionResponse): ExtractionResult[] {
   return Object.entries(backendData).map(([keyName, result]) => {
     // Flatten source_locations to references
-    const references = result.source_locations.flatMap((location) =>
-      location.page_numbers.map((pageNum) => ({
-        file_id: location.pdf_filename.replace(/.pdf$/i, ''),
+    const references = result.source_locations.flatMap((location) => {
+      const documentId = location.document_id
+      if (documentId === null) {
+        return []
+      }
+
+      return location.page_numbers.map((pageNum) => ({
+        document_id: documentId,
+        file_name: location.pdf_filename,
         page_number: pageNum,
         text: result.description || '',
         bounding_box: location.bounding_box,
       }))
-    )
+    })
 
     return {
       key: keyName,
@@ -63,7 +70,7 @@ export function ExtractionView() {
   const [showAllKeysModal, setShowAllKeysModal] = useState(false)
 
   const {
-    uploadedFileIds,
+    uploadedDocumentIds,
     extractionResultsData,
     autoDetectionEnabled,
     detectedProductType,
@@ -100,7 +107,7 @@ export function ExtractionView() {
 
   // Load template keys and detect counts when product type is selected
   useEffect(() => {
-    if (selectedProductType && uploadedFileIds.length > 0) {
+    if (selectedProductType && uploadedDocumentIds.length > 0) {
       const baseKeys = getKeysForProductType(selectedProductType)
 
       if (!autoDetectionEnabled) {
@@ -118,7 +125,7 @@ export function ExtractionView() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            file_ids: uploadedFileIds,
+            document_ids: uploadedDocumentIds,
             product_type: selectedProductType,
           }),
         })
@@ -172,7 +179,7 @@ export function ExtractionView() {
     setDetectedCoreCount,
     setDetectedWindingCount,
     setTemplateKeys,
-    uploadedFileIds,
+    uploadedDocumentIds,
   ])
 
   const handleProductTypeSelect = (productType: ProductType) => {
@@ -180,7 +187,7 @@ export function ExtractionView() {
   }
 
   const handleExtractFromTemplate = async () => {
-    if (!selectedProductType || templateKeys.length === 0 || uploadedFileIds.length === 0) {
+    if (!selectedProductType || templateKeys.length === 0 || uploadedDocumentIds.length === 0) {
       showNotification(t('selectProductAndUpload'), 'error')
       return
     }
@@ -199,8 +206,8 @@ export function ExtractionView() {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          file_ids: uploadedFileIds,
-          key_names: templateKeys.map(k => k.name),
+          document_ids: uploadedDocumentIds,
+          key_names: templateKeys.map((key) => key.name),
           language: language,
         }),
       })
@@ -257,7 +264,7 @@ export function ExtractionView() {
 
   const handleExtractManually = async () => {
     const keysText = manualKeys.trim()
-    if (!keysText || uploadedFileIds.length === 0) {
+    if (!keysText || uploadedDocumentIds.length === 0) {
       showNotification(t('enterKeyError'), 'error')
       return
     }
@@ -283,7 +290,7 @@ export function ExtractionView() {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          file_ids: uploadedFileIds,
+          document_ids: uploadedDocumentIds,
           key_names: keyNames,
           language: language,
         }),
@@ -603,11 +610,11 @@ export function ExtractionView() {
 
                           onClick={handleExtractFromTemplate}
 
-                          disabled={uploadedFileIds.length === 0 || isExtracting || isDetectingCounts}
+                          disabled={uploadedDocumentIds.length === 0 || isExtracting || isDetectingCounts}
 
                           isLoading={isExtracting}
 
-                          title={uploadedFileIds.length === 0 ? t('pleaseUploadFirst') : isDetectingCounts ? t('optimizingKeyListTitle') : ''}
+                          title={uploadedDocumentIds.length === 0 ? t('pleaseUploadFirst') : isDetectingCounts ? t('optimizingKeyListTitle') : ''}
 
                         >
 
@@ -617,7 +624,7 @@ export function ExtractionView() {
 
           
 
-                        {uploadedFileIds.length === 0 && (
+                        {uploadedDocumentIds.length === 0 && (
 
                           <p style={{ color: '#EF4444', marginTop: '8px', fontSize: '0.9em', textAlign: 'center' }}>
 
@@ -694,7 +701,7 @@ export function ExtractionView() {
               onManualKeysChange={setManualKeys}
               onExtract={handleExtractManually}
               isExtracting={isExtracting}
-              uploadedFileIds={uploadedFileIds}
+              uploadedDocumentIds={uploadedDocumentIds}
               extractionComplete={extractionComplete}
               extractionResultsData={extractionResultsData}
               onViewResults={() => {

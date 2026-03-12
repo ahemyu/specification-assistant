@@ -1,14 +1,13 @@
 export interface UploadedFile {
-  id: string
+  id: number
   name: string
   size?: number
 }
 
 export interface ProcessedFile {
-  file_id: string
-  original_filename: string
-  processed_filename: string
-  status: string
+  id: number
+  file_name: string
+  total_pages: number
 }
 
 export interface ExtractionResult {
@@ -18,7 +17,8 @@ export interface ExtractionResult {
 }
 
 export interface Reference {
-  file_id: string
+  document_id: number
+  file_name: string
   page_number: number
   text: string
   bounding_box?: [number, number, number, number]
@@ -39,7 +39,7 @@ export interface ChatMessage {
 }
 
 export interface PDFCache {
-  [fileId: string]: any
+  [documentId: number]: any
 }
 
 // PDF Comparison types

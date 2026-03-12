@@ -22,7 +22,7 @@ When a key IS found:
   "key_name": "Voltage Rating",
   "result": {{
     "key_value": "20kV",
-    "source_locations": [{{ "pdf_filename": "spec.pdf", "page_numbers": [3] }}],
+    "source_locations": [{{ "document_id": 12, "pdf_filename": "spec.pdf", "page_numbers": [3] }}],
     "description": "Found voltage rating in specifications table on page 3",
     "matched_line_ids": ["3_t0_r2_c1", "3_t0_r2_c2"]
   }}
@@ -42,7 +42,7 @@ When a key is NOT found:
 For each key, you MUST return:
 - key_name: the exact key string as provided in the list above
 - key_value: the extracted value or null if not found
-- source_locations: all PDF filenames and page numbers where the information was found
+- source_locations: all document IDs, PDF filenames, and page numbers where the information was found
 - description: explanation of where and how you found it (DO NOT mention line_id, cell_id, or other internal markers)
 - matched_line_ids: list of [line_id] or [cell_id] markers that contain the value (REQUIRED)
 
@@ -52,7 +52,7 @@ IMPORTANT INSTRUCTIONS:
 1. Treat each key independently and provide a separate result for each one.
 2. Use the key metadata above (if provided) to understand both the German and English terms,
    as well as additional context about what values are expected or typical.
-3. Record ALL PDF filenames and page numbers where you found relevant information
+3. Record ALL document IDs, PDF filenames, and page numbers where you found relevant information
    (they COULD be spread to different pdfs/pages).
 4. CRITICAL: When you find a key's value, you MUST identify and return the line_id(s)
    or cell_id(s) where the value appears. Include ALL IDs that contain the complete answer.

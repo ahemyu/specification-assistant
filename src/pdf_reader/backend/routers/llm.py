@@ -4,7 +4,7 @@ import json
 import logging
 
 from backend.database import get_db
-from backend.dependencies import get_current_user, get_llm_extractor, get_pdf_data_for_file_ids_async
+from backend.dependencies import get_current_user, get_llm_extractor, get_pdf_data_for_document_ids_async
 from backend.models.user import User
 from backend.schemas.domain import SourceLocation
 from backend.schemas.requests import (
@@ -36,7 +36,7 @@ async def extract_keys(
     Extract keys from one or more previously uploaded PDFs using LLM.
 
     Args:
-    - request: KeyExtractionRequest containing file_ids and key_names
+    - request: KeyExtractionRequest containing document_ids and key_names
     - db: AsyncSession database session
     - llm_extractor: LLMKeyExtractor service for key extraction
     - current_user: Authenticated user
@@ -44,7 +44,7 @@ async def extract_keys(
     Returns:
     - Dictionary mapping each key name to its KeyExtractionResult
     """
-    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
+    pdf_data_list = await get_pdf_data_for_document_ids_async(db, request.document_ids)
 
     # Extract all keys using LLM
     try:
@@ -59,8 +59,19 @@ async def extract_keys(
 
                 for source_loc in result.source_locations:
                     pdf_filename = source_loc.pdf_filename
+                    document_id = source_loc.document_id
 
-                    matching_pdf = next((pdf for pdf in pdf_data_list if pdf.get("filename") == pdf_filename), None)
+                    matching_pdf = None
+                    if document_id is not None:
+                        matching_pdf = next(
+                            (pdf for pdf in pdf_data_list if pdf.get("document_id") == document_id),
+                            None,
+                        )
+
+                    if matching_pdf is None:
+                        matching_pdfs = [pdf for pdf in pdf_data_list if pdf.get("filename") == pdf_filename]
+                        if len(matching_pdfs) == 1:
+                            matching_pdf = matching_pdfs[0]
 
                     if not matching_pdf or "line_id_map" not in matching_pdf:
                         new_source_locations.append(source_loc)
@@ -84,6 +95,7 @@ async def extract_keys(
 
                         new_source_locations.append(
                             SourceLocation(
+                                document_id=matching_pdf.get("document_id"),
                                 pdf_filename=pdf_filename,
                                 page_numbers=[line_page_num],
                                 bounding_box=bbox,
@@ -92,6 +104,8 @@ async def extract_keys(
                         has_highlight = True
 
                     if not has_highlight:
+                        if source_loc.document_id is None:
+                            source_loc.document_id = matching_pdf.get("document_id") if matching_pdf else None
                         new_source_locations.append(source_loc)
 
                 result.source_locations = new_source_locations
@@ -113,7 +127,7 @@ async def extract_keys(
             await create_extraction_result(
                 db=db,
                 user_id=current_user.id,
-                file_ids=request.file_ids,
+                document_ids=request.document_ids,
                 extraction_results=simple_results,
                 language=request.language,
             )
@@ -137,14 +151,14 @@ async def ask_question_stream(
     Ask a general question about one or more previously uploaded PDFs using LLM with streaming.
 
     Args:
-    - request: QuestionRequest containing file_ids and question
+    - request: QuestionRequest containing document_ids and question
     - db: AsyncSession database session
     - llm_extractor: LLMKeyExtractor service for question answering
 
     Returns:
     - Streaming response with Server-Sent Events (SSE) format
     """
-    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
+    pdf_data_list = await get_pdf_data_for_document_ids_async(db, request.document_ids)
 
     # Convert conversation history to dict format for LLM
     conversation_history = None
@@ -200,14 +214,14 @@ async def detect_product_type(
     - Kombiwandler (Combined Instrument Transformer)
 
     Args:
-    - request: ProductTypeDetectionRequest containing file_ids
+    - request: ProductTypeDetectionRequest containing document_ids
     - db: AsyncSession database session
     - llm_extractor: LLMKeyExtractor service for product type detection
 
     Returns:
     - ProductTypeDetectionResult with detected type, confidence, and evidence
     """
-    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
+    pdf_data_list = await get_pdf_data_for_document_ids_async(db, request.document_ids)
 
     # Detect product type using LLM
     try:
@@ -231,14 +245,14 @@ async def detect_core_winding_count(
     or windings (Wicklung) are specified, based on the product type.
 
     Args:
-    - request: CoreWindingCountRequest containing file_ids and product_type
+    - request: CoreWindingCountRequest containing document_ids and product_type
     - db: AsyncSession database session
     - llm_extractor: LLMKeyExtractor service for core/winding count detection
 
     Returns:
     - CoreWindingCountResult with max_core_number and max_winding_number
     """
-    pdf_data_list = await get_pdf_data_for_file_ids_async(db, request.file_ids)
+    pdf_data_list = await get_pdf_data_for_document_ids_async(db, request.document_ids)
 
     # Detect core/winding count using LLM
     try:
@@ -261,7 +275,7 @@ async def compare_pdfs(
     Compare two versions of a PDF to identify changes in specifications.
 
     Args:
-    - request: PDFComparisonRequest containing base_file_id, new_file_id, and additional_context
+    - request: PDFComparisonRequest containing base_document_id, new_document_id, and additional_context
     - db: AsyncSession database session
     - llm_extractor: LLMKeyExtractor service for PDF comparison
 
@@ -269,7 +283,9 @@ async def compare_pdfs(
     - PDFComparisonResult with summary and list of changes
     """
     # Get both PDFs - helper will raise HTTPException if not found
-    pdf_data_list = await get_pdf_data_for_file_ids_async(db, [request.base_file_id, request.new_file_id])
+    pdf_data_list = await get_pdf_data_for_document_ids_async(
+        db, [request.base_document_id, request.new_document_id]
+    )
     base_pdf_data, new_pdf_data = pdf_data_list[0], pdf_data_list[1]
 
     # Compare the PDFs using LLM
